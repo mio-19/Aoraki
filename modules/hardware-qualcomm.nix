@@ -7,7 +7,7 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
   cfg = config.mobile.hardware.socs;
   anyQualcomm = lib.any (v: v) [
     cfg.qualcomm-msm8940.enable
@@ -20,6 +20,7 @@ let
     cfg.qualcomm-sdm845.enable
     cfg.qualcomm-sm6125.enable
     cfg.qualcomm-sda429w.enable
+    cfg.qualcomm-sw5100.enable
     cfg.qualcomm-apq8064-1aa.enable
   ];
 in
@@ -80,6 +81,11 @@ in
       default = false;
       description = "enable when SOC is SDA429W (Snapdragon Wear 3100)";
     };
+    hardware.socs.qualcomm-sw5100.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "enable when SOC is SW5100 (Snapdragon W5 Gen 1)";
+    };
   };
 
   config = mkMerge [
@@ -135,16 +141,23 @@ in
       };
     }
     {
+      mobile = mkIf cfg.qualcomm-sw5100.enable {
+        system.system = "armv7l-linux";
+      };
+    }
+    {
       mobile = mkIf cfg.qualcomm-apq8064-1aa.enable {
         system.system = "armv7l-linux";
       };
     }
     (mkIf anyQualcomm {
       mobile.kernel.structuredConfig = [
-        (helpers: with helpers; {
-          ARCH_QCOM = lib.mkDefault (whenAtLeast "4.1" yes);
-          ARCH_MSM = lib.mkDefault (whenOlder "4.1" yes);
-        })
+        (
+          helpers: with helpers; {
+            ARCH_QCOM = lib.mkDefault (whenAtLeast "4.1" yes);
+            ARCH_MSM = lib.mkDefault (whenOlder "4.1" yes);
+          }
+        )
       ];
     })
   ];
