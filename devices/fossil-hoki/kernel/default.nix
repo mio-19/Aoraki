@@ -1,17 +1,45 @@
-{
-  mobile-nixos
+{ mobile-nixos
+, stdenv
+, cpio
 , fetchFromGitHub
 , ...
 }:
 
 # Fossil Gen 6 (hoki) ships a 4.14 downstream Qualcomm kernel.
-# AsteroidOS builds it with GCC 8; their recipe notes that "gcc >= 13
-# doesn't boot", so do not upgrade the compiler blindly.
+#
+# It must be built with GCC 8: AsteroidOS's recipe inherits `kernel-gcc8` and
+# notes "gcc >= 13 doesn't boot". Nixpkgs dropped gcc8, so borrow the armv7l
+# cross compiler from nixos-24.05 (the last channel still shipping 8.5.0).
 #
 # Patches 0001-0006 are vendored verbatim from AsteroidOS meta-smartwatch
 # (meta-hoki/recipes-kernel/linux/files). 90_dtbs-install is ours: this tree
 # has no ARM dtbs_install target.
-mobile-nixos.kernel-builder {
+let
+  # Pinned by git rev rather than a channel URL: channels.nixos.org/nixos-24.05
+  # is a moving target whose NAR hash changes as the branch advances, and that
+  # branch is gone now that 24.05 is EOL.
+  pkgsGcc8 = import (builtins.fetchGit {
+    url = "https://github.com/NixOS/nixpkgs.git";
+    rev = "b134951a4c9f3c995fd7be05f3243f8ecd65d798";
+    shallow = true;
+  }) {};
+
+  cc8 = pkgsGcc8.pkgsCross.armv7l-hf-multiplatform.buildPackages.gcc8;
+
+  # Same as pkgs.overrideCC (pkgs/stdenv/adapters.nix), inlined so this file
+  # does not need the surrounding package set.
+  stdenvGcc8 = stdenv.override {
+    allowedRequisites = null;
+    cc = cc8;
+    hasCC = true;
+  };
+
+  kernel-builder-gcc8 = mobile-nixos.kernel-builder.override {
+    stdenv = stdenvGcc8;
+  };
+in
+
+kernel-builder-gcc8 {
   version = "4.14.206";
   configfile = ./config.armv7;
 
@@ -33,6 +61,11 @@ mobile-nixos.kernel-builder {
   ];
 
   isModular = false;
+
+  # Qualcomm backported the 5.3 kheaders feature into this 4.14 tree
+  # (CONFIG_IKHEADERS=y), and kernel/gen_kheaders.sh needs cpio. The builder
+  # only supplies cpio for >= 5.2, so add it here.
+  nativeBuildInputs = [ cpio ];
 
   # Set by CONFIG_BUILD_ARM_APPENDED_DTB_IMAGE in the defconfig.
   buildDTBs = true;
