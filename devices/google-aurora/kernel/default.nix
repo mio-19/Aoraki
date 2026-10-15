@@ -18,5 +18,14 @@ mobile-nixos.kernel-builder {
     sha256 = "0bicl1n5sqglffz31vf1092c31ygwx8achqw6zbc8wsx8pfz5aig";
   };
 
-  isModular = false;
+  patches = [
+    ./0001-video-fbdev-add-qcom-continuous-splash-framebuffer.patch
+    ./cc-o-c-respfile.patch
+    ./cmd-mod-file-func.patch
+    ./eud-secure-fail-nonfatal.patch
+    ./modfinal-cc-o-c-respfile.patch
+    ./rtc-pm8xxx-read-only.patch
+  ];
+
+  isModular = true;
 }
