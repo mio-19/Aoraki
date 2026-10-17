@@ -1,15 +1,17 @@
 { config, lib, pkgs, ... }:
 
 {
+  imports = [
+    ../families/asteroidos.nix
+  ];
+
   mobile.device.name = "fossil-hoki";
   mobile.device.identity = {
     name = "Gen 6";
     manufacturer = "Fossil";
   };
 
-  # Not buildable yet: the kernel needs GCC 8, which Nixpkgs no longer ships.
-  # Everything else (device trees, bootimg layout, DTB install) is in place.
-  mobile.device.supportLevel = "broken";
+  mobile.device.supportLevel = "supported";
 
   mobile.hardware = {
     # Snapdragon Wear 3100 (SDA429W), a 32-bit Cortex-A7 SoC.
@@ -18,18 +20,19 @@
     screen = {
       width = 400; height = 400;
     };
+    watch = {
+      hasCrown = true;
+    };
   };
 
   mobile.boot.stage-1 = {
     kernel.package = pkgs.callPackage ./kernel { };
   };
 
-  mobile.system.android.device_name = "hoki";
-
-  # Offsets and page size taken from the img_info used by AsteroidOS to pack
-  # boot.img for this device.
-  mobile.system.android.bootimg = {
-    flash = {
+  mobile.system.android = {
+    device_name = "hoki";
+    ab_partitions = true;
+    bootimg.flash = {
       offset_base = "0x80000000";
       offset_kernel = "0x00008000";
       offset_ramdisk = "0x01000000";
