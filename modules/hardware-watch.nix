@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
@@ -8,7 +13,7 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
 
   screenCfg = config.mobile.hardware.screen;
   watchCfg = config.mobile.hardware.watch;
@@ -16,7 +21,12 @@ in
 {
   options.mobile.hardware.screen = {
     shape = mkOption {
-      type = types.enum [ "round" "square" "squircle" "chin" ];
+      type = types.enum [
+        "round"
+        "square"
+        "squircle"
+        "chin"
+      ];
       default =
         if screenCfg.chinHeight > 0 then
           "chin"
@@ -42,10 +52,7 @@ in
     radius = mkOption {
       type = types.int;
       default =
-        if screenCfg.shape == "round" || screenCfg.shape == "chin" then
-          screenCfg.width / 2
-        else
-          0;
+        if screenCfg.shape == "round" || screenCfg.shape == "chin" then screenCfg.width / 2 else 0;
       description = ''
         Corner or circular radius of the screen in pixels.
       '';

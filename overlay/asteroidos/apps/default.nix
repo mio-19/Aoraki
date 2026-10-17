@@ -1,45 +1,52 @@
-{ lib
-, stdenv
-, fetchFromGitHub
-, cmake
-, extra-cmake-modules
-, pkg-config
-, qt5
-, qml-asteroid
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  cmake,
+  extra-cmake-modules,
+  pkg-config,
+  qt5,
+  qml-asteroid,
 }:
 
 let
-  mkAsteroidApp = { name, desc, sha256 }: stdenv.mkDerivation rec {
-    pname = "asteroid-${name}";
-    version = "2.1";
+  mkAsteroidApp =
+    {
+      name,
+      desc,
+      sha256,
+    }:
+    stdenv.mkDerivation rec {
+      pname = "asteroid-${name}";
+      version = "2.1";
 
-    src = fetchFromGitHub {
-      owner = "AsteroidOS";
-      repo = "asteroid-${name}";
-      rev = version;
-      inherit sha256;
+      src = fetchFromGitHub {
+        owner = "AsteroidOS";
+        repo = "asteroid-${name}";
+        rev = version;
+        inherit sha256;
+      };
+
+      nativeBuildInputs = [
+        cmake
+        extra-cmake-modules
+        pkg-config
+      ];
+
+      buildInputs = [
+        qt5.qtbase
+        qt5.qtdeclarative
+        qt5.qtquickcontrols
+        qml-asteroid
+      ];
+
+      meta = with lib; {
+        description = desc;
+        homepage = "https://asteroidos.org/";
+        license = licenses.gpl3Plus;
+        platforms = platforms.linux;
+      };
     };
-
-    nativeBuildInputs = [
-      cmake
-      extra-cmake-modules
-      pkg-config
-    ];
-
-    buildInputs = [
-      qt5.qtbase
-      qt5.qtdeclarative
-      qt5.qtquickcontrols
-      qml-asteroid
-    ];
-
-    meta = with lib; {
-      description = desc;
-      homepage = "https://asteroidos.org/";
-      license = licenses.gpl3Plus;
-      platforms = platforms.linux;
-    };
-  };
 in
 {
   stopwatch = mkAsteroidApp {

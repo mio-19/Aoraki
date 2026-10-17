@@ -1,14 +1,15 @@
-{ lib
-, stdenv
-, fetchFromGitHub
-, cmake
-, extra-cmake-modules
-, pkg-config
-, glib
-, glibmm
-, bluez
-, systemd
-, qt5
+{
+  lib,
+  stdenv,
+  fetchFromGitHub,
+  cmake,
+  extra-cmake-modules,
+  pkg-config,
+  glib,
+  glibmm,
+  bluez,
+  systemd,
+  qt5,
 }:
 
 stdenv.mkDerivation rec {

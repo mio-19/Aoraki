@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
@@ -6,7 +11,7 @@ let
     mkIf
     mkOption
     types
-  ;
+    ;
 
   watchCfg = config.mobile.hardware.watch;
 in

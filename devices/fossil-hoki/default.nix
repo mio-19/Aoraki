@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   imports = [
@@ -18,7 +23,8 @@
     soc = "qualcomm-sda429w";
     ram = 1024 * 1;
     screen = {
-      width = 400; height = 400;
+      width = 400;
+      height = 400;
     };
     watch = {
       hasCrown = true;
