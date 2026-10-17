@@ -44,6 +44,10 @@ let
   '';
 in
 {
+  imports = [
+    ../families/asteroidos.nix
+  ];
+
   mobile.device.name = "google-aurora";
   mobile.device.identity = {
     name = "Pixel Watch 2";
@@ -61,6 +65,9 @@ in
     screen = {
       width = 384;
       height = 384;
+    };
+    watch = {
+      hasCrown = true;
     };
   };
 
