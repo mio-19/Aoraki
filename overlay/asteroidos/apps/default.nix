@@ -33,6 +33,7 @@ let
         kdePackages.extra-cmake-modules
         pkg-config
         qt6.qtdeclarative
+        qt6.wrapQtAppsHook
       ];
 
       buildInputs = [

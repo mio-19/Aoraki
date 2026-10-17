@@ -7,7 +7,12 @@ rec {
     inherit qml-asteroid;
   };
 
-  asteroid-btsyncd = callPackage ./asteroid-btsyncd { };
+  amber-mpris = callPackage ./amber-mpris { };
+  mlite = callPackage ./mlite { };
+
+  asteroid-btsyncd = callPackage ./asteroid-btsyncd {
+    inherit qml-asteroid amber-mpris mlite;
+  };
 
   apps = callPackage ./apps {
     inherit qml-asteroid;

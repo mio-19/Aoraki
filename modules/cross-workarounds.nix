@@ -44,6 +44,11 @@ lib.mkIf isCross (
 
               # systemd BPF framework fails when cross-compiling on 32-bit ARM due to missing linux/types.h in clang target bpf.
               systemd = super.systemd.override { withLibBPF = false; };
+
+              # libpcap pulls in rdma-core (InfiniBand/RoCE), which fails to cross-compile
+              # on 32-bit ARM due to CMake Python host/target architecture checks.
+              # Smartwatches do not use InfiniBand, so disable RDMA.
+              libpcap = super.libpcap.override { withRdma = false; };
             }
         )
       ];

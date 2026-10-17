@@ -58,6 +58,7 @@ kernel-builder-gcc8 {
     ./0004-usb-hcd-Handle-when-host-mode-isn-t-available.patch
     ./0005-initramfs-Don-t-skip-initramfs.patch
     ./0006-ARM-8933-1-replace-Sun-Solaris-style-flag-on-section.patch
+    ./0007-pcm_native-guard-pm_qos_remove_request-with-active-.patch
     ./90_dtbs-install.patch
   ];
 

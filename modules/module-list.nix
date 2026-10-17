@@ -12,6 +12,7 @@
   ./devices-metadata.nix
   ./disk-image.nix
   ./documentation.nix
+  ./fscrypt.nix
   ./hardware-eink.nix
   ./generated-disk-images.nix
   ./generated-filesystems.nix

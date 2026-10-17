@@ -68,4 +68,54 @@
   ];
 
   mobile.system.type = "android";
+
+  environment.systemPackages = [
+    pkgs.alsa-utils
+  ];
+
+  # WCNSS Wi-Fi firmware initialization and driver loading
+  systemd.services.wlan-firmware-hoki = {
+    description = "Fossil Gen 6 WCNSS WLAN firmware setup";
+    wantedBy = [ "multi-user.target" ];
+    before = [ "network-pre.target" ];
+    path = with pkgs; [
+      kmod
+      coreutils
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.writeShellScript "wlan-firmware-hoki" (
+        builtins.readFile ./wlan-firmware-hoki.sh
+      )}";
+    };
+  };
+
+  # TFA98xx amplifier firmware and ALSA mixer routing setup
+  systemd.services.audio-mixer-fix-hoki = {
+    description = "Fossil Gen 6 ALSA mixer & TFA98xx amplifier configuration";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "sound.target" ];
+    path = with pkgs; [
+      alsa-utils
+      kmod
+      coreutils
+      systemd
+      shadow
+      gnugrep
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = "${pkgs.writeShellScript "audio-mixer-fix-hoki" (
+        builtins.readFile ./audio-mixer-fix-hoki.sh
+      )}";
+    };
+  };
+
+  # GNSS AGPS NTP injection configuration & Android HAL library symlink
+  environment.etc."gps_xtra.ini".source = ./gps_xtra.ini;
+  systemd.tmpfiles.rules = [
+    "L+ /system/lib/hw/gps.default.so - - - - /vendor/lib/hw/gps.default.so"
+  ];
 }

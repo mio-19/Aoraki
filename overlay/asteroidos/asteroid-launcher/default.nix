@@ -20,11 +20,16 @@ stdenv.mkDerivation rec {
     sha256 = "0lrfk1m4kn9z47v0xr7mhgzi5kyahchf43jml7rzxq20limblrmn";
   };
 
+  patches = [
+    ./find-phone.patch
+  ];
+
   nativeBuildInputs = [
     cmake
     kdePackages.extra-cmake-modules
     pkg-config
     qt6.qtdeclarative
+    qt6.wrapQtAppsHook
   ];
 
   buildInputs = [
