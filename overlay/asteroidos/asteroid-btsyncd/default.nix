@@ -3,29 +3,29 @@
   stdenv,
   fetchFromGitHub,
   cmake,
-  extra-cmake-modules,
   pkg-config,
   glib,
   glibmm,
   bluez,
   systemd,
-  qt5,
+  qt6,
+  kdePackages,
 }:
 
 stdenv.mkDerivation rec {
   pname = "asteroid-btsyncd";
-  version = "2.1";
+  version = "nightly";
 
   src = fetchFromGitHub {
     owner = "AsteroidOS";
     repo = "asteroid-btsyncd";
-    rev = version;
-    sha256 = "00cg3gh197rilwqk06vx455w1wgnzakjcwf7k3p46r75fap3hs6h";
+    rev = "e14fbcd9a157f0988204e874b03f6f800f89d645";
+    sha256 = "15vpd3y817gz8j1d7f56k5g1y3747grsjqc5z7b896n7rs2p8ijc";
   };
 
   nativeBuildInputs = [
     cmake
-    extra-cmake-modules
+    kdePackages.extra-cmake-modules
     pkg-config
   ];
 
@@ -34,7 +34,7 @@ stdenv.mkDerivation rec {
     glibmm
     bluez
     systemd
-    qt5.qtbase
+    qt6.qtbase
   ];
 
   meta = with lib; {

@@ -2,6 +2,7 @@
 # Keep this list `:sort`ed.
 [
   ./adb.nix
+  ./asteroid-config.nix
   ./beautification.nix
   ./boot-control.nix
   ./boot-initrd.nix

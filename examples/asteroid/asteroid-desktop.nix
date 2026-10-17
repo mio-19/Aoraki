@@ -32,6 +32,13 @@ in
       asteroid.qml-asteroid
       asteroid.asteroid-launcher
       asteroid.asteroid-btsyncd
+      # Asset suite
+      asteroid.assets.wallpapers
+      asteroid.assets.sounds
+      asteroid.assets.icons
+      asteroid.assets.fonts
+      asteroid.assets.virtualkeyboard
+      # Complete application suite
       asteroid.apps.stopwatch
       asteroid.apps.timer
       asteroid.apps.alarmclock
@@ -41,6 +48,11 @@ in
       asteroid.apps.music
       asteroid.apps.compass
       asteroid.apps.flashlight
+      asteroid.apps.calendar
+      asteroid.apps.diamonds
+      asteroid.apps.hrm
+      asteroid.apps.camera
+      asteroid.apps.gps-test
     ];
 
     # AsteroidOS Bluetooth synchronization daemon service

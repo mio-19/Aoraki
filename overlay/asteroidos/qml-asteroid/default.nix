@@ -3,33 +3,35 @@
   stdenv,
   fetchFromGitHub,
   cmake,
-  extra-cmake-modules,
   pkg-config,
-  qt5,
+  qt6,
+  kdePackages,
 }:
 
 stdenv.mkDerivation rec {
   pname = "qml-asteroid";
-  version = "2.1";
+  version = "nightly";
 
   src = fetchFromGitHub {
     owner = "AsteroidOS";
     repo = "qml-asteroid";
-    rev = version;
-    sha256 = "05d5s9drc4mf21527jlzdzd466wiwhgyi89xrn5acphc31fmzxvh";
+    rev = "c1905485d4aa22f964273e93a62ef23c27a7754b";
+    sha256 = "14l43mnff8a7v1dw1d066i0nvswxmj1la3k6a0mxkyzxhykw68iq";
   };
 
   nativeBuildInputs = [
     cmake
-    extra-cmake-modules
+    kdePackages.extra-cmake-modules
     pkg-config
+    qt6.qtdeclarative
   ];
 
   buildInputs = [
-    qt5.qtbase
-    qt5.qtdeclarative
-    qt5.qtsvg
-    qt5.qtquickcontrols
+    qt6.qtbase
+    qt6.qtdeclarative
+    qt6.qtsvg
+    qt6.qtshadertools
+    qt6.qtwayland
   ];
 
   cmakeFlags = [

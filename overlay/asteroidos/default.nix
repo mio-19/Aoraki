@@ -12,4 +12,6 @@ rec {
   apps = callPackage ./apps {
     inherit qml-asteroid;
   };
+
+  assets = callPackage ./assets { };
 }

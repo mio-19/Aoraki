@@ -3,34 +3,36 @@
   stdenv,
   fetchFromGitHub,
   cmake,
-  extra-cmake-modules,
   pkg-config,
-  qt5,
+  qt6,
   qml-asteroid,
+  kdePackages,
 }:
 
 stdenv.mkDerivation rec {
   pname = "asteroid-launcher";
-  version = "2.1";
+  version = "nightly";
 
   src = fetchFromGitHub {
     owner = "AsteroidOS";
     repo = "asteroid-launcher";
-    rev = version;
-    sha256 = "14l9myz4jqxqi5a3y8cf03pxfixmwmhmnrkcxllhwi6fzi22lyxz";
+    rev = "0ba0eb50a68fc6f1019312d511ec3e2fd1b48f31";
+    sha256 = "0lrfk1m4kn9z47v0xr7mhgzi5kyahchf43jml7rzxq20limblrmn";
   };
 
   nativeBuildInputs = [
     cmake
-    extra-cmake-modules
+    kdePackages.extra-cmake-modules
     pkg-config
+    qt6.qtdeclarative
   ];
 
   buildInputs = [
-    qt5.qtbase
-    qt5.qtdeclarative
-    qt5.qtwayland
-    qt5.qtsensors
+    qt6.qtbase
+    qt6.qtdeclarative
+    qt6.qtwayland
+    qt6.qtsensors
+    qt6.qtshadertools
     qml-asteroid
   ];
 
