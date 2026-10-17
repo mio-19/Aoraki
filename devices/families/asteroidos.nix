@@ -23,6 +23,9 @@ in
   # growPartition must be disabled to avoid pulling 64-bit qemu-utils into 32-bit ARMv7 targets.
   boot.growPartition = lib.mkForce false;
 
+  # Watches are embedded appliances; disable installer tools to shrink image and avoid heavy cross-compilation
+  system.disableInstallerTools = mkDefault true;
+
   # Flashing method defaults to fastboot
   mobile.system.android.flashingMethod = mkDefault "fastboot";
 
