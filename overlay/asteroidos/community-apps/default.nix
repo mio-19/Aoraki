@@ -20,10 +20,12 @@ let
       sha256,
       extraNativeBuildInputs ? [ ],
       extraBuildInputs ? [ ],
+      postPatch ? "",
     }:
     stdenv.mkDerivation {
       pname = repo;
       version = "nightly";
+      inherit postPatch;
 
       src = fetchFromGitHub {
         inherit
@@ -172,5 +174,23 @@ rec {
     desc = "Direct internet weather forecast fetcher for AsteroidOS";
     rev = "70044bb4904d22f521fa7eb7448d5007bd863f97";
     sha256 = "04m1shcw9a36dpa5ibw5728c6d1vqiah9djlr79fq51c12sy7fvl";
+  };
+
+  # A metronome and chromatic tuning fork app for smartwatches
+  # Upstream repository: https://github.com/moWerk/asteroid-beatfork
+  beatfork = mkAsteroidApp {
+    name = "beatfork";
+    owner = "moWerk";
+    repo = "asteroid-beatfork";
+    desc = "Metronome and chromatic tuning fork app for smartwatches";
+    rev = "e3fbc5dd6da40868e0f338c9a0d3f6e877afca25";
+    sha256 = "1s4n5qfqximi05szksjbl806rpd37j3q7245z1iip5rrnlbkc7m2";
+    postPatch = ''
+      substituteInPlace src/CMakeLists.txt \
+        --replace-fail '/usr/share' 'share'
+    '';
+    extraBuildInputs = [
+      qt6.qtmultimedia
+    ];
   };
 }

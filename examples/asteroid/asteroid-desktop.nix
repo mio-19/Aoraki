@@ -63,6 +63,7 @@ in
       asteroid.community-apps.qmltester
       asteroid.community-apps.skedaddle
       asteroid.community-apps.weatherfetch
+      asteroid.community-apps.beatfork
     ];
 
     # AsteroidOS Bluetooth synchronization daemon service
