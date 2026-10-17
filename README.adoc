@@ -1,95 +1,104 @@
+= NixOS for Smartwatches
+:toc:
+:toc-placement!:
+
 ++++
-<div align="center"><a href="https://mobile-nixos.github.io/"><img src="artwork/logo/logo.svg" alt="Mobile NixOS" title="Mobile NixOS" width="500" height="130" /></a></div>
+<div align="center">
+  <h1>⌚ NixOS for Smartwatches</h1>
+  <p><em>“NixOS, on your wrist”</em></p>
+  <p>A declarative, Linux-based operating system for smartwatches, powered by NixOS and integrating hardware & userland works from <a href="https://asteroidos.org/">AsteroidOS</a>.</p>
+</div>
 ++++
 
-*Mobile NixOS* is a superset on top of link:https://nixos.org/nixos/[NixOS Linux],
-link:https://nixos.org/nixpkgs/[Nixpkgs] and link:https://nixos.org/nix/[Nix],
-aiming to abstract away the differences between _mobile_ devices.
+toc::[]
 
-In four words: _“NixOS, on your phone”_.
+== Overview
 
-ifdef::env-github[]
-Read more: <<doc/about.adoc#,About Mobile NixOS>>.
-endif::[]
-ifndef::env-github[]
-Read more: <<about.adoc#,About Mobile NixOS>>.
-endif::[]
+This project is a smartwatch-dedicated operating system built on top of link:https://nixos.org/nixos/[NixOS Linux],
+link:https://nixos.org/nixpkgs/[Nixpkgs], and the upstream hardware and userland achievements of link:https://asteroidos.org/[AsteroidOS].
 
-ifdef::env-github[]
-⚠️ **Note**: Mobile NixOS is only expected to build successfully against the **unstable** branch of Nixpkgs.
-endif::[]
+Unlike generic mobile Linux distributions designed for smartphones, tablets, or laptops, this system is engineered specifically from the ground up for wearable constraints:
 
-== Documentation
+* **Watch Display Geometries**: Native support for circular screens (e.g. 400x400, 384x384), square displays (e.g. ZenWatch 320x320), and "chin" (flat-tire) displays (e.g. Moto 360).
+* **Wearable Input Systems**: Rotary encoder crown dials, multi-button navigation, and wrist gesture detection.
+* **Wrist Power & Thermals**: Aggressive Always-On Display (AOD) ambient mode, OLED burn-in pixel shift protection, aggressive autosuspend, and wrist thermal thresholds.
+* **AsteroidOS Userland Integration**:
+  ** *`asteroid-launcher`*: Fast Wayland compositor and shell with 4-way gesture navigation (quick settings, notification center, today overview, app launcher).
+  ** *`qml-asteroid`*: QML touch toolkit tailored for round and small square screens.
+  ** *`asteroid-btsyncd`*: Bluetooth Low Energy sync daemon compatible with the AsteroidOS Sync companion app (Android/iOS) and Gadgetbridge for phone notifications, time sync, weather, and media control.
+  ** *AsteroidOS Core Apps*: Settings, Stopwatch, Timer, Alarm Clock, Calculator, Calendar, Weather, Music remote, Compass, Flashlight.
 
- * link:https://mobile-nixos.github.io/[The Mobile NixOS website] hosts the rendered link:https://github.com/mobile-nixos/mobile-nixos/tree/development/doc[doc folder] for Mobile NixOS documentation.
+== Supported Smartwatches
 
-As Mobile NixOS is a superset of NixOS Linux, the following documentation applies:
+The project ports and supports the watch hardware catalog pioneered by link:https://asteroidos.org/watches/[AsteroidOS]:
 
- * link:https://nixos.org/nixos/manual[NixOS Manual] - how to install, configure, and maintain a purely-functional Linux distribution
- * link:https://nixos.org/nixpkgs/manual/[Nixpkgs Manual] - contributing to Nixpkgs and using programming-language-specific Nix expressions
- * link:https://nixos.org/nix/manual[Nix Package Manager Manual] - how to write Nix expressions (programs), and how to use Nix command line tools
+[cols="2,2,2,3,1",options="header"]
+|===
+| Device | Codename | SoC | Display | Support
+| **Google Pixel Watch 2** | `google-aurora` | Snapdragon W5 Gen 1 | 384x384 Round (Crown, AOD) | Active
+| **Fossil Gen 6** | `fossil-hoki` | Snapdragon Wear 4100+ | 400x400 Round (Crown, AOD) | Active
+| **Fossil Gen 5** (Carlyle/Julianna) | `fossil-triggerfish` | Snapdragon Wear 3100 | 416x416 Round (Crown, AOD) | Ported
+| **Fossil Gen 4** (Explorist HR 46mm) | `fossil-firefish` | Snapdragon Wear 2100 | 454x454 Round (Crown) | Ported
+| **Mobvoi TicWatch Pro** | `ticwatch-catfish` | Snapdragon Wear 2100 | 400x400 Dual-layer Round | Ported
+| **Mobvoi TicWatch Pro 3** | `ticwatch-rubyfish` | Snapdragon Wear 4100 | 454x454 Dual-layer Round | Ported
+| **Huawei Watch 1** | `huawei-sturgeon` | Snapdragon 400 | 400x400 Sapphire Round | Ported
+| **LG Watch Urbane** | `lg-bass` | Snapdragon 400 | 320x320 Round | Ported
+| **LG G Watch R** | `lg-lenok` | Snapdragon 400 | 320x320 Round | Ported
+| **ASUS ZenWatch 2** | `asus-sparrow` | Snapdragon 400 | 320x320 Square AMOLED | Ported
+| **Moto 360 2nd Gen** | `motorola-smelt` | Snapdragon 400 | 360x325 Round with Chin | Ported
+| **OPPO Watch 46mm** | `oppo-beluga` | Snapdragon Wear 3100 | 402x476 Curved Squircle | Ported
+| **QEMU / Virtual VM** | `uefi-x86_64` | Virtual x86_64 | Scalable Display | Eval / VM
+|===
 
-== Community
+== Quick Start
 
-Mobile NixOS development and questions is done within the link:https://github.com/mobile-nixos/mobile-nixos[Mobile NixOS GitHub repository].
+=== Evaluating a Watch Configuration
 
-The following community resources are also available, for NixOS questions.
+You can evaluate the system derivation for any supported watch:
 
- * link:https://matrix.to/#/#nix:nixos.org?via=nixos.org&via=matrix.org[Nix and NixOS support channel on the NixOS Matrix Space]
- * link:https://discourse.nixos.org/[Discourse Forum]
+[source,bash]
+----
+# Evaluate Google Pixel Watch 2
+nix-instantiate --eval -E '(import ./default.nix { device = "google-aurora"; }).config.mobile.device.name'
 
-== Other Project Repositories
+# Evaluate Fossil Gen 6
+nix-instantiate --eval -E '(import ./default.nix { device = "fossil-hoki"; }).config.mobile.device.name'
+----
 
- * link:https://github.com/NixOS/nix[Nix] - the purely functional package manager
- * link:https://github.com/NixOS/nixpkgs[Nixpkgs] - the Nix packages collection
+=== Building the AsteroidOS Smartwatch Environment
 
-== Continuous Integration
+To build a full flashable image with the AsteroidOS Wayland desktop environment for your watch:
 
-There is no published artifacts for the time being, but the documentation
-should point you towards resources that you can use to get started quicker when
-your device is supported.
+[source,bash]
+----
+nix-build examples/asteroid --argstr device google-aurora -A outputs.default
+----
 
-== Contributing
+=== Flashing Boot Artifacts
 
-There are two ways your contributions can reach this project.
+Fastboot-capable watches produce fastboot-ready boot images:
 
-ifdef::env-github[]
- * <<CONTRIBUTING.adoc#,Contributing to Mobile NixOS>>
-endif::[]
-ifndef::env-github[]
- * <<contributing.adoc#,Contributing to Mobile NixOS>>
-endif::[]
- * link:https://github.com/NixOS/nixpkgs/blob/master/CONTRIBUTING.md[Contributing to Nixpkgs or NixOS]
+* **Android Header v4** (e.g. Pixel Watch 2):
+  [source,bash]
+  ----
+  fastboot flash --slot=all boot boot.img
+  fastboot flash --slot=all vendor_kernel_boot vendor_kernel_boot.img
+  fastboot flash --slot=all init_boot init_boot.img
+  ----
+* **Standard Android Bootimg** (e.g. Fossil Gen 5/6, Huawei Watch, LG Watch Urbane):
+  [source,bash]
+  ----
+  fastboot flash boot boot.img
+  ----
 
-Contributions are always welcome. If it's your first time contributing:
-jump in and don't be scared. Mistakes in your first contributions are room for
-improvement; it is not in our nature to scold new contributors.
+== Prior Work and Acknowledgments
+
+This project stands on the shoulders of giants:
+* link:https://asteroidos.org/[AsteroidOS Project] for hardware enablement, kernel trees, device recipes, and the AsteroidOS UI ecosystem.
+* link:https://mobile-nixos.github.io/[Mobile NixOS Project] for foundation NixOS mobile architecture abstractions.
+* link:https://nixos.org/[NixOS Project] for purely functional package and system management.
 
 == License
 
-Mobile NixOS is licensed under the link:https://github.com/mobile-nixos/mobile-nixos/blob/development/LICENSE[MIT License].
-
-[NOTE]
-====
-As with Nixpkgs, the MIT license does not apply to the packages built,
-but only to the files in this repository (expressions, scripts, modules, etc.).
-
-Patches and derivative work are covered by the licenses of their respective
-packages.
-====
-
-[#homepage-acknowledgements]
---
-[discrete]
-== Acknowledgements
-
-This project was funded in part through the NGI PET Fund.
-link:https://nlnet.nl/PET/[Read more about it on NLnet's website].
-
-ifdef::env-github[]
-image::doc/images/NGI0_tag_black_mono.svg[NGI0,link=https://nlnet.nl/NGI0/]
-endif::[]
-ifndef::env-github[]
-image::images/NGI0_tag_black_mono.svg[NGI0,link=https://nlnet.nl/NGI0/]
-endif::[]
---
+This project is licensed under the link:LICENSE[MIT License].
+Patches and vendor device trees are covered by the licenses of their respective upstreams.

@@ -29,10 +29,8 @@ import ./lib/eval-with-configuration.nix (args // {
      ** Note that an unconfigured image may appear to hang at boot. **
 
     An alternative is to use one of the `examples` system. They differ in their
-    configuration. An example that should be building, and working using
-    cross-compilation is the `examples/hello` system. Read its README for more
-    information.
+    configuration. For smartwatches, build the AsteroidOS environment:
 
-     $ nix-build examples/hello --argstr device ${device} -A outputs.default
+     $ nix-build examples/asteroid --argstr device ${device} -A outputs.default
   '';
 })

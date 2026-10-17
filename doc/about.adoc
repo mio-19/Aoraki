@@ -1,28 +1,23 @@
-= About Mobile NixOS
+= About NixOS for Smartwatches
 include::_support/common.inc[]
 
-Mobile NixOS is a superset on top of link:https://nixos.org/nixos/[NixOS Linux]
+This project is a dedicated smartwatch operating system built on top of link:https://nixos.org/nixos/[NixOS Linux],
 link:https://nixos.org/nixpkgs/[Nixpkgs] and link:https://nixos.org/nix/[Nix],
-aiming to abstract away the differences between _mobile_ devices.
+incorporating the hardware adaptations and software stack of link:https://asteroidos.org/[AsteroidOS].
 
-In four words: _“NixOS, on your phone”_.
-
+In four words: _“NixOS, on your wrist”_.
 
 == Goals
 
-The goal is to get a NixOS system running on mobile devices, e.g. Android
-phones.
-
-This is intended as building blocks, allowing the end-users to configure their
-systems as desired.
-
-The amount of targeted devices does not dilute or devalue the work. It's the
-other way around, it increases the odds that people will start using the
-project and contribute back.
-
+The goal is to provide a purely declarative, robust, and reproducible operating system for smartwatches.
+Key focuses include:
+- Native watch display geometry handling (round, square, chin displays).
+- Low-memory tuning and aggressive power management suited for all-day wearable battery life.
+- Seamless companion pairing and notification synchronization via AsteroidOS BLE protocols.
+- Reproducible device configurations for watches across multiple generations of Wear OS hardware.
 
 == Prior work and thanks
 
-This project initially borrowed and relied on the hard work from the
-link:https://postmarketos.org/[PostmarketOS project]. They are forever
-thanked in their efforts.
+This project directly adapts and builds upon the pioneering achievements of:
+- The link:https://asteroidos.org/[AsteroidOS Project] for their extensive work reverse engineering smartwatch hardware, writing the Asteroid UI, and maintaining kernel trees.
+- The link:https://mobile-nixos.github.io/[Mobile NixOS project] for initial mobile abstractions on NixOS.
