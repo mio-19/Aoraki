@@ -49,6 +49,37 @@ lib.mkIf isCross (
               # on 32-bit ARM due to CMake Python host/target architecture checks.
               # Smartwatches do not use InfiniBand, so disable RDMA.
               libpcap = super.libpcap.override { withRdma = false; };
+
+              # Skia gnFlags cpu mapping expects "arm" instead of "armv7l".
+              # Reference: https://github.com/NixOS/nixpkgs/blob/master/pkgs/by-name/sk/skia/package.nix
+              skia = super.skia.override {
+                stdenv = super.stdenv.override (old: {
+                  hostPlatform = super.stdenv.hostPlatform // {
+                    parsed = super.stdenv.hostPlatform.parsed // {
+                      cpu = super.stdenv.hostPlatform.parsed.cpu // {
+                        name = "arm";
+                      };
+                    };
+                  };
+                });
+              };
+
+              # Port Ladybird browser to 32-bit ARM (armv7l):
+              # Upstream repository: https://github.com/LadybirdBrowser/ladybird
+              # Patches LibGC (NanBoxedValue, HeapRegion, BlockAllocator) to support 32-bit pointers
+              # and reduces the heap cage from 4 TiB to 128 MiB to fit 32-bit virtual memory.
+              ladybird =
+                (super.ladybird.override {
+                  skia = final.skia;
+                }).overrideAttrs
+                  (old: {
+                    patches = (old.patches or [ ]) ++ [
+                      ../overlay/ladybird/0001-32bit-support.patch
+                    ];
+                    meta = old.meta // {
+                      platforms = (old.meta.platforms or [ ]) ++ [ "armv7l-linux" ];
+                    };
+                  });
             }
         )
       ];

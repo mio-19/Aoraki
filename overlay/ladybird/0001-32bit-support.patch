@@ -1,0 +1,67 @@
+From: Antigravity <antigravity@internal>
+Subject: [PATCH] LibGC, AK: Add 32-bit architecture support (ARMv7l)
+
+Enables compilation of Ladybird on 32-bit systems (such as armv7l):
+- In LibGC/NanBoxedValue.h, relax sizeof(void*) == sizeof(u64) to <=.
+  Since payload is 48 bits, 32-bit pointers fit easily within the NaN box.
+- In LibGC/HeapRegion.h, set HEAP_REGION_SIZE to 128 MiB on 32-bit architectures
+  instead of 4 TiB, avoiding virtual address space exhaustion.
+- In LibGC/BlockAllocator.cpp, relax sizeof(FlatPtr) >= sizeof(u64) to sizeof(void*).
+- In AK/Platform.h, add AK_IS_ARCH_ARM32() detection macro.
+
+diff --git a/AK/Platform.h b/AK/Platform.h
+index 101e4ec..550f837 100644
+--- a/AK/Platform.h
++++ b/AK/Platform.h
+@@ -29,6 +29,12 @@
+ #    define AK_IS_ARCH_AARCH64() 0
+ #endif
+ 
++#if defined(__arm__) && !defined(__aarch64__)
++#    define AK_IS_ARCH_ARM32() 1
++#else
++#    define AK_IS_ARCH_ARM32() 0
++#endif
++
+ #if defined(__riscv) && __riscv_xlen == 64
+ #    define AK_IS_ARCH_RISCV64() 1
+ #else
+diff --git a/Libraries/LibGC/BlockAllocator.cpp b/Libraries/LibGC/BlockAllocator.cpp
+index d3c7546..f2e7c10 100644
+--- a/Libraries/LibGC/BlockAllocator.cpp
++++ b/Libraries/LibGC/BlockAllocator.cpp
+@@ -55,7 +55,7 @@ class HeapRegion {
+ 
+     HeapRegion()
+     {
+-        static_assert(sizeof(FlatPtr) >= sizeof(u64));
++        static_assert(sizeof(FlatPtr) >= sizeof(void*));
+         Checked<size_t> reservation_size = size;
+         reservation_size += size;
+         VERIFY(!reservation_size.has_overflow());
+diff --git a/Libraries/LibGC/HeapRegion.h b/Libraries/LibGC/HeapRegion.h
+index eb94334..1b4028a 100644
+--- a/Libraries/LibGC/HeapRegion.h
++++ b/Libraries/LibGC/HeapRegion.h
+@@ -17,6 +17,8 @@ namespace GC {
+ // address space between userspace and the kernel. Keep room for the second
+ // region-sized reservation used to align the cage base.
+ static constexpr size_t HEAP_REGION_SIZE = 64ull * GiB;
++#elif (defined(__SIZEOF_POINTER__) && __SIZEOF_POINTER__ == 4) || defined(AK_ARCH_32_BIT)
++static constexpr size_t HEAP_REGION_SIZE = 128ull * MiB;
+ #elif AK_IS_ARCH_AARCH64() && !defined(AK_OS_MACOS)
+ // Some AArch64 systems provide only 39 or 42 bits of user virtual address
+ // space. Keep the cage small enough to fit those systems, including the
+diff --git a/Libraries/LibGC/NanBoxedValue.h b/Libraries/LibGC/NanBoxedValue.h
+index 10a7bc3..b66fa5a 100644
+--- a/Libraries/LibGC/NanBoxedValue.h
++++ b/Libraries/LibGC/NanBoxedValue.h
+@@ -14,7 +14,7 @@
+ namespace GC {
+ 
+ static_assert(sizeof(double) == 8);
+-static_assert(sizeof(void*) == sizeof(u64));
++static_assert(sizeof(void*) <= sizeof(u64));
+ // To make our Value representation compact we can use the fact that IEEE
+ // doubles have a lot (2^52 - 2) of NaN bit patterns. The canonical form being
+ // just 0x7FF8000000000000 i.e. sign = 0 exponent is all ones and the top most
