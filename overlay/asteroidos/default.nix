@@ -14,4 +14,6 @@ rec {
   };
 
   assets = callPackage ./assets { };
+
+  msm-fb-refresher = callPackage ./msm-fb-refresher { };
 }
