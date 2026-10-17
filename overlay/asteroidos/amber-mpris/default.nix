@@ -1,3 +1,6 @@
+# QML MPRIS integration library used by AsteroidOS music and btsyncd components
+# Upstream repository: https://github.com/sailfishos/amber-mpris
+# Packaging reference in AsteroidOS: https://github.com/AsteroidOS/meta-asteroid/tree/master/recipes-qt/amber-mpris
 {
   lib,
   stdenv,

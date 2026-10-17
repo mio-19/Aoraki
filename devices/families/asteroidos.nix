@@ -23,6 +23,10 @@ in
   # growPartition must be disabled to avoid pulling 64-bit qemu-utils into 32-bit ARMv7 targets.
   boot.growPartition = lib.mkForce false;
 
+  # Downstream Android/AsteroidOS vendor kernels use specialized defconfigs (disabling desktop VT, etc.)
+  # Reference: https://github.com/AsteroidOS/meta-smartwatch/tree/master/meta-hoki/recipes-kernel/linux
+  mobile.boot.stage-1.kernel.useStrictKernelConfig = lib.mkForce false;
+
   # Watches are embedded appliances; disable installer tools to shrink image and avoid heavy cross-compilation
   system.disableInstallerTools = mkDefault true;
 

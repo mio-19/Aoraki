@@ -74,6 +74,7 @@
   ];
 
   # WCNSS Wi-Fi firmware initialization and driver loading
+  # Upstream PR: https://github.com/AsteroidOS/meta-smartwatch/pull/341 ("hoki: wlan: working WiFi driver from source")
   systemd.services.wlan-firmware-hoki = {
     description = "Fossil Gen 6 WCNSS WLAN firmware setup";
     wantedBy = [ "multi-user.target" ];
@@ -91,31 +92,14 @@
     };
   };
 
-  # TFA98xx amplifier firmware and ALSA mixer routing setup
-  systemd.services.audio-mixer-fix-hoki = {
-    description = "Fossil Gen 6 ALSA mixer & TFA98xx amplifier configuration";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "sound.target" ];
-    path = with pkgs; [
-      alsa-utils
-      kmod
-      coreutils
-      systemd
-      shadow
-      gnugrep
-    ];
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-      ExecStart = "${pkgs.writeShellScript "audio-mixer-fix-hoki" (
-        builtins.readFile ./audio-mixer-fix-hoki.sh
-      )}";
-    };
-  };
-
   # GNSS AGPS NTP injection configuration & Android HAL library symlink
+  # Upstream PR: https://github.com/AsteroidOS/meta-smartwatch/pull/342 ("hoki: gnss: symlink real vendor HAL service, enable NTP AGPS assistance")
   environment.etc."gps_xtra.ini".source = ./gps_xtra.ini;
   systemd.tmpfiles.rules = [
     "L+ /system/lib/hw/gps.default.so - - - - /vendor/lib/hw/gps.default.so"
   ];
+
+  # Audio support on Fossil Gen 6 (hoki) is handled natively via Android Audio HAL (audio.primary.sdm429w.so)
+  # and pulseaudio-modules-droid with `source_channel_map=mono rate=48000` (48 kHz DSP frontend clock).
+  # Upstream PR (Merged): https://github.com/AsteroidOS/meta-smartwatch/pull/357 ("hoki: Fix microphone and speaker")
 }

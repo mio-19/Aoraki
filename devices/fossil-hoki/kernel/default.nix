@@ -7,14 +7,18 @@
 }:
 
 # Fossil Gen 6 (hoki) ships a 4.14 downstream Qualcomm kernel.
+# Upstream source tree: https://github.com/fossil-engineering/kernel-msm-fossil-cw
+# AsteroidOS recipe: https://github.com/AsteroidOS/meta-smartwatch/blob/master/meta-hoki/recipes-kernel/linux/linux-hoki_p.bb
 #
-# It must be built with GCC 8: AsteroidOS's recipe inherits `kernel-gcc8` and
-# notes "gcc >= 13 doesn't boot". Nixpkgs dropped gcc8, so borrow the armv7l
+# It must be built with GCC 8: AsteroidOS's recipe inherits `kernel-gcc8` (https://github.com/AsteroidOS/meta-asteroid/blob/master/classes/kernel-gcc8.bbclass)
+# and notes "gcc >= 13 doesn't boot". Nixpkgs dropped gcc8, so borrow the armv7l
 # cross compiler from nixos-24.05 (the last channel still shipping 8.5.0).
 #
-# Patches 0001-0006 are vendored verbatim from AsteroidOS meta-smartwatch
-# (meta-hoki/recipes-kernel/linux/files). 90_dtbs-install is ours: this tree
-# has no ARM dtbs_install target.
+# Patches 0001-0006 are vendored verbatim from AsteroidOS meta-smartwatch:
+# https://github.com/AsteroidOS/meta-smartwatch/tree/master/meta-hoki/recipes-kernel/linux/files
+# Patch 0007 fixes unconditional pm_qos_remove_request crash in pcm_native.c:
+# https://github.com/AsteroidOS/meta-smartwatch/pull/344
+# 90_dtbs-install is ours: this tree has no ARM dtbs_install target.
 let
   # Pinned by git rev rather than a channel URL: channels.nixos.org/nixos-24.05
   # is a moving target whose NAR hash changes as the branch advances, and that

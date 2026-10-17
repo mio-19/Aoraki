@@ -20,7 +20,10 @@ stdenv.mkDerivation rec {
     sha256 = "0lrfk1m4kn9z47v0xr7mhgzi5kyahchf43jml7rzxq20limblrmn";
   };
 
+  # AsteroidOS wayland compositor & shell
+  # Upstream repository: https://github.com/AsteroidOS/asteroid-launcher
   patches = [
+    # QuickPanel quick-toggle button to trigger the find-phone alarm on the companion phone
     ./find-phone.patch
   ];
 

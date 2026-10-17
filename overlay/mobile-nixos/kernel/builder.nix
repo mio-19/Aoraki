@@ -190,6 +190,7 @@ let
       version
       writeShellScript
       ;
+    useStrictKernelConfig = __mobile-nixos-useStrictKernelConfig;
     structuredConfig = (systemBuild-structuredConfig version);
   };
 

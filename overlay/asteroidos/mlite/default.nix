@@ -1,3 +1,6 @@
+# Lightweight desktop integration library providing MDConfItem / dconf bindings for Qt
+# Upstream repository: https://github.com/sailfishos/mlite
+# Packaging reference in AsteroidOS: https://github.com/AsteroidOS/meta-asteroid/tree/master/recipes-nemomobile/mlite
 {
   lib,
   stdenv,

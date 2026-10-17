@@ -6,6 +6,7 @@
   structuredConfig,
   version,
   writeShellScript,
+  useStrictKernelConfig ? false,
 }:
 rec {
   module = import (path + "/nixos/modules/system/boot/kernel_config.nix");
@@ -173,9 +174,18 @@ rec {
               echo "   Warnings: $warn"
               echo
               if ((error)); then
-                echo "=> Kernel configuration validation failed..."
-                echo "... aborting."
-                false
+                echo "=> Kernel configuration validation had $error mismatch(es)..."
+                ${
+                  if useStrictKernelConfig then
+                    ''
+                      echo "... aborting."
+                      false
+                    ''
+                  else
+                    ''
+                      echo "... continuing (non-strict mode)."
+                    ''
+                }
               fi
 
               if ((warn)); then

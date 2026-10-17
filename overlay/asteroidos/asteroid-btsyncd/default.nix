@@ -23,7 +23,11 @@ stdenv.mkDerivation rec {
     sha256 = "15vpd3y817gz8j1d7f56k5g1y3747grsjqc5z7b896n7rs2p8ijc";
   };
 
+  # AsteroidOS Bluetooth synchronization daemon
+  # Upstream repository: https://github.com/AsteroidOS/asteroid-btsyncd
+  # Companion phone app protocol (Gadgetbridge): https://codeberg.org/Freeyourgadget/Gadgetbridge
   patches = [
+    # Adds find-phone D-Bus command and synchronization packet support for Gadgetbridge
     ./find-phone.patch
   ];
 

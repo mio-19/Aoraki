@@ -1,3 +1,7 @@
+# Native ext4 File-Based Encryption (FBE) via fscrypt for wearable devices.
+# Linux kernel fscrypt documentation: https://www.kernel.org/doc/html/latest/filesystems/fscrypt.html
+# Google Adiantum cipher (designed for devices lacking AES hardware acceleration): https://github.com/google/adiantum
+# fscrypt userspace implementation & PAM integration: https://github.com/google/fscrypt
 {
   config,
   lib,
