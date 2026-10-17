@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   enabled = config.partitioningScheme == "gpt";
@@ -7,7 +12,7 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
 in
 {
   options.gpt = {
@@ -31,8 +36,13 @@ in
 
     hybridMBR = mkOption {
       type = with types; listOf str;
-      default = [];
-      example = [ "1" "3" "6" "EE" ];
+      default = [ ];
+      example = [
+        "1"
+        "3"
+        "6"
+        "EE"
+      ];
       description = ''
         Creates an hybrid MBR with the given (string) partition numbers.
 

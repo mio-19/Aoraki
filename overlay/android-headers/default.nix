@@ -1,6 +1,6 @@
 {
-stdenvNoCC
-, fetchgit
+  stdenvNoCC,
+  fetchgit,
 }:
 
 let

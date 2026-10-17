@@ -1,4 +1,10 @@
-{stdenv, fetchgit, libpng, libdrm, pkg-config}:
+{
+  stdenv,
+  fetchgit,
+  libpng,
+  libdrm,
+  pkg-config,
+}:
 
 let
   version = "2016-01-11";

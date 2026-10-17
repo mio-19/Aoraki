@@ -31,7 +31,12 @@ in
       "/vendor" = {
         device = vendor.partition;
         fsType = "ext4";
-        options = [ "ro" "nosuid" "noexec" "nodev" ];
+        options = [
+          "ro"
+          "nosuid"
+          "noexec"
+          "nodev"
+        ];
       };
     };
   };

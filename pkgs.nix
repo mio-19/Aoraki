@@ -9,20 +9,16 @@
 let
   inherit (import ./npins)
     nixpkgs
-  ;
+    ;
   channelInfo =
     builtins.match
       # https://releases.nixos.org/nixos/unstable/nixos-25.05beta723344.d3c42f187194/nixexprs.tar.xz
       "https?://(.*)/([^/]+)/([^/]+)/([^/]+)/.*"
-      nixpkgs.url
-  ;
-  channelName =
-    builtins.concatStringsSep "-" [
-      (builtins.elemAt channelInfo 1)
-      (builtins.elemAt channelInfo 2)
-    ]
-  ;
+      nixpkgs.url;
+  channelName = builtins.concatStringsSep "-" [
+    (builtins.elemAt channelInfo 1)
+    (builtins.elemAt channelInfo 2)
+  ];
   identifier = builtins.elemAt channelInfo 3;
 in
-builtins.trace "(Using pinned Nixpkgs; ${channelName} @ ${identifier})"
-(import nixpkgs)
+builtins.trace "(Using pinned Nixpkgs; ${channelName} @ ${identifier})" (import nixpkgs)

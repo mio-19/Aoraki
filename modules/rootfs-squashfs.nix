@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
@@ -6,7 +11,7 @@ let
     mkOption
     optionalString
     types
-  ;
+    ;
 in
 {
   options = {
@@ -27,7 +32,7 @@ in
   config = mkIf (config.mobile.rootfs.useSquashfs) {
     mobile.generatedFilesystems = {
       rootfs = lib.mkDefault {
-        filesystem = lib.mkForce "squashfs";                                    
+        filesystem = lib.mkForce "squashfs";
       };
     };
 
@@ -74,9 +79,11 @@ in
       };
     };
 
-    mobile.boot.stage-1.kernel.additionalModules = (lib.mkIf config.mobile.boot.stage-1.kernel.modular [
-      "squashfs"
-      "overlay"
-    ]);
+    mobile.boot.stage-1.kernel.additionalModules = (
+      lib.mkIf config.mobile.boot.stage-1.kernel.modular [
+        "squashfs"
+        "overlay"
+      ]
+    );
   };
 }

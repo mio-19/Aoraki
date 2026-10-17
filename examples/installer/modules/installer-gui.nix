@@ -1,25 +1,35 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib.strings) makeBinPath;
 
-  app = pkgs.callPackage ../app {};
+  app = pkgs.callPackage ../app { };
   installer-gui = pkgs.mobile-nixos.script-loader.wrap {
     name = "installer-gui";
     applet = "${app}/libexec/app.mrb";
     env = {
-      PATH = "${makeBinPath (with pkgs;[
-        bashInteractive # The shell
-        tmux            # Terminal puppeteering
-        networkmanager  # Network management (nmcli)
-        systemd         # For poweroff
-        nix             # To do Nix builds
-        mobile-installer-script # To do the install
-        util-linux      # wipefs, sfdisk
-        cryptsetup      # LUKS
-        e2fsprogs       # mkfs.ext4
-        mkpasswd        # for the user's password
-      ])}:$PATH";
+      PATH = "${
+        makeBinPath (
+          with pkgs;
+          [
+            bashInteractive # The shell
+            tmux # Terminal puppeteering
+            networkmanager # Network management (nmcli)
+            systemd # For poweroff
+            nix # To do Nix builds
+            mobile-installer-script # To do the install
+            util-linux # wipefs, sfdisk
+            cryptsetup # LUKS
+            e2fsprogs # mkfs.ext4
+            mkpasswd # for the user's password
+          ]
+        )
+      }:$PATH";
     };
   };
 in
@@ -39,7 +49,8 @@ in
     if config.mobile.system.type == "android" then
       # Heed this warning.
       # The installer *as currently implemented* may cause irreparable damages to android-based devices.
-      builtins.throw "Building the installer for '${config.mobile.system.type}' system types is not supported and may be dangerous."
+      builtins.throw
+        "Building the installer for '${config.mobile.system.type}' system types is not supported and may be dangerous."
     else
       {
         description = "GUI for the installer for Mobile NixOS";
@@ -47,8 +58,14 @@ in
 
         # Let's make sure our networking interfaces are up...
         # Also settle since there's no input device hotplug.
-        wants = [ "network-online.target" "systemd-udev-settle.service" ];
-        after = [ "network-online.target" "systemd-udev-settle.service" ];
+        wants = [
+          "network-online.target"
+          "systemd-udev-settle.service"
+        ];
+        after = [
+          "network-online.target"
+          "systemd-udev-settle.service"
+        ];
 
         serviceConfig = {
           Restart = "always";
@@ -61,8 +78,7 @@ in
           inherit (config.environment.sessionVariables) NIX_PATH;
           XDG_RUNTIME_DIR = "%t/installer-gui";
         };
-      }
-  ;
+      };
 
   system.build = {
     app-simulator = app.simulator;

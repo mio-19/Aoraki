@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.mobile.boot;
@@ -9,7 +14,7 @@ let
     mkOptionDefault
     optional
     types
-  ;
+    ;
 in
 {
   options.mobile.boot = {

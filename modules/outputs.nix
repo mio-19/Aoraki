@@ -3,7 +3,7 @@
 let
   inherit (lib)
     mkOption
-  ;
+    ;
 in
 {
   options = {

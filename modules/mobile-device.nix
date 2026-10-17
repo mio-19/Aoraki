@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.mobile.device;
@@ -9,7 +14,7 @@ let
     mkOption
     mkOptionDefault
     types
-  ;
+    ;
 in
 {
   options.mobile.device = {
@@ -55,7 +60,14 @@ in
     };
 
     supportLevel = mkOption {
-      type = types.enum [ "supported" "best-effort" "broken" "vendor" "unsupported" "abandoned" ];
+      type = types.enum [
+        "supported"
+        "best-effort"
+        "broken"
+        "vendor"
+        "unsupported"
+        "abandoned"
+      ];
       default = "unsupported";
       description = ''
         Support level for the device.

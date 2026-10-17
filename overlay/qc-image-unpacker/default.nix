@@ -1,4 +1,8 @@
-{ stdenv, fetchFromGitHub, zlib }:
+{
+  stdenv,
+  fetchFromGitHub,
+  zlib,
+}:
 
 stdenv.mkDerivation {
   pname = "qc-image-unpacker";

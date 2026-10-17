@@ -1,7 +1,17 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  inherit (lib) mkIf mkMerge mkOption types;
+  inherit (lib)
+    mkIf
+    mkMerge
+    mkOption
+    types
+    ;
   cfg = config.mobile.hardware.socs;
   anyAllwinner = lib.any (v: v) [
     cfg.allwinner-a64.enable
@@ -35,9 +45,11 @@ in
     }
     (mkIf anyAllwinner {
       mobile.kernel.structuredConfig = [
-        (helpers: with helpers; {
-          ARCH_SUNXI = lib.mkDefault yes;
-        })
+        (
+          helpers: with helpers; {
+            ARCH_SUNXI = lib.mkDefault yes;
+          }
+        )
       ];
     })
   ];

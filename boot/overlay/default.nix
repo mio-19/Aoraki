@@ -2,7 +2,7 @@ final: super:
 let
   inherit (final)
     callPackage
-  ;
+    ;
 in
 # NOTE: This overlay is scoped to only be used in practice by `mobile-nixos.stage-1`.
 #       See `overlay/overlay.nix` for how it's used.
@@ -13,12 +13,12 @@ in
       inherit (final)
         libinput
         libxkbcommon
-      ;
+        ;
       # Inherits the script-loader now customized with the slimmed deps.
       inherit (final.mobile-nixos) script-loader;
-      boot-recovery-menu = callPackage ../recovery-menu {};
-      boot-error = callPackage ../error {};
-      boot-splash = callPackage ../splash {};
+      boot-recovery-menu = callPackage ../recovery-menu { };
+      boot-error = callPackage ../error { };
+      boot-splash = callPackage ../splash { };
     };
   };
 
@@ -26,13 +26,13 @@ in
   libinput = callPackage ./libinput {
     inherit (super)
       libinput
-    ;
+      ;
   };
 
   # Slimmed-down for stage-1 usage.
   libxkbcommon = callPackage ./libxkbcommon {
     inherit (super)
       libxkbcommon
-    ;
+      ;
   };
 }

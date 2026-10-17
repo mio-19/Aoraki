@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
@@ -6,7 +11,7 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
   cfg = config.mobile.hardware.socs;
   anyRockchip = lib.any (v: v) [
     cfg.rockchip-op1.enable
@@ -40,9 +45,11 @@ in
     }
     (mkIf anyRockchip {
       mobile.kernel.structuredConfig = [
-        (helpers: with helpers; {
-          ARCH_ROCKCHIP = lib.mkDefault yes;
-        })
+        (
+          helpers: with helpers; {
+            ARCH_ROCKCHIP = lib.mkDefault yes;
+          }
+        )
       ];
     })
   ];

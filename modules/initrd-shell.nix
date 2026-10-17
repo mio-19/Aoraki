@@ -1,7 +1,17 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  inherit (lib) mkMerge mkIf mkOption types;
+  inherit (lib)
+    mkMerge
+    mkIf
+    mkOption
+    types
+    ;
   cfg = config.mobile.boot.stage-1.shell;
 in
 {

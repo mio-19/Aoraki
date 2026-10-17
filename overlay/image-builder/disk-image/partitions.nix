@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
@@ -6,7 +11,7 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
 
   inherit (config) helpers;
 
@@ -95,10 +100,12 @@ let
       };
 
       filesystem = mkOption {
-        type = types.nullOr (types.submodule ({
-          imports = [ ../filesystem-image ];
-          _module.args.pkgs = pkgs;
-        }));
+        type = types.nullOr (
+          types.submodule ({
+            imports = [ ../filesystem-image ];
+            _module.args.pkgs = pkgs;
+          })
+        );
         default = null;
         description = ''
           A filesystem image configuration.
@@ -118,7 +125,12 @@ let
       };
 
       raw = mkOption {
-        type = with types; nullOr (oneOf [ package path ]);
+        type =
+          with types;
+          nullOr (oneOf [
+            package
+            path
+          ]);
         defaultText = "[contents of the filesystem attribute]";
         default = null;
         description = ''

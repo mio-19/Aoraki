@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   enabled = config.partitioningScheme == "mbr";
@@ -7,14 +12,16 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
 in
 {
   options.mbr = {
     diskID = mkOption {
       type = types.strMatching (
-        let hex = "[0-9a-fA-F]"; in
-          "${hex}{8}"
+        let
+          hex = "[0-9a-fA-F]";
+        in
+        "${hex}{8}"
       );
       default = null;
       description = ''

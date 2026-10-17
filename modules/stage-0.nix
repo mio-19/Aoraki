@@ -1,14 +1,20 @@
-{ config, lib, pkgs, extendModules, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  extendModules,
+  ...
+}:
 
 # This module provides the `stage-0` build output.
 # It is the same configuration, with minor customizations.
 
-let 
+let
   inherit (lib) mkOption types;
   inherit (config.mobile.quirks) supportsStage-0;
 
   # A bit dirty, but actually works for what we want.
-  fdt-forward = pkgs.runCommand "fdt-forward-for-initrd" {} ''
+  fdt-forward = pkgs.runCommand "fdt-forward-for-initrd" { } ''
     mkdir -p $out/bin
     # /bin/sh is busybox in the initrd, assuredly.
     echo "#!/bin/sh" > $out/bin/fdt-forward
@@ -34,16 +40,19 @@ in
     mobile.quirks.fdt-forward = {
       nodes = mkOption {
         type = types.listOf types.str;
-        default = [];
+        default = [ ];
         description = ''
           FDT nodes to forward to the kexec'd system.
         '';
       };
       props = mkOption {
         type = types.listOf (types.listOf types.str);
-        default = [];
+        default = [ ];
         example = [
-          ["/soc/mmc@1c10000/wifi@1" "local-mac-address"]
+          [
+            "/soc/mmc@1c10000/wifi@1"
+            "local-mac-address"
+          ]
         ];
         description = ''
           Pair of [node prop] to forward to the kexec'd system.
@@ -66,29 +75,35 @@ in
   };
 
   config = {
-    mobile.outputs.stage-0 = (extendModules {
-      modules = [
-        (
-          { config, ... }:
-          lib.mkIf supportsStage-0 {
-            mobile.boot.stage-1.stage = 0;
-            mobile.boot.stage-1.extraUtils = [
-              { package = pkgs.kexec-tools; }
-              { package = fdt-forward; }
-            ];
-            mobile.boot.stage-1.bootConfig.stage-0 = {
-              forward = {
-                nodes = [
-                  "/memory"
-                ] ++ config.mobile.quirks.fdt-forward.nodes;
-                props = [
-                  ["/" "serial-number"]
-                ] ++ config.mobile.quirks.fdt-forward.props;
+    mobile.outputs.stage-0 =
+      (extendModules {
+        modules = [
+          (
+            { config, ... }:
+            lib.mkIf supportsStage-0 {
+              mobile.boot.stage-1.stage = 0;
+              mobile.boot.stage-1.extraUtils = [
+                { package = pkgs.kexec-tools; }
+                { package = fdt-forward; }
+              ];
+              mobile.boot.stage-1.bootConfig.stage-0 = {
+                forward = {
+                  nodes = [
+                    "/memory"
+                  ]
+                  ++ config.mobile.quirks.fdt-forward.nodes;
+                  props = [
+                    [
+                      "/"
+                      "serial-number"
+                    ]
+                  ]
+                  ++ config.mobile.quirks.fdt-forward.props;
+                };
               };
-            };
-          }
-        )
-      ];
-    }).config;
+            }
+          )
+        ];
+      }).config;
   };
 }

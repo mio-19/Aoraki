@@ -1,7 +1,11 @@
-{ lib, runCommand, mobile-nixos }:
+{
+  lib,
+  runCommand,
+  mobile-nixos,
+}:
 
 let
-  assets = runCommand "boot-splash-assets" {} ''
+  assets = runCommand "boot-splash-assets" { } ''
     mkdir -p $out
     ln -s /etc/logo.svg $out/logo.svg
   '';

@@ -1,10 +1,15 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
     mkOption
     types
-  ;
+    ;
 in
 {
   options.mobile.adbd = {
@@ -19,7 +24,8 @@ in
 
   config = lib.mkIf config.mobile.adbd.enable {
     assertions = [
-      { assertion = config.mobile.boot.stage-1.usb.enable;
+      {
+        assertion = config.mobile.boot.stage-1.usb.enable;
         message = "adb requires mobile.boot.stage-1.usb.enable = true";
       }
     ];
@@ -27,10 +33,12 @@ in
     mobile.boot.stage-1 = {
       usb.features = [ "adb" ];
 
-      extraUtils = [{
-        package = pkgs.adbd;
-        extraCommand = ''cp -fpv "${pkgs.glibc.out}"/lib/libnss_files.so.* "$out"/lib/'';
-      }];
+      extraUtils = [
+        {
+          package = pkgs.adbd;
+          extraCommand = ''cp -fpv "${pkgs.glibc.out}"/lib/libnss_files.so.* "$out"/lib/'';
+        }
+      ];
     };
 
     # TODO: `teardown` on the stage-1 adb task, and execute it before switch_root

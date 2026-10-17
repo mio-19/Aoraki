@@ -1,9 +1,10 @@
-{ stdenv
-, fetchFromGitHub
-, libconfig
-, libusbgx
-, cmake
-, pkg-config
+{
+  stdenv,
+  fetchFromGitHub,
+  libconfig,
+  libusbgx,
+  cmake,
+  pkg-config,
 }:
 
 stdenv.mkDerivation rec {

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   enabled = config.filesystem == "btrfs";
@@ -9,7 +14,7 @@ let
     mkOption
     optionalString
     types
-  ;
+    ;
 
   inherit (config) label;
   inherit (config.btrfs) partitionID;
@@ -40,8 +45,7 @@ in
       # Rounded up to 110MiB.
       minimumSize = config.helpers.size.MiB 110;
 
-      computeMinimalSize = ''
-      '';
+      computeMinimalSize = "";
 
       buildPhases = {
         copyPhase = ''

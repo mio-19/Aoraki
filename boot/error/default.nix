@@ -1,7 +1,11 @@
-{ lib, runCommand, mobile-nixos }:
+{
+  lib,
+  runCommand,
+  mobile-nixos,
+}:
 
 let
-  assets = runCommand "boot-error-assets" {} ''
+  assets = runCommand "boot-error-assets" { } ''
     mkdir -p $out
     cp ${../../artwork/sad.svg} $out/sad.svg
   '';

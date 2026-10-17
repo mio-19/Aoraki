@@ -5,7 +5,7 @@ let
   inherit (lib)
     mkAfter
     mkDefault
-  ;
+    ;
   inherit (config.mobile.generatedFilesystems) rootfs;
   deviceName = config.mobile.device.name;
   # Name used for some image file output.

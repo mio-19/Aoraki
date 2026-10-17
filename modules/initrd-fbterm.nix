@@ -1,10 +1,15 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
     mkOption
     types
-  ;
+    ;
   cfg = config.mobile.boot.stage-1.fbterm;
   fontsConf = pkgs.writeText "fonts.conf" ''
     <?xml version="1.0"?>
@@ -85,7 +90,10 @@ in
       { package = pkgs.fbterm; }
     ];
     contents = [
-      { object = fontsConf; symlink = "/etc/fonts/fonts.conf"; }
+      {
+        object = fontsConf;
+        symlink = "/etc/fonts/fonts.conf";
+      }
     ];
   };
 }

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.mobile.quirks.audio;
@@ -20,19 +25,18 @@ in
     environment.pathsToLink = [ "/share/alsa/ucm2" ];
     environment.systemPackages = [ pkgs.alsa-ucm-conf ];
 
-    environment.variables.ALSA_CONFIG_UCM2 =
-      "/run/current-system/sw/share/alsa/ucm2";
+    environment.variables.ALSA_CONFIG_UCM2 = "/run/current-system/sw/share/alsa/ucm2";
 
     # pulseaudio
     systemd.user.services.pulseaudio.environment.ALSA_CONFIG_UCM2 = ucm-env;
-    systemd.services.pulseaudio.environment.ALSA_CONFIG_UCM2      = ucm-env;
+    systemd.services.pulseaudio.environment.ALSA_CONFIG_UCM2 = ucm-env;
 
     # pipewire
-    systemd.user.services.pipewire.environment.ALSA_CONFIG_UCM2       = ucm-env;
+    systemd.user.services.pipewire.environment.ALSA_CONFIG_UCM2 = ucm-env;
     systemd.user.services.pipewire-pulse.environment.ALSA_CONFIG_UCM2 = ucm-env;
-    systemd.user.services.wireplumber.environment.ALSA_CONFIG_UCM2    = ucm-env;
-    systemd.services.pipewire.environment.ALSA_CONFIG_UCM2            = ucm-env;
-    systemd.services.pipewire-pulse.environment.ALSA_CONFIG_UCM2      = ucm-env;
-    systemd.services.wireplumber.environment.ALSA_CONFIG_UCM2         = ucm-env;
+    systemd.user.services.wireplumber.environment.ALSA_CONFIG_UCM2 = ucm-env;
+    systemd.services.pipewire.environment.ALSA_CONFIG_UCM2 = ucm-env;
+    systemd.services.pipewire-pulse.environment.ALSA_CONFIG_UCM2 = ucm-env;
+    systemd.services.wireplumber.environment.ALSA_CONFIG_UCM2 = ucm-env;
   };
 }

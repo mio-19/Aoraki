@@ -1,4 +1,8 @@
-{ stdenv, lessc, svgo }:
+{
+  stdenv,
+  lessc,
+  svgo,
+}:
 
 stdenv.mkDerivation {
   src = ./.;

@@ -11,64 +11,58 @@
 # Note:
 # Verify that .ci/instantiate-all.nix lists the expected paths when adding to this file.
 
-{ mobile-nixos ? builtins.fetchGit ./.
-# By default, builds all devices.
-, devices ? null
+{
+  mobile-nixos ? builtins.fetchGit ./.,
+  # By default, builds all devices.
+  devices ? null,
 
-# By default, assume we eval only for this eval's system
-, systems ? null
+  # By default, assume we eval only for this eval's system
+  systems ? null,
 
-# Some additional configuration will be made with this.
-# Mainly to work with some limitations (output size).
-, inNixOSHydra ? false
+  # Some additional configuration will be made with this.
+  # Mainly to work with some limitations (output size).
+  inNixOSHydra ? false,
 
-# The current system, for pure evals it must be provided.
-, system ? null
+  # The current system, for pure evals it must be provided.
+  system ? null,
 
-# The Nixpkgs this release is evaluated with.
-# By default relies on the pinned Nixpkgs.
-, pkgs ? null
+  # The Nixpkgs this release is evaluated with.
+  # By default relies on the pinned Nixpkgs.
+  pkgs ? null,
 }@args':
 
 let
-  system =
-    if args' ? system
-    then (args'.system)
-    else builtins.currentSystem
-  ;
-  systems =
-    if args' ? systems
-    then args'.systems
-    else [ system ];
+  system = if args' ? system then (args'.system) else builtins.currentSystem;
+  systems = if args' ? systems then args'.systems else [ system ];
   pkgs =
-    if args' ? pkgs
-    then
-      if args' ? system
-      then builtins.throw "Providing the `system` argument when providing your own `pkgs` is forbidden. You should instead pass the desired `system` argument to your `pkgs` instance."
-      else (args'.pkgs)
-    else (import ./pkgs.nix {
-      inherit system;
-      config = {
-        allowAliases = false;
-      };
-    })
-  ;
+    if args' ? pkgs then
+      if args' ? system then
+        builtins.throw "Providing the `system` argument when providing your own `pkgs` is forbidden. You should instead pass the desired `system` argument to your `pkgs` instance."
+      else
+        (args'.pkgs)
+    else
+      (import ./pkgs.nix {
+        inherit system;
+        config = {
+          allowAliases = false;
+        };
+      });
 
   mobileReleaseTools = (import ./lib/release-tools.nix { inherit pkgs; });
 in
 
 # This weird shuffle is to make the `device` argument depend on the input `pkgs`,
 # while also keeping the original `devices` argument name in the code..
-let devices' = devices; in
 let
-  devices =
-    if devices' == null
-    then mobileReleaseTools.all-devices
-    else devices'
-  ;
+  devices' = devices;
+in
+let
+  devices = if devices' == null then mobileReleaseTools.all-devices else devices';
 in
 # Drop this unneeded name.
-let devices' = null; in
+let
+  devices' = null;
+in
 
 let
   # We require some `lib` stuff in here.
@@ -77,13 +71,12 @@ let
   inherit (mobileReleaseTools.withPkgs pkgs)
     evalFor
     specialConfig
-  ;
+    ;
 
   # Add `allowAliases = false` to `evalWithConfiguration` for the release evaluations.
-  evalWithConfiguration = 
+  evalWithConfiguration =
     config: device:
-    (mobileReleaseTools.withPkgs pkgs).evalWithConfiguration
-    {
+    (mobileReleaseTools.withPkgs pkgs).evalWithConfiguration {
       imports = [
         {
           nixpkgs.config = {
@@ -92,9 +85,7 @@ let
         }
         config
       ];
-    }
-    device
-  ;
+    } device;
 
   # Systems we should eval for, per host system.
   # Non-native will be assumed cross.
@@ -113,7 +104,9 @@ let
   };
 
   onlyDerivations = lib.filterAttrs (k: v: lib.isDerivation v);
-  onlyDerivationsAndAttrsets = lib.filterAttrs (k: v: lib.isDerivation v || (lib.isAttrs v && !lib.isFunction v));
+  onlyDerivationsAndAttrsets = lib.filterAttrs (
+    k: v: lib.isDerivation v || (lib.isAttrs v && !lib.isFunction v)
+  );
 
   # Given an evaluated "device", filters `pkgs` down to only our packages
   # unique to the overaly.
@@ -122,10 +115,14 @@ let
     let
       # Trick the overlay in giving us its attributes.
       # Using the values is likely to fail. Thank lazyness!
-      overlayAttrNames = builtins.attrNames (import ./overlay/overlay.nix {} {});
+      overlayAttrNames = builtins.attrNames (import ./overlay/overlay.nix { } { });
     in
-    eval: let overlay = (lib.genAttrs overlayAttrNames (name: eval.pkgs.${name})); in
-    overlay // {
+    eval:
+    let
+      overlay = (lib.genAttrs overlayAttrNames (name: eval.pkgs.${name}));
+    in
+    overlay
+    // {
       xf86-video-fbdev = eval.pkgs.xf86-video-fbdev;
 
       # lib-like attributes...
@@ -140,32 +137,38 @@ let
 
       # Also lib-like, but a "global" like attribute :/
       defaultKernelPatches = null;
-    }
-  ;
+    };
 
   # Given a system builds run on, this will return a set of further systems
   # this builds in, either native or cross.
   # The values are `overlayForEval` applied for the pair local/cross systems.
-  evalForSystem = system:  builtins.listToAttrs
-    (builtins.map (
-      buildingForSystem:
-      let
-        # "device" name for the eval *and* key used for the set.
-        name = if system == buildingForSystem then buildingForSystem else "${buildingForSystem}-cross";
-        # "device" eval for our dummy device.
-        eval = evalFor (specialConfig {inherit name buildingForSystem system;});
-        overlay = overlayForEval eval;
-      in {
-        inherit name;
-        value = overlay;
-      }) shouldEvalOn.${system}
-    )
-  ;
+  evalForSystem =
+    system:
+    builtins.listToAttrs (
+      builtins.map (
+        buildingForSystem:
+        let
+          # "device" name for the eval *and* key used for the set.
+          name = if system == buildingForSystem then buildingForSystem else "${buildingForSystem}-cross";
+          # "device" eval for our dummy device.
+          eval = evalFor (specialConfig {
+            inherit name buildingForSystem system;
+          });
+          overlay = overlayForEval eval;
+        in
+        {
+          inherit name;
+          value = overlay;
+        }
+      ) shouldEvalOn.${system}
+    );
 
   # `device` here is indexed by the system it's being built on first.
   # FIXME: can we better filter this?
-  device = lib.genAttrs devices (device:
-    lib.genAttrs systems (system:
+  device = lib.genAttrs devices (
+    device:
+    lib.genAttrs systems (
+      system:
       (evalWithConfiguration {
         nixpkgs.buildPlatform = system;
       } device).config.mobile.outputs.default
@@ -174,8 +177,10 @@ let
 
   # `kernel` here is indexed by the system it's being built on first.
   # FIXME: can we better filter this?
-  kernel = lib.genAttrs devices (device:
-    lib.genAttrs systems (system:
+  kernel = lib.genAttrs devices (
+    device:
+    lib.genAttrs systems (
+      system:
       (evalWithConfiguration {
         nixpkgs.buildPlatform = system;
       } device).config.mobile.boot.stage-1.kernel.package
@@ -183,18 +188,15 @@ let
   );
 
   evalExample =
-    { example
-    , system
-    , targetSystem ? system
+    {
+      example,
+      system,
+      targetSystem ? system,
     }:
     import example {
       inherit pkgs;
       device = specialConfig {
-        name =
-          if system == targetSystem
-          then system
-          else "${targetSystem}-built-on-${system}"
-        ;
+        name = if system == targetSystem then system else "${targetSystem}-built-on-${system}";
         inherit system;
         buildingForSystem = targetSystem;
         config = {
@@ -204,12 +206,12 @@ let
           mobile.rootfs.shared.enabled = true;
         };
       };
-    }
-  ;
+    };
 
   evalInstaller =
-    { device
-    , buildPlatform
+    {
+      device,
+      buildPlatform,
     }:
     let
       eval = evalWithConfiguration {
@@ -219,8 +221,7 @@ let
         nixpkgs.buildPlatform = buildPlatform;
       } device;
     in
-      eval // { inherit (eval.config.mobile) outputs; }
-  ;
+    eval // { inherit (eval.config.mobile) outputs; };
 
   doc = import ./doc {
     inherit pkgs;
@@ -237,31 +238,77 @@ rec {
   # They may or may not work as-they-are on devices. YMMV.
   examples = {
     hello = {
-      x86_64-linux.toplevel  = (evalExample { example = ./examples/hello; system = "x86_64-linux"; }).outputs.toplevel;
-      aarch64-linux.toplevel = (evalExample { example = ./examples/hello; system = "aarch64-linux"; }).outputs.toplevel;
-      cross-x86-aarch64.toplevel = (evalExample { example = ./examples/hello; system = "x86_64-linux"; targetSystem = "aarch64-linux"; }).outputs.toplevel;
-      cross-x86-armv7l.toplevel  = (evalExample { example = ./examples/hello; system = "x86_64-linux"; targetSystem = "armv7l-linux";  }).outputs.toplevel;
+      x86_64-linux.toplevel =
+        (evalExample {
+          example = ./examples/hello;
+          system = "x86_64-linux";
+        }).outputs.toplevel;
+      aarch64-linux.toplevel =
+        (evalExample {
+          example = ./examples/hello;
+          system = "aarch64-linux";
+        }).outputs.toplevel;
+      cross-x86-aarch64.toplevel =
+        (evalExample {
+          example = ./examples/hello;
+          system = "x86_64-linux";
+          targetSystem = "aarch64-linux";
+        }).outputs.toplevel;
+      cross-x86-armv7l.toplevel =
+        (evalExample {
+          example = ./examples/hello;
+          system = "x86_64-linux";
+          targetSystem = "armv7l-linux";
+        }).outputs.toplevel;
     };
     phosh = {
-      x86_64-linux.toplevel  = (evalExample { example = ./examples/phosh; system = "x86_64-linux"; }).outputs.toplevel;
-      aarch64-linux.toplevel = (evalExample { example = ./examples/phosh; system = "aarch64-linux"; }).outputs.toplevel;
-      cross-x86-aarch64.toplevel = (evalExample { example = ./examples/phosh; system = "x86_64-linux"; targetSystem = "aarch64-linux"; }).outputs.toplevel;
+      x86_64-linux.toplevel =
+        (evalExample {
+          example = ./examples/phosh;
+          system = "x86_64-linux";
+        }).outputs.toplevel;
+      aarch64-linux.toplevel =
+        (evalExample {
+          example = ./examples/phosh;
+          system = "aarch64-linux";
+        }).outputs.toplevel;
+      cross-x86-aarch64.toplevel =
+        (evalExample {
+          example = ./examples/phosh;
+          system = "x86_64-linux";
+          targetSystem = "aarch64-linux";
+        }).outputs.toplevel;
     };
   };
 
   installer = {
-    lenovo-krane = (evalInstaller { device = "lenovo-krane"; buildPlatform = "aarch64-linux"; }).outputs.default;
-    lenovo-wormdingler = (evalInstaller { device = "lenovo-wormdingler"; buildPlatform = "aarch64-linux"; }).outputs.default;
-    pine64-pinephone = (evalInstaller { device = "pine64-pinephone"; buildPlatform = "aarch64-linux"; }).outputs.default;
-    pine64-pinephonepro = (evalInstaller { device = "pine64-pinephonepro"; buildPlatform = "aarch64-linux"; }).outputs.default;
+    lenovo-krane =
+      (evalInstaller {
+        device = "lenovo-krane";
+        buildPlatform = "aarch64-linux";
+      }).outputs.default;
+    lenovo-wormdingler =
+      (evalInstaller {
+        device = "lenovo-wormdingler";
+        buildPlatform = "aarch64-linux";
+      }).outputs.default;
+    pine64-pinephone =
+      (evalInstaller {
+        device = "pine64-pinephone";
+        buildPlatform = "aarch64-linux";
+      }).outputs.default;
+    pine64-pinephonepro =
+      (evalInstaller {
+        device = "pine64-pinephonepro";
+        buildPlatform = "aarch64-linux";
+      }).outputs.default;
   };
 
   # Overlays build native, and cross, according to shouldEvalOn
-  overlay = lib.genAttrs systems (system:
-    (evalForSystem system)
-  );
+  overlay = lib.genAttrs systems (system: (evalForSystem system));
 
-  cross-canaries = lib.genAttrs ["aarch64-linux" "armv7l-linux"] (system:
+  cross-canaries = lib.genAttrs [ "aarch64-linux" "armv7l-linux" ] (
+    system:
     releaseTools.aggregate {
       name = "cross-canaries-${system}";
       constituents =
@@ -269,8 +316,7 @@ rec {
           overlay' = overlay.x86_64-linux."${system}-cross";
         in
         (builtins.attrValues overlay'.mobile-nixos.cross-canary-test)
-        ++ (builtins.attrValues overlay'.mobile-nixos.cross-canary-test-static)
-      ;
+        ++ (builtins.attrValues overlay'.mobile-nixos.cross-canary-test-static);
       meta = {
         description = "Useful checks for cross-compilation.";
       };
@@ -279,84 +325,102 @@ rec {
 
   cross-compiled = {
     installer = {
-      lenovo-krane = (evalInstaller { device = "lenovo-krane"; buildPlatform = "x86_64-linux"; }).outputs.default;
-      lenovo-wormdingler = (evalInstaller { device = "lenovo-wormdingler"; buildPlatform = "x86_64-linux"; }).outputs.default;
-      pine64-pinephone = (evalInstaller { device = "pine64-pinephone"; buildPlatform = "x86_64-linux"; }).outputs.default;
-      pine64-pinephonepro = (evalInstaller { device = "pine64-pinephonepro"; buildPlatform = "aarch64-linux"; }).outputs.default;
+      lenovo-krane =
+        (evalInstaller {
+          device = "lenovo-krane";
+          buildPlatform = "x86_64-linux";
+        }).outputs.default;
+      lenovo-wormdingler =
+        (evalInstaller {
+          device = "lenovo-wormdingler";
+          buildPlatform = "x86_64-linux";
+        }).outputs.default;
+      pine64-pinephone =
+        (evalInstaller {
+          device = "pine64-pinephone";
+          buildPlatform = "x86_64-linux";
+        }).outputs.default;
+      pine64-pinephonepro =
+        (evalInstaller {
+          device = "pine64-pinephonepro";
+          buildPlatform = "aarch64-linux";
+        }).outputs.default;
     };
   };
 
-  tested = let
-    hasSystem = name: lib.lists.any (el: el == name) systems;
+  tested =
+    let
+      hasSystem = name: lib.lists.any (el: el == name) systems;
 
-    constituents =
-      cross-canaries.aarch64-linux.constituents
-      ++ lib.optionals (hasSystem "x86_64-linux") [
-        device.uefi-x86_64.x86_64-linux              # UEFI system
+      constituents =
+        cross-canaries.aarch64-linux.constituents
+        ++ lib.optionals (hasSystem "x86_64-linux") [
+          device.uefi-x86_64.x86_64-linux # UEFI system
 
-        # Cross builds
-        device.asus-z00t.x86_64-linux                # Android
-        device.asus-dumo.x86_64-linux                # Depthcharge
+          # Cross builds
+          device.asus-z00t.x86_64-linux # Android
+          device.asus-dumo.x86_64-linux # Depthcharge
 
-        # Example systems
-        examples.hello.x86_64-linux.toplevel
-        examples.hello.cross-x86-aarch64.toplevel
-        examples.phosh.x86_64-linux.toplevel
+          # Example systems
+          examples.hello.x86_64-linux.toplevel
+          examples.hello.cross-x86-aarch64.toplevel
+          examples.phosh.x86_64-linux.toplevel
 
-        # Flashable zip binaries are universal for a platform.
-        overlay.x86_64-linux.aarch64-linux-cross.mobile-nixos.android-flashable-zip-binaries
-      ]
-      ++ lib.optionals (hasSystem "aarch64-linux") [
-        device.asus-z00t.aarch64-linux               # Android
-        device.asus-dumo.aarch64-linux               # Depthcharge
+          # Flashable zip binaries are universal for a platform.
+          overlay.x86_64-linux.aarch64-linux-cross.mobile-nixos.android-flashable-zip-binaries
+        ]
+        ++ lib.optionals (hasSystem "aarch64-linux") [
+          device.asus-z00t.aarch64-linux # Android
+          device.asus-dumo.aarch64-linux # Depthcharge
 
-        # Example systems
-        examples.hello.aarch64-linux.toplevel
-        examples.phosh.aarch64-linux.toplevel
+          # Example systems
+          examples.hello.aarch64-linux.toplevel
+          examples.phosh.aarch64-linux.toplevel
 
-        installer.pine64-pinephone
+          installer.pine64-pinephone
 
-        # Flashable zip binaries are universal for a platform.
-        overlay.aarch64-linux.aarch64-linux.mobile-nixos.android-flashable-zip-binaries
-      ];
-  in
-  releaseTools.aggregate {
-    name = "mobile-nixos-tested";
-    inherit constituents;
-    meta = {
-      description = "Representative subset of devices that have to succeed.";
+          # Flashable zip binaries are universal for a platform.
+          overlay.aarch64-linux.aarch64-linux.mobile-nixos.android-flashable-zip-binaries
+        ];
+    in
+    releaseTools.aggregate {
+      name = "mobile-nixos-tested";
+      inherit constituents;
+      meta = {
+        description = "Representative subset of devices that have to succeed.";
+      };
     };
-  };
 
   # Uses the constituents of tested
-  testedPlus = let
-    hasSystem = name: lib.lists.any (el: el == name) systems;
+  testedPlus =
+    let
+      hasSystem = name: lib.lists.any (el: el == name) systems;
 
-    constituents = tested.constituents
-      ++ cross-canaries.armv7l-linux.constituents
-      ++ lib.optionals (hasSystem "x86_64-linux") [
-        device.asus-flo.x86_64-linux
-        overlay.x86_64-linux.armv7l-linux-cross.mobile-nixos.android-flashable-zip-binaries
-        examples.hello.cross-x86-armv7l.toplevel
-      ]
-      ++ lib.optionals (hasSystem "aarch64-linux") [
-      ]
-      ++ lib.optionals (hasSystem "armv7l-linux") [
-        device.asus-flo.armv7l-linux
-        overlay.armv7l-linux.armv7l-linux.mobile-nixos.android-flashable-zip-binaries
-      ]
-      ;
-  in
-  releaseTools.aggregate {
-    name = "mobile-nixos-tested-plus";
-    inherit constituents;
-    meta = {
-      description = ''
-        Other targets that may be failing more often than `tested`.
-        This contains more esoteric and less tested platforms.
+      constituents =
+        tested.constituents
+        ++ cross-canaries.armv7l-linux.constituents
+        ++ lib.optionals (hasSystem "x86_64-linux") [
+          device.asus-flo.x86_64-linux
+          overlay.x86_64-linux.armv7l-linux-cross.mobile-nixos.android-flashable-zip-binaries
+          examples.hello.cross-x86-armv7l.toplevel
+        ]
+        ++ lib.optionals (hasSystem "aarch64-linux") [
+        ]
+        ++ lib.optionals (hasSystem "armv7l-linux") [
+          device.asus-flo.armv7l-linux
+          overlay.armv7l-linux.armv7l-linux.mobile-nixos.android-flashable-zip-binaries
+        ];
+    in
+    releaseTools.aggregate {
+      name = "mobile-nixos-tested-plus";
+      inherit constituents;
+      meta = {
+        description = ''
+          Other targets that may be failing more often than `tested`.
+          This contains more esoteric and less tested platforms.
 
-        For a future release, `testedPlus` shoud also pass.
-      '';
+          For a future release, `testedPlus` shoud also pass.
+        '';
+      };
     };
-  };
 }

@@ -1,4 +1,8 @@
-{ lib, mobile-nixos, fetchurl }:
+{
+  lib,
+  mobile-nixos,
+  fetchurl,
+}:
 
 let
   ruby_rev = "37457117c941b700b150d76879318c429599d83f";

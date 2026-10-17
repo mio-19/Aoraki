@@ -5,8 +5,8 @@ let
     mkIf
     mkOption
     types
-  ;
-  
+    ;
+
   system_type = config.mobile.system.type;
 
   known_system_types = config.mobile.system.types ++ [ "none" ];
@@ -55,8 +55,6 @@ in
     # When evaluating with the Mobile NixOS defaults disabled, we want
     # to use the `none` type so evaluation can continue.
     # Otherwise we want to error on an unset value if not set.
-    mobile.system.type = mkIf (!config.mobile.enable) (
-      lib.mkOptionDefault "none"
-    );
+    mobile.system.type = mkIf (!config.mobile.enable) (lib.mkOptionDefault "none");
   };
 }

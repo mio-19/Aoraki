@@ -1,4 +1,10 @@
-{ config, lib, options, pkgs, ... }:
+{
+  config,
+  lib,
+  options,
+  pkgs,
+  ...
+}:
 
 let
 
@@ -9,7 +15,7 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
   cfg = config.mobile.boot.stage-1.kernel;
 
   modulesClosure = pkgs.makeModulesClosure (
@@ -17,13 +23,12 @@ let
       kernel =
         # Use the "new" split output for modules, when available.
         # Fixes breakage caused by https://github.com/NixOS/nixpkgs/pull/423933
-        cfg.package.modules or cfg.package
-      ;
+        cfg.package.modules or cfg.package;
       allowMissing = cfg.allowMissingModules;
       rootModules = cfg.modules ++ cfg.additionalModules;
       firmware = config.hardware.firmware;
-    } //
-    (lib.optionalAttrs ((builtins.functionArgs pkgs.makeModulesClosure) ? allowEmpty) {
+    }
+    // (lib.optionalAttrs ((builtins.functionArgs pkgs.makeModulesClosure) ? allowEmpty) {
       allowEmpty = !cfg.modular;
     })
   );
@@ -136,113 +141,129 @@ in
   config = mkMerge [
     # This can always be configured, as it does not affect the NixOS configuration.
     {
-      mobile.boot.stage-1 = (mkIf cfg.modular {
-        firmware = [ modulesClosure ];
-        contents = [
-          { object = "${modulesClosure}/lib/modules"; symlink = "/lib/modules"; }
-        ];
-        kernel.modules = [
-          # Basic always-needed kernel modules.
-          "loop"
-          "uinput"
-          "evdev"
-        ];
-        kernel.additionalModules = [
-          # Filesystems
-          "nls_cp437"
-          "nls_iso8859-1"
-          "fat"
-          "vfat"
+      mobile.boot.stage-1 = (
+        mkIf cfg.modular {
+          firmware = [ modulesClosure ];
+          contents = [
+            {
+              object = "${modulesClosure}/lib/modules";
+              symlink = "/lib/modules";
+            }
+          ];
+          kernel.modules = [
+            # Basic always-needed kernel modules.
+            "loop"
+            "uinput"
+            "evdev"
+          ];
+          kernel.additionalModules = [
+            # Filesystems
+            "nls_cp437"
+            "nls_iso8859-1"
+            "fat"
+            "vfat"
 
-          "ext4"
-          "crc32c"
-        ];
-      });
+            "ext4"
+            "crc32c"
+          ];
+        }
+      );
 
-      nixpkgs.overlays = [(_: _: {
-        # Used to transmit the option to the kernel builder
-        # *sigh*
-        __mobile-nixos-useStrictKernelConfig = cfg.useStrictKernelConfig;
-      })];
+      nixpkgs.overlays = [
+        (_: _: {
+          # Used to transmit the option to the kernel builder
+          # *sigh*
+          __mobile-nixos-useStrictKernelConfig = cfg.useStrictKernelConfig;
+        })
+      ];
     }
     # Logo configuration
     {
-      nixpkgs.overlays = [(final: super: {
-        # This is how it's passed down to the kernel builder infra...
-        inherit (cfg.logo) linuxLogo224PPMFile;
-      })];
+      nixpkgs.overlays = [
+        (final: super: {
+          # This is how it's passed down to the kernel builder infra...
+          inherit (cfg.logo) linuxLogo224PPMFile;
+        })
+      ];
       mobile.boot.stage-1.kernel.logo = {
         logo = mkDefault ../artwork/boot-logo.svg;
-        linuxLogo224PPMFile = pkgs.runCommand "logo_linux_clut224.ppm" {
-          nativeBuildInputs = with pkgs; [
-            imagemagick
-            netpbm
-            perl # Needed by netpbm
-          ];
-        } ''
-          magick \
-            ${cfg.logo.logo} \
-            -resize ${toString config.mobile.hardware.screen.width}x${toString config.mobile.hardware.screen.height} \
-            -trim converted.ppm
-          ppmquant 224 converted.ppm > quantized.ppm
-          pnmnoraw quantized.ppm > $out
-        '';
+        linuxLogo224PPMFile =
+          pkgs.runCommand "logo_linux_clut224.ppm"
+            {
+              nativeBuildInputs = with pkgs; [
+                imagemagick
+                netpbm
+                perl # Needed by netpbm
+              ];
+            }
+            ''
+              magick \
+                ${cfg.logo.logo} \
+                -resize ${toString config.mobile.hardware.screen.width}x${toString config.mobile.hardware.screen.height} \
+                -trim converted.ppm
+              ppmquant 224 converted.ppm > quantized.ppm
+              pnmnoraw quantized.ppm > $out
+            '';
       };
     }
     {
-      mobile.boot.stage-1 = (mkIf (!cfg.modular) {
-        contents = [
-          # Link an empty `/lib/modules` for the Modules task.
-          # This is better than implementing conditional loading of the task
-          # as the task is now always exercised.
-          {
-            object =
-              let
-                nullModules = pkgs.callPackage (
-                  { runCommand, ... }:
-                  runCommand "null-modules" { } ''
-                    mkdir -p $out/lib/modules
-                  ''
-                ) {};
-              in
-              "${nullModules}/lib/modules"
-            ;
-            symlink = "/lib/modules";
-          }
-        ];
-      });
+      mobile.boot.stage-1 = (
+        mkIf (!cfg.modular) {
+          contents = [
+            # Link an empty `/lib/modules` for the Modules task.
+            # This is better than implementing conditional loading of the task
+            # as the task is now always exercised.
+            {
+              object =
+                let
+                  nullModules = pkgs.callPackage (
+                    { runCommand, ... }:
+                    runCommand "null-modules" { } ''
+                      mkdir -p $out/lib/modules
+                    ''
+                  ) { };
+                in
+                "${nullModules}/lib/modules";
+              symlink = "/lib/modules";
+            }
+          ];
+        }
+      );
     }
     # Options affecting the NixOS configuration
     (mkIf (!cfg.useNixOSKernel) {
       boot.kernelPackages = mkDefault (
-        if (supportsStage-0 && config.mobile.rootfs.shared.enabled) || cfg.package == null
-        then let
-          self = {
-            # This must look legit enough so that NixOS thinks it's a kernel attrset.
-            stdenv = pkgs.stdenv;
-            # callPackage so that override / overrideAttrs exist.
-            kernel = pkgs.callPackage (
-              { runCommand, ... }: runCommand "null-kernel" {
-                passthru = rec {
-                  # minimum supported version~ish
-                  # The exact version doesn't matter much, as long as it
-                  # makes the few system options work correctly on a generic image.
-                  baseVersion = "3.18";
-                  kernelOlder = lib.versionOlder baseVersion;
-                  kernelAtLeast = lib.versionAtLeast baseVersion;
-                  modDirVersion = "99";
-                };
-                version = "99";
-              } "mkdir $out; touch $out/no-kernel"
-            ) {};
-            kernelOlder = self.kernel.kernelOlder;
-            kernelAtLeast = self.kernel.kernelAtLeast;
-            # Fake having `extend` available... probably dumb... but is it more
-            # dumb than faking a kernelPackages package set for eval??
-            extend = _: self;
-          };
-        in self
-        else (lib.recurseIntoAttrs (pkgs.linuxPackagesFor cfg.package))
+        if (supportsStage-0 && config.mobile.rootfs.shared.enabled) || cfg.package == null then
+          let
+            self = {
+              # This must look legit enough so that NixOS thinks it's a kernel attrset.
+              stdenv = pkgs.stdenv;
+              # callPackage so that override / overrideAttrs exist.
+              kernel = pkgs.callPackage (
+                { runCommand, ... }:
+                runCommand "null-kernel" {
+                  passthru = rec {
+                    # minimum supported version~ish
+                    # The exact version doesn't matter much, as long as it
+                    # makes the few system options work correctly on a generic image.
+                    baseVersion = "3.18";
+                    kernelOlder = lib.versionOlder baseVersion;
+                    kernelAtLeast = lib.versionAtLeast baseVersion;
+                    modDirVersion = "99";
+                  };
+                  version = "99";
+                } "mkdir $out; touch $out/no-kernel"
+              ) { };
+              kernelOlder = self.kernel.kernelOlder;
+              kernelAtLeast = self.kernel.kernelAtLeast;
+              # Fake having `extend` available... probably dumb... but is it more
+              # dumb than faking a kernelPackages package set for eval??
+              extend = _: self;
+            };
+          in
+          self
+        else
+          (lib.recurseIntoAttrs (pkgs.linuxPackagesFor cfg.package))
       );
 
       system.boot.loader.kernelFile = mkIf (cfg.package != null && cfg.package ? file) (
@@ -251,7 +272,7 @@ in
 
       # Disable kernel config checks as it's EXTREMELY nixpkgs-kernel centric.
       # We're duplicating that good work for the time being.
-      system.requiredKernelConfig = lib.mkForce [];
+      system.requiredKernelConfig = lib.mkForce [ ];
     })
     (mkIf (cfg.useNixOSKernel) {
       mobile.boot.stage-1 = {
@@ -259,11 +280,13 @@ in
           package = config.boot.kernelPackages.kernel;
           modular = true;
           # Use the modules described by the NixOS config.
-          modules = config.boot.initrd.kernelModules ++ [ "uinput" "evdev" ];
+          modules = config.boot.initrd.kernelModules ++ [
+            "uinput"
+            "evdev"
+          ];
           additionalModules = config.boot.initrd.availableKernelModules;
         };
       };
     })
   ];
 }
-

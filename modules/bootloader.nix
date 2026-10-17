@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib) mkIf mkOption types;
@@ -28,4 +33,3 @@ in
     boot.loader.generic-extlinux-compatible.enable = false;
   };
 }
-

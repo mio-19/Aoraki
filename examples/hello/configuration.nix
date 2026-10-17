@@ -1,18 +1,28 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib.strings) makeBinPath;
 
-  app = pkgs.callPackage ./app {};
+  app = pkgs.callPackage ./app { };
   hello-gui = pkgs.mobile-nixos.script-loader.wrap {
     name = "hello-gui";
     applet = "${app}/libexec/app.mrb";
     env = {
-      PATH = "${makeBinPath (with pkgs;[
-        systemd     # journalctl
-        glibc       # iconv
-        util-linux  # lsblk
-      ])}:$PATH";
+      PATH = "${
+        makeBinPath (
+          with pkgs;
+          [
+            systemd # journalctl
+            glibc # iconv
+            util-linux # lsblk
+          ]
+        )
+      }:$PATH";
     };
   };
 
@@ -24,16 +34,13 @@ let
 
   # Only enable `adb` if we know how to.
   # FIXME: relies on implementation details. Poor separation of concerns.
-  enableADB = 
-  let
-    value =
-      config.mobile.usb.mode == "android_usb" ||
-      (config.mobile.usb.mode == "gadgetfs" && config.mobile.usb.gadgetfs.functions ? adb)
-    ;
-  in
-    if value then value else
-    builtins.trace "warning: unable to enable ADB for this device." value
-  ;
+  enableADB =
+    let
+      value =
+        config.mobile.usb.mode == "android_usb"
+        || (config.mobile.usb.mode == "gadgetfs" && config.mobile.usb.gadgetfs.functions ? adb);
+    in
+    if value then value else builtins.trace "warning: unable to enable ADB for this device." value;
 in
 {
   imports = [
@@ -63,7 +70,7 @@ in
     "/var/log" = tmpfsConf;
     "/home" = tmpfsConf;
   };
- 
+
   mobile.boot.stage-1.bootConfig = {
     # This will be useful for debugging boot issues over serial in the default
     # configuration.
@@ -107,7 +114,11 @@ in
 
   users.users.nixos = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "networkmanager" "video" ];
+    extraGroups = [
+      "wheel"
+      "networkmanager"
+      "video"
+    ];
   };
 
   security.sudo = {

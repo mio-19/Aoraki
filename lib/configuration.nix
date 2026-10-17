@@ -12,15 +12,12 @@
 # }
 # ```
 
-{ device ? null }:
+{
+  device ? null,
+}:
 
 {
   imports =
-    (
-      if device == null
-      then []
-      else [ (import (../devices + "/${device}")) ]
-    )
-    ++ import ../modules/module-list.nix
-  ;
+    (if device == null then [ ] else [ (import (../devices + "/${device}")) ])
+    ++ import ../modules/module-list.nix;
 }

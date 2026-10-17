@@ -1,10 +1,11 @@
-{ stdenv
-, lib
-, fetchurl
-, mruby
+{
+  stdenv,
+  lib,
+  fetchurl,
+  mruby,
 
-# Additional tasks
-, tasks ? []
+  # Additional tasks
+  tasks ? [ ],
 }:
 
 let
@@ -66,5 +67,6 @@ stdenv.mkDerivation {
 
   tasks = [
     "./tasks"
-  ] ++ tasks;
+  ]
+  ++ tasks;
 }

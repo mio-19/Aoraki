@@ -8,7 +8,7 @@ let
     optional
     optionals
     types
-  ;
+    ;
   inherit (config.mobile.usb) gadgetfs;
   cfg = config.mobile.boot.stage-1;
 in
@@ -24,7 +24,7 @@ in
     };
     features = mkOption {
       type = types.listOf types.str;
-      default = [];
+      default = [ ];
       description = ''
         `android_usb` features to enable.
       '';
@@ -44,7 +44,12 @@ in
       '';
     };
     mode = mkOption {
-      type = types.nullOr (types.enum [ "android_usb" "gadgetfs" ]);
+      type = types.nullOr (
+        types.enum [
+          "android_usb"
+          "gadgetfs"
+        ]
+      );
       default = null;
       description = ''
         The USB gadget implementation the device uses.
@@ -65,7 +70,11 @@ in
         # FIXME: remove once added to <nixpkgs/nixos/modules/tasks/filesystems.nix> specialFSTypes
         device = "configfs";
         fsType = "configfs";
-        options = [ "nosuid" "noexec" "nodev" ];
+        options = [
+          "nosuid"
+          "noexec"
+          "nodev"
+        ];
       };
     };
 
@@ -75,23 +84,29 @@ in
         "libcomposite"
       ]
       ++ optionals (config.mobile.usb.mode == "gadgetfs") (
-        forEach cfg.usb.features (feature:
-          let function = lib.head (lib.splitString "." gadgetfs.functions."${feature}");
-          in "usb_f_${function}"
+        forEach cfg.usb.features (
+          feature:
+          let
+            function = lib.head (lib.splitString "." gadgetfs.functions."${feature}");
+          in
+          "usb_f_${function}"
         )
       );
 
-      usb.features = []
-        ++ optional cfg.networking.enable "rndis"
-      ;
+      usb.features = [ ] ++ optional cfg.networking.enable "rndis";
       tasks = [
         ./stage-1/tasks/usb-gadget-task.rb
       ];
       bootConfig = {
         boot.usb.features = cfg.usb.features;
-        boot.usb.functions = mkIf (config.mobile.usb.mode == "gadgetfs") (builtins.listToAttrs (
-          builtins.map (feature: { name = feature; value = gadgetfs.functions."${feature}"; }) cfg.usb.features
-        ));
+        boot.usb.functions = mkIf (config.mobile.usb.mode == "gadgetfs") (
+          builtins.listToAttrs (
+            builtins.map (feature: {
+              name = feature;
+              value = gadgetfs.functions."${feature}";
+            }) cfg.usb.features
+          )
+        );
         usb = {
           inherit (config.mobile.usb) idVendor idProduct mode;
         };

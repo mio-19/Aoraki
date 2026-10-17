@@ -1,11 +1,23 @@
-{ config, pkgs, lib, modules, baseModules, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  modules,
+  baseModules,
+  ...
+}:
 
 let
   enabled = config.mobile.system.type == "u-boot";
 
   inherit (config.mobile.outputs) recovery stage-0;
   inherit (pkgs) buildPackages runCommand;
-  inherit (lib) mkBefore mkIf mkOption  types;
+  inherit (lib)
+    mkBefore
+    mkIf
+    mkOption
+    types
+    ;
   cfg = config.mobile.quirks.u-boot;
   deviceName = config.mobile.device.name;
   kernel = stage-0.mobile.boot.stage-1.kernel.package;
@@ -29,8 +41,8 @@ let
     env delete bootargs
 
     # Add every args one by one, or else it may be too big to fit in a single invocation.
-    ${lib.concatMapStringsSep "\n" (arg:
-      ''setenv bootargs "$bootargs ${arg}"''
+    ${lib.concatMapStringsSep "\n" (
+      arg: ''setenv bootargs "$bootargs ${arg}"''
     ) config.boot.kernelParams}
 
     ${cfg.additionalCommands}
@@ -96,13 +108,18 @@ let
     booti ''${kernel_addr_r} ''${ramdisk_addr_r}:''${ramdisk_size} ''${fdt_addr_r};
   '';
 
-  bootscr = runCommand "${deviceName}-boot.scr" {
-    nativeBuildInputs = [
-      buildPackages.ubootTools
-    ];
-  } ''
-    mkimage -C none -A ${ubootPlatforms.${pkgs.stdenv.targetPlatform.system}} -T script -d ${bootcmd} $out
-  '';
+  bootscr =
+    runCommand "${deviceName}-boot.scr"
+      {
+        nativeBuildInputs = [
+          buildPackages.ubootTools
+        ];
+      }
+      ''
+        mkimage -C none -A ${
+          ubootPlatforms.${pkgs.stdenv.targetPlatform.system}
+        } -T script -d ${bootcmd} $out
+      '';
 in
 {
   options.mobile = {

@@ -1,11 +1,16 @@
-{ config, lib, pkgs, ...}:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
     mapAttrs
     mkOption
     types
-  ;
+    ;
 in
 {
   options = {
@@ -25,8 +30,8 @@ in
   };
 
   config = {
-    mobile.outputs.generatedDiskImages =
-      mapAttrs (name: config: config.output) config.mobile.generatedDiskImages
-    ;
+    mobile.outputs.generatedDiskImages = mapAttrs (
+      name: config: config.output
+    ) config.mobile.generatedDiskImages;
   };
 }

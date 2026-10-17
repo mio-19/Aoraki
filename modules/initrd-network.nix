@@ -4,7 +4,7 @@ let
   inherit (lib)
     mkOption
     types
-  ;
+    ;
   cfg = config.mobile.boot.stage-1.networking;
 in
 {

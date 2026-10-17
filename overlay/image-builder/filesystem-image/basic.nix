@@ -1,17 +1,22 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
     mkOption
     optionalString
     types
-  ;
+    ;
 
   inherit (config)
     computeMinimalSize
     extraPadding
     size
-  ;
+    ;
 in
 {
   options = {
@@ -117,14 +122,14 @@ in
     };
 
     populateCommands = lib.mkOption {
-      type = types.lines;                  
+      type = types.lines;
       default = "";
       description = ''
         Commands used to fill the filesystem.
 
         `$PWD` is the root of the filesystem.
       '';
-    };                                       
+    };
 
     buildInputs = mkOption {
       type = with types; listOf package;

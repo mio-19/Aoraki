@@ -1,19 +1,20 @@
-{ lib
-, fetchurl
-, mobile-nixos
-, symlinkJoin
+{
+  lib,
+  fetchurl,
+  mobile-nixos,
+  symlinkJoin,
 
-, coreutils
-, mkpasswd
-, nix
-, util-linux
+  coreutils,
+  mkpasswd,
+  nix,
+  util-linux,
 }:
 
 let
   inherit (lib)
     cleanSource
     makeBinPath
-  ;
+    ;
 
   ruby_rev = "37457117c941b700b150d76879318c429599d83f";
   shellwords = fetchurl {
@@ -22,10 +23,11 @@ let
     sha256 = "197g7qvrrijmajixa2h9c4jw26l36y8ig6qjb5d43qg4qykhqfcx";
   };
 
-  makeApplet = script:
+  makeApplet =
+    script:
     let
       src = cleanSource ./.;
-      app =  mobile-nixos.mkLVGUIApp {
+      app = mobile-nixos.mkLVGUIApp {
         name = "${script}.mrb";
         enableDebugInformation = true;
         inherit src;
@@ -41,15 +43,16 @@ let
       name = script;
       applet = "${app}/libexec/app.mrb";
       env = {
-        PATH = "${makeBinPath [
-          coreutils
-          mkpasswd
-          nix
-          util-linux
-        ]}:$PATH";
+        PATH = "${
+          makeBinPath [
+            coreutils
+            mkpasswd
+            nix
+            util-linux
+          ]
+        }:$PATH";
       };
-    }
-  ;
+    };
 in
 symlinkJoin {
   name = "installer-scripts";

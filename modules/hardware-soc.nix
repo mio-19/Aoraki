@@ -1,7 +1,17 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  inherit (lib) mkIf mkOption mkOptionDefault types;
+  inherit (lib)
+    mkIf
+    mkOption
+    mkOptionDefault
+    types
+    ;
   cfg = config.mobile.hardware;
 in
 {
@@ -17,7 +27,10 @@ in
 
   config = {
     assertions = [
-      { assertion = cfg.socs ? ${cfg.soc}; message = "Cannot enable SOC ${cfg.soc}; it is unknown.";}
+      {
+        assertion = cfg.socs ? ${cfg.soc};
+        message = "Cannot enable SOC ${cfg.soc}; it is unknown.";
+      }
     ];
     mobile.hardware.socs."${cfg.soc}".enable = true;
 
@@ -25,9 +38,7 @@ in
     # to use the a generic type so evaluation can continue.
     # Otherwise we want to error on an unset value if not set.
     mobile.hardware.soc = mkIf (!config.mobile.enable) (
-      mkOptionDefault (
-        "generic-${config.nixpkgs.hostPlatform.parsed.cpu.name}"
-      )
+      mkOptionDefault ("generic-${config.nixpkgs.hostPlatform.parsed.cpu.name}")
     );
   };
 }

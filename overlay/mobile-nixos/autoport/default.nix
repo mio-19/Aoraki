@@ -1,5 +1,16 @@
-{ stdenv, fetchFromGitHub
-, ruby, binutils, curl, file, gzip, lz4, mkbootimg, binwalk, zlib }:
+{
+  stdenv,
+  fetchFromGitHub,
+  ruby,
+  binutils,
+  curl,
+  file,
+  gzip,
+  lz4,
+  mkbootimg,
+  binwalk,
+  zlib,
+}:
 
 stdenv.mkDerivation {
   pname = "mobile-nixos-autoport";

@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   enabled = config.filesystem == "fat32";
@@ -9,10 +14,10 @@ let
     mkOption
     optionalString
     types
-  ;
+    ;
   inherit (config.helpers)
     chopDecimal
-  ;
+    ;
   type32bitHex = types.strMatching "[0-9a-fA-F]{1,8}";
 
   inherit (config) label sectorSize blockSize;
@@ -107,15 +112,18 @@ in
         # `local size` is in bytes.
 
         # This amount is a static amount of reserved space.
-        local static_reserved=${toString ( (reservedSectors + hiddenSectors) * sectorSize )}
+        local static_reserved=${toString ((reservedSectors + hiddenSectors) * sectorSize)}
 
         # This is a constant representing the relative reserved space ratio.
         local relative_reserved=${
           chopDecimal (
-            precision - (
-              1.0 * sectorSize / ((clusterSize * sectorSize) + (numberOfFats * fatPadding))
-              # ^ forces floating point
-            ) * precision
+            precision
+            -
+              (
+                1.0 * sectorSize / ((clusterSize * sectorSize) + (numberOfFats * fatPadding))
+                # ^ forces floating point
+              )
+              * precision
           )
         }
         # Rounds up the likely truncated result. At worst it's a bit more space.

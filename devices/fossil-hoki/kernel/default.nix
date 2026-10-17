@@ -1,8 +1,9 @@
-{ mobile-nixos
-, stdenv
-, cpio
-, fetchFromGitHub
-, ...
+{
+  mobile-nixos,
+  stdenv,
+  cpio,
+  fetchFromGitHub,
+  ...
 }:
 
 # Fossil Gen 6 (hoki) ships a 4.14 downstream Qualcomm kernel.
@@ -22,7 +23,7 @@ let
     url = "https://github.com/NixOS/nixpkgs.git";
     rev = "b134951a4c9f3c995fd7be05f3243f8ecd65d798";
     shallow = true;
-  }) {};
+  }) { };
 
   cc8 = pkgsGcc8.pkgsCross.armv7l-hf-multiplatform.buildPackages.gcc8;
 

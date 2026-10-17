@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
@@ -6,17 +11,17 @@ let
     mkIf
     mkOption
     types
-  ;
+    ;
   inherit (lib.systems)
     elaborate
-  ;
+    ;
   inherit (config)
     nixpkgs
-  ;
+    ;
   inherit (config.nixpkgs)
     hostPlatform
     localSystem
-  ;
+    ;
   cfg = config.mobile.system;
 
   # Use JSON to escape values for printing
@@ -28,11 +33,7 @@ let
   # The `config.nixpkgs` attribute set value defaults are not supposed to be read.
   # Let's try anyway, and assume a pure evaluation with i.e. `[flake]lib.nixosSystem` is in play when that fails.
   # This should be safe, as this is only used to automatically compute cross-compilation in “impure” environments.
-  hasLocalSystem =
-    (builtins.tryEval (
-      config.nixpkgs.localSystem
-    )).success
-  ;
+  hasLocalSystem = (builtins.tryEval (config.nixpkgs.localSystem)).success;
 
   # When `nixpkgs` is built on a different platform than it will be running on.
   isCross = hasLocalSystem && deviceHostPlatform.system != localSystem.system;
@@ -43,11 +44,15 @@ let
   traceCrossBuildPlatform =
     buildPlatform:
     builtins.trace ''
-      Building for cross?: ${e deviceHostPlatform.system} != ${e localSystem.system} → ${if isCross then "we are" else "we're not"}.
-                nixpkgs.buildPlatform.config → ${e /*nixpkgs.*/buildPlatform.config}
+      Building for cross?: ${e deviceHostPlatform.system} != ${e localSystem.system} → ${
+        if isCross then "we are" else "we're not"
+      }.
+                nixpkgs.buildPlatform.config → ${
+                  # nixpkgs.
+                  e buildPlatform.config
+                }
                 nixpkgs.hostPlatform.config → ${e nixpkgs.hostPlatform.config}
-    '' buildPlatform
-  ;
+    '' buildPlatform;
 in
 {
   options.mobile = {
@@ -78,15 +83,11 @@ in
       }
     ];
 
-    nixpkgs.hostPlatform =
-      mkDefault deviceHostPlatform
-    ;
-    nixpkgs.buildPlatform =
-      mkIf isCross (
-        # We are only using `traceCrossBuildPlatform` when doing cross-compilation.
-        # Otherwise it's noise for native builds.
-        mkDefault (traceCrossBuildPlatform (elaborate localSystem.system))
-      )
-    ;
+    nixpkgs.hostPlatform = mkDefault deviceHostPlatform;
+    nixpkgs.buildPlatform = mkIf isCross (
+      # We are only using `traceCrossBuildPlatform` when doing cross-compilation.
+      # Otherwise it's noise for native builds.
+      mkDefault (traceCrossBuildPlatform (elaborate localSystem.system))
+    );
   };
 }

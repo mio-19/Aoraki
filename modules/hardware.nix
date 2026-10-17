@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib) types;
@@ -11,7 +16,7 @@ in
         rebootModes = lib.mkOption {
           type = types.listOf types.str;
           internal = true;
-          default = [];
+          default = [ ];
           description = ''
             Identifiers known by the boot menu to provide reboot options
             that are hardware-dependent. E.g. reboot to bootloader.

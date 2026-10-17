@@ -1,7 +1,14 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
-  nixpkgs.overlays = [(final: super: {
-    mobile-installer-script = final.callPackage ../pkgs/scripted-installer {};
-  })];
+  nixpkgs.overlays = [
+    (final: super: {
+      mobile-installer-script = final.callPackage ../pkgs/scripted-installer { };
+    })
+  ];
 }

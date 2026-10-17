@@ -1,7 +1,17 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
-  inherit (lib) mkOption mkMerge mkIf types;
+  inherit (lib)
+    mkOption
+    mkMerge
+    mkIf
+    types
+    ;
   cfg = config.mobile.hardware.socs;
   anyMediatek = lib.any (v: v) [
     cfg.mediatek-mt6755.enable
@@ -51,10 +61,12 @@ in
         system.system = "armv7l-linux";
         quirks.fb-refresher.enable = true;
         kernel.structuredConfig = [
-          (helpers: with helpers; {
-            ARCH_MT8127 = lib.mkDefault yes;
-            ARCH_MEDIATEK = option yes;
-          })
+          (
+            helpers: with helpers; {
+              ARCH_MT8127 = lib.mkDefault yes;
+              ARCH_MEDIATEK = option yes;
+            }
+          )
         ];
       };
     }
@@ -65,9 +77,11 @@ in
     }
     (mkIf anyMediatek {
       mobile.kernel.structuredConfig = [
-        (helpers: with helpers; {
-          ARCH_MEDIATEK = lib.mkDefault yes;
-        })
+        (
+          helpers: with helpers; {
+            ARCH_MEDIATEK = lib.mkDefault yes;
+          }
+        )
       ];
     })
   ];

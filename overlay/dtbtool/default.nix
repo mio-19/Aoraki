@@ -1,8 +1,9 @@
-{ stdenv
-, fetchurl
-, python3
-, python3Packages
-, buildPackages
+{
+  stdenv,
+  fetchurl,
+  python3,
+  python3Packages,
+  buildPackages,
 }:
 
 let

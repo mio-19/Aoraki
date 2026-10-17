@@ -1,7 +1,8 @@
-{ stdenv
-, fetchFromGitHub
-, ruby
-, gptfdisk
+{
+  stdenv,
+  fetchFromGitHub,
+  ruby,
+  gptfdisk,
 }:
 
 stdenv.mkDerivation {

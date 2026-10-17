@@ -1,4 +1,11 @@
-{ config, pkgs, lib, modules, baseModules, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  modules,
+  baseModules,
+  ...
+}:
 
 let
   enabled = config.mobile.system.type == "android";
@@ -12,9 +19,10 @@ let
   # Fragments that will be re-used in the flashable zip builds
 
   android-flashable-fragment-assertDevice =
-    if config.mobile.system.android.device_name == null then ""
-    else "assert_device(${builtins.toJSON config.mobile.system.android.device_name})"
-  ;
+    if config.mobile.system.android.device_name == null then
+      ""
+    else
+      "assert_device(${builtins.toJSON config.mobile.system.android.device_name})";
 
   android-flashable-fragment-burnBoot = ''
     flash_partition(${builtins.toJSON config.mobile.system.android.boot_partition_destination}, zip: "boot.img")
@@ -99,7 +107,7 @@ in
           android-flashable-bootimg
           android-flashable-system
           android-flashable-zip
-        ;
+          ;
       };
     })
   ];

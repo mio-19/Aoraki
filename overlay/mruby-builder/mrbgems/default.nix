@@ -1,11 +1,12 @@
-{ stdenvNoCC
-, lib
-, fetchFromGitHub
-, fetchpatch
+{
+  stdenvNoCC,
+  lib,
+  fetchFromGitHub,
+  fetchpatch,
 
-, libffi
-, pkg-config
-, zeromq
+  libffi,
+  pkg-config,
+  zeromq,
 }:
 
 let
@@ -13,19 +14,24 @@ let
 in
 rec {
   # Thin wrapper over stdenvNoCC.mkDerivation.
-  mkGem = attrs: stdenvNoCC.mkDerivation ({
-    # "Static" name. Just like source packages.
-    name = if attrs.src ? name then attrs.src.name else "source";
+  mkGem =
+    attrs:
+    stdenvNoCC.mkDerivation (
+      {
+        # "Static" name. Just like source packages.
+        name = if attrs.src ? name then attrs.src.name else "source";
 
-    # Skip these, as they may be accidentally triggered.
-    configurePhase = ":";
-    buildPhase = ":";
+        # Skip these, as they may be accidentally triggered.
+        configurePhase = ":";
+        buildPhase = ":";
 
-    installPhase = ''
-      echo " :: Copying mrbgem"
-      cp -vr . $out
-    '';
-  } // attrs);
+        installPhase = ''
+          echo " :: Copying mrbgem"
+          cp -vr . $out
+        '';
+      }
+      // attrs
+    );
 
   mruby-dir = mkGem {
     src = fetchFromGitHub {
@@ -242,7 +248,7 @@ rec {
       sha256 = "1q47v1mavdi12x3jrv5l58ax3kx83byxpn7nwbb4wxb4r4q23i0l";
     };
 
-    patches =  [
+    patches = [
       ./mruby-process/0001-dln-Fix-bad-environment-assumptions.patch
     ];
 

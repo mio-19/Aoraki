@@ -1,7 +1,7 @@
 # As we're re-using the default values, define them outside the callPackage
 # declaration.
 let
-  defaultGemBoxes = ["default"];
+  defaultGemBoxes = [ "default" ];
   defaultGems = [
     # Without this, a cross-compilation will be missing its mrbc.
     # This is useful when mruby is intended to be run on the target.
@@ -9,36 +9,37 @@ let
     { core = "mruby-bin-mrbc"; }
   ];
 in
-{ stdenv
-, lib
-, buildPackages
-, pkgsBuildBuild
-, ruby
-, bison
-, fetchFromGitHub
-, file
-, mruby
-, builder
-, runtimeShell
-, writeText
+{
+  stdenv,
+  lib,
+  buildPackages,
+  pkgsBuildBuild,
+  ruby,
+  bison,
+  fetchFromGitHub,
+  file,
+  mruby,
+  builder,
+  runtimeShell,
+  writeText,
 
-# When unset the default gembox will be used.
-# For a native build, use the default gembox
-# For a cross build, use no gembox
-, gemBoxes ? []
-# When unset [] no additional mrbgem is added.
-# Add paths to mrbgems to add gems.
-, gems ? []
-# Add additional configuration to the target config.
-, additionalBuildConfig ? ""
-# Adds `enable_debug`.
-, debug ? false
-# Prepends defaults to `gems` and `gemBoxes`.
-, useDefaults ? true
-# Strips store path hashes in debug information
-# `nuke-ref` will break the irep of compiled mruby.
-# Stripping the hashes is *required* with nuke-ref.
-, stripStorePathHashes ? debug
+  # When unset the default gembox will be used.
+  # For a native build, use the default gembox
+  # For a cross build, use no gembox
+  gemBoxes ? [ ],
+  # When unset [] no additional mrbgem is added.
+  # Add paths to mrbgems to add gems.
+  gems ? [ ],
+  # Add additional configuration to the target config.
+  additionalBuildConfig ? "",
+  # Adds `enable_debug`.
+  debug ? false,
+  # Prepends defaults to `gems` and `gemBoxes`.
+  useDefaults ? true,
+  # Strips store path hashes in debug information
+  # `nuke-ref` will break the irep of compiled mruby.
+  # Stripping the hashes is *required* with nuke-ref.
+  stripStorePathHashes ? debug,
 }:
 
 let
@@ -50,22 +51,21 @@ let
     optional
     optionals
     optionalString
-  ;
+    ;
   inherit (builtins)
     toJSON
     typeOf
-  ;
+    ;
 
   # Naïve and minimal implementation to turn an input into ruby.
   # This is the minimum required for our needs.
-  toRuby = input:
+  toRuby =
+    input:
     if isDerivation input then
       toJSON (toString input)
     else if typeOf input == "set" then
       # Assumes attrsets are built only from symbole => value equivalents.
-      concatStringsSep ", " (mapAttrsToList (
-        name: value: ":${name} => ${toRuby value}"
-      ) input)
+      concatStringsSep ", " (mapAttrsToList (name: value: ":${name} => ${toRuby value}") input)
     else if typeOf input == "string" then
       # Strings are simply their "toJSON" equivalents since it's a generally
       # proper "C-like" escape.
@@ -73,8 +73,7 @@ let
     else if typeOf input == "bool" then
       toJSON input
     else
-      throw "toRuby doesn't know how to handle type ${typeOf input}"
-  ;
+      throw "toRuby doesn't know how to handle type ${typeOf input}";
 
   isCross = stdenv.hostPlatform != stdenv.buildPlatform;
   targetName = if isCross then "${stdenv.cc.targetPrefix}config" else "host";
@@ -88,11 +87,17 @@ let
     useDefaults = false;
   };
 
-  concatGemAttr = attr: gems: builtins.concatLists (map (gem:
-    if typeOf gem == "set" && (builtins.hasAttr attr gem)
-    then gem."${attr}" ++ (concatGemAttr attr gem."${attr}")
-    else []
-  ) gems);
+  concatGemAttr =
+    attr: gems:
+    builtins.concatLists (
+      map (
+        gem:
+        if typeOf gem == "set" && (builtins.hasAttr attr gem) then
+          gem."${attr}" ++ (concatGemAttr attr gem."${attr}")
+        else
+          [ ]
+      ) gems
+    );
 
   gemsForGems = concatGemAttr "requiredGems" gems;
 
@@ -107,14 +112,14 @@ let
   gemNativeBuildInputs = concatGemAttr "gemNativeBuildInputs" gems';
 
   shared-config = ''
-      # Gemboxes
-      ${concatMapStringsSep "\n" (box: "conf.gembox '${box}'") gemBoxes'}
+    # Gemboxes
+    ${concatMapStringsSep "\n" (box: "conf.gembox '${box}'") gemBoxes'}
 
-      # Gems
-      ${concatMapStringsSep "\n" (gem: "conf.gem(${toRuby gem})") gems'}
+    # Gems
+    ${concatMapStringsSep "\n" (gem: "conf.gem(${toRuby gem})") gems'}
 
-      # Additional build config
-      ${additionalBuildConfig}
+    # Additional build config
+    ${additionalBuildConfig}
   '';
 
   # This configuration file is aimed solely at producing cross-compiled mrubies.
@@ -123,34 +128,35 @@ let
       toolchain :gcc
 
       ${optionalString debug ''
-      enable_debug
-      # C compiler settings
-      conf.cc.defines = %w(MRB_ENABLE_DEBUG_HOOK)
-      # Generate mruby debugger command (require mruby-eval)
-      conf.gem :core => "mruby-bin-debugger"
+        enable_debug
+        # C compiler settings
+        conf.cc.defines = %w(MRB_ENABLE_DEBUG_HOOK)
+        # Generate mruby debugger command (require mruby-eval)
+        conf.gem :core => "mruby-bin-debugger"
       ''}
 
       ${optionalString isCross
-      # Makes a cross-compiled mruby aware of our existing "host" build of
-      # mruby. Otherwise it will build a "host" mruby for the target.
-      ''
-      def mrbcfile()
-        "${buildMruby}/bin/mrbc"
-      end
-      ''}
+        # Makes a cross-compiled mruby aware of our existing "host" build of
+        # mruby. Otherwise it will build a "host" mruby for the target.
+        ''
+          def mrbcfile()
+            "${buildMruby}/bin/mrbc"
+          end
+        ''
+      }
 
       ${shared-config}
     end
 
     ${optionalString (!isCross) ''
-    MRuby::Build.new('test') do |conf|
-      toolchain :gcc
-      enable_debug
-      conf.enable_bintest
-      conf.enable_test
+      MRuby::Build.new('test') do |conf|
+        toolchain :gcc
+        enable_debug
+        conf.enable_bintest
+        conf.enable_test
 
-      ${shared-config}
-    end
+        ${shared-config}
+      end
     ''}
   '';
 
@@ -170,25 +176,30 @@ let
     inherit stripStorePathHashes;
 
     src = fetchFromGitHub {
-      owner   = "mruby";
-      repo    = "mruby";
-      rev     = version;
-      sha256  = "0fhfv8pi7i8jn2vgk2n2rjnbnfa12nhj514v8i4k353n7q4pmkh3";
+      owner = "mruby";
+      repo = "mruby";
+      rev = version;
+      sha256 = "0fhfv8pi7i8jn2vgk2n2rjnbnfa12nhj514v8i4k353n7q4pmkh3";
     };
 
     patches = [
       ./0001-HACK-Ensures-a-host-less-build-can-be-made.patch
       ./0001-Nixpkgs-dump-linker-flags-for-re-use.patch
     ]
-    ++ optional stripStorePathHashes ./0001-mobile-nixos-Strip-store-path-hashes-when-saving-deb.patch
-    ;
+    ++ optional stripStorePathHashes ./0001-mobile-nixos-Strip-store-path-hashes-when-saving-deb.patch;
 
     postPatch = ''
       substituteInPlace include/mrbconf.h \
         --replace '//#define MRB_INT64' '#define MRB_INT64'
     '';
 
-    nativeBuildInputs = [ pkg-config-helper ruby bison pkgsBuildBuild.rake ] ++ gemNativeBuildInputs;
+    nativeBuildInputs = [
+      pkg-config-helper
+      ruby
+      bison
+      pkgsBuildBuild.rake
+    ]
+    ++ gemNativeBuildInputs;
     buildInputs = gemBuildInputs;
 
     # Necessary so it uses `gcc` instead of `ld` for linking.
@@ -228,13 +239,15 @@ let
 
     passthru = {
       inherit debug;
-      builder = builder.override({ inherit mruby; });
+      builder = builder.override ({ inherit mruby; });
     };
 
     meta = with lib; {
       description = "An embeddable implementation of the Ruby language";
       homepage = "https://mruby.org";
-      maintainers = [ /*maintainers.samueldr*/ ];
+      maintainers = [
+        # maintainers.samueldr
+      ];
       license = licenses.mit;
       platforms = platforms.unix;
     };
@@ -242,4 +255,4 @@ let
     enableParallelBuilding = true;
   };
 in
-  mruby
+mruby

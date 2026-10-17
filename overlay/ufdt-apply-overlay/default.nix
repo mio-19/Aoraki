@@ -1,4 +1,10 @@
-{ stdenv, lib, fetchFromGitHub, dtc, python3 }:
+{
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  dtc,
+  python3,
+}:
 
 stdenv.mkDerivation {
   pname = "ufdt-apply-overlay";
@@ -40,7 +46,9 @@ stdenv.mkDerivation {
     homepage = "https://github.com/hybris-mobian/android-platform-system-libufdt";
     description = "Standalone fork of platform/system/libufdt";
     platforms = platforms.linux;
-    maintainers = [ /*maintainers.samueldr*/ ];
+    maintainers = [
+      # maintainers.samueldr
+    ];
     license = [
       # https://github.com/hybris-mobian/android-platform-system-libufdt/blob/6cd3e7128e721dc08d3feb306b493a0afc8c98ad/debian/copyright
       licenses.bsd2

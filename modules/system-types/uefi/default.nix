@@ -1,4 +1,11 @@
-{ config, pkgs, lib, modules, baseModules, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  modules,
+  baseModules,
+  ...
+}:
 
 let
   enabled = config.mobile.system.type == "uefi";
@@ -9,7 +16,7 @@ let
     mkIf
     mkOption
     types
-  ;
+    ;
   inherit (config.mobile.outputs) recovery stage-0;
   deviceName = config.mobile.device.name;
   kernel = stage-0.mobile.boot.stage-1.kernel.package;
@@ -18,75 +25,80 @@ let
 
   # Look-up table to translate from targetPlatform to U-Boot names.
   uefiPlatforms = {
-    "i686-linux"    = "ia32";
-    "x86_64-linux"  =  "x64";
+    "i686-linux" = "ia32";
+    "x86_64-linux" = "x64";
     "aarch64-linux" = "aa64";
   };
   uefiPlatform = uefiPlatforms.${pkgs.stdenv.targetPlatform.system};
 
-  efiKernel = pkgs.runCommand "${deviceName}-efiKernel" {
-    osReleaseFile = pkgs.writeText "${deviceName}-osrel.cmd" config.environment.etc."os-release".text;
-    kernelParamsFile = pkgs.writeText "${deviceName}-boot.cmd" (concatStringsSep " " config.boot.kernelParams);
-    systemdStub = "${pkgs.systemd}/lib/systemd/boot/efi/linux${uefiPlatform}.efi.stub";
-    nativeBuildInputs = [
-      pkgs.stdenv.cc.bintools.bintools_bin
-    ];
-  } ''
-    PS4=" $ "
+  efiKernel =
+    pkgs.runCommand "${deviceName}-efiKernel"
+      {
+        osReleaseFile = pkgs.writeText "${deviceName}-osrel.cmd" config.environment.etc."os-release".text;
+        kernelParamsFile = pkgs.writeText "${deviceName}-boot.cmd" (
+          concatStringsSep " " config.boot.kernelParams
+        );
+        systemdStub = "${pkgs.systemd}/lib/systemd/boot/efi/linux${uefiPlatform}.efi.stub";
+        nativeBuildInputs = [
+          pkgs.stdenv.cc.bintools.bintools_bin
+        ];
+      }
+      ''
+        PS4=" $ "
 
-    # Add a section to the systemd EFI stub, following its implied semantics.
-    add_section() {
-      output="$1"; shift
-      name="$1"; shift
-      section="$1"; shift
+        # Add a section to the systemd EFI stub, following its implied semantics.
+        add_section() {
+          output="$1"; shift
+          name="$1"; shift
+          section="$1"; shift
 
-      SectionAlignment=0x$(
+          SectionAlignment=0x$(
+            ${pkgs.stdenv.cc.bintools.targetPrefix}objdump \
+              --private-headers "$output" \
+              | grep SectionAlignment \
+              | cut -f2
+          )
+          set $(
+            ${pkgs.stdenv.cc.bintools.targetPrefix}objdump \
+              --headers "$output" \
+              | grep '^\s\+[0-9]\+\s\+\.' \
+              | sort -k 4 \
+              | tail -n1
+          )
+
+          # Tail end location of the last section
+          tail=$(( 0x$3 + 0x$4 ))
+
+          # The new section's start is then aligned with SectionAlignment
+          new_section_offset=$(( tail + SectionAlignment - tail % SectionAlignment ))
+
+          # We're modifying "in-place" (which is a lie).
+          mv $output $output.tmp
+          (set -x
+          ${pkgs.stdenv.cc.bintools.targetPrefix}objcopy \
+            --add-section "$name"="$section" --change-section-vma "$name"="$new_section_offset" \
+            "$output.tmp" "$output"
+          )
+          # So since we lied, remove the temporary file.
+          rm $output.tmp
+        }
+
+        # Cheekily copy the file without keeping its mode.
+        cat $systemdStub > stub
+
+        add_section "stub" ".osrel"   "$osReleaseFile"
+        add_section "stub" ".cmdline" "$kernelParamsFile"
+        add_section "stub" ".initrd"  "${config.mobile.outputs.initrd}"
+        add_section "stub" ".linux"   "${kernelFile}"
+
+        mv stub $out
+
+        # Let's print what we did at the end, might be helpful.
+        (set -x
         ${pkgs.stdenv.cc.bintools.targetPrefix}objdump \
-          --private-headers "$output" \
-          | grep SectionAlignment \
-          | cut -f2
-      )
-      set $(
-        ${pkgs.stdenv.cc.bintools.targetPrefix}objdump \
-          --headers "$output" \
-          | grep '^\s\+[0-9]\+\s\+\.' \
-          | sort -k 4 \
-          | tail -n1
-      )
-
-      # Tail end location of the last section
-      tail=$(( 0x$3 + 0x$4 ))
-
-      # The new section's start is then aligned with SectionAlignment
-      new_section_offset=$(( tail + SectionAlignment - tail % SectionAlignment ))
-
-      # We're modifying "in-place" (which is a lie).
-      mv $output $output.tmp
-      (set -x
-      ${pkgs.stdenv.cc.bintools.targetPrefix}objcopy \
-        --add-section "$name"="$section" --change-section-vma "$name"="$new_section_offset" \
-        "$output.tmp" "$output"
-      )
-      # So since we lied, remove the temporary file.
-      rm $output.tmp
-    }
-
-    # Cheekily copy the file without keeping its mode.
-    cat $systemdStub > stub
-
-    add_section "stub" ".osrel"   "$osReleaseFile"
-    add_section "stub" ".cmdline" "$kernelParamsFile"
-    add_section "stub" ".initrd"  "${config.mobile.outputs.initrd}"
-    add_section "stub" ".linux"   "${kernelFile}"
-
-    mv stub $out
-
-    # Let's print what we did at the end, might be helpful.
-    (set -x
-    ${pkgs.stdenv.cc.bintools.targetPrefix}objdump \
-      --headers "$out"
-    )
-  '';
+          --headers "$out"
+        )
+      '';
 in
 {
   imports = [

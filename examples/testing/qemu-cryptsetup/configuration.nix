@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   # This is not a secure or safe way to create an encrypted drive in a build.
@@ -7,51 +12,52 @@ let
   uuid = "12345678-1234-1234-1234-123456789abc"; # heh
 
   # We are re-using the raw filesystem from the hello system.
-  rootfsExt4 = (
-    import ../../hello {
+  rootfsExt4 =
+    (import ../../hello {
       inherit pkgs;
       device = config.mobile.device.name;
-    }
-  ).config.mobile.generatedFilesystems.rootfs;
+    }).config.mobile.generatedFilesystems.rootfs;
 
   # This is not a facility from the disk images builder because **it is really
   # insecure to use**.
   # So, for now, we have an implementation details-y way of producing an
   # encrypted rootfs.
   encryptedRootfs = pkgs.vmTools.runInLinuxVM (
-    pkgs.runCommand "encrypted-rootfs" {
-      buildInputs = [ pkgs.cryptsetup ];
-      passthru = rec {
-        filename = "encrypted.img";
-        location = "/${filename}";
-        filesystemType = "LUKS";
-      };
-    } ''
-      (PS4=" $ "; set -x
-      mkdir -p /run/cryptsetup
-      mkdir -p $out
-      cd $out
+    pkgs.runCommand "encrypted-rootfs"
+      {
+        buildInputs = [ pkgs.cryptsetup ];
+        passthru = rec {
+          filename = "encrypted.img";
+          location = "/${filename}";
+          filesystemType = "LUKS";
+        };
+      }
+      ''
+        (PS4=" $ "; set -x
+        mkdir -p /run/cryptsetup
+        mkdir -p $out
+        cd $out
 
-      slack=32 # MiB
+        slack=32 # MiB
 
-      # Some slack space we'll append to the raw fs
-      # Used by `--reduce-device-size` read cryptsetup(8).
-      dd if=/dev/zero of=tmp.img bs=1024 count=$((slack*1024))
+        # Some slack space we'll append to the raw fs
+        # Used by `--reduce-device-size` read cryptsetup(8).
+        dd if=/dev/zero of=tmp.img bs=1024 count=$((slack*1024))
 
-      # Catting both to ensure it's writable, and to add some slack space at
-      # the end
-      cat ${rootfsExt4.imagePath} tmp.img > encrypted.img
-      rm tmp.img
+        # Catting both to ensure it's writable, and to add some slack space at
+        # the end
+        cat ${rootfsExt4.imagePath} tmp.img > encrypted.img
+        rm tmp.img
 
-      echo ${builtins.toJSON passphrase} | cryptsetup \
-        reencrypt \
-        --encrypt ./encrypted.img \
-        --reduce-device-size $((slack*1024*1024))
+        echo ${builtins.toJSON passphrase} | cryptsetup \
+          reencrypt \
+          --encrypt ./encrypted.img \
+          --reduce-device-size $((slack*1024*1024))
 
-      #echo YES |
-      cryptsetup luksUUID --uuid=${builtins.toJSON uuid} ./encrypted.img
-      )
-    ''
+        #echo YES |
+        cryptsetup luksUUID --uuid=${builtins.toJSON uuid} ./encrypted.img
+        )
+      ''
   );
 in
 

@@ -1,19 +1,18 @@
 {
-stdenv
-, lib
-, fetchFromGitHub
-, autoreconfHook
-, pkg-config
+  stdenv,
+  lib,
+  fetchFromGitHub,
+  autoreconfHook,
+  pkg-config,
 
-, android-headers
-, file
-, useLegacyProperties ? false
+  android-headers,
+  file,
+  useLegacyProperties ? false,
 }:
 
 let
   inherit (stdenv) targetPlatform buildPlatform;
-  libPrefix = if targetPlatform == buildPlatform then ""
-    else stdenv.targetPlatform.config;
+  libPrefix = if targetPlatform == buildPlatform then "" else stdenv.targetPlatform.config;
 in
 stdenv.mkDerivation {
   pname = "libhybris";
@@ -29,8 +28,7 @@ stdenv.mkDerivation {
   patches = [
     ./0001-Removes-failing-test-for-wayland-less-builds.patch
   ]
-    ++ lib.optional useLegacyProperties ./0001-HACK-Rely-on-legacy-properties-rather-than-native-pr.patch
-  ;
+  ++ lib.optional useLegacyProperties ./0001-HACK-Rely-on-legacy-properties-rather-than-native-pr.patch;
 
   postAutoreconf = ''
     substituteInPlace configure \
@@ -54,8 +52,7 @@ stdenv.mkDerivation {
     "--with-android-headers=${android-headers}/include/android/"
   ]
   ++ lib.optional targetPlatform.isAarch64 "--enable-arch=arm64"
-  ++ lib.optional targetPlatform.isAarch32 "--enable-arch=arm"
-  ;
+  ++ lib.optional targetPlatform.isAarch32 "--enable-arch=arm";
 
   sourceRoot = "source/hybris";
 

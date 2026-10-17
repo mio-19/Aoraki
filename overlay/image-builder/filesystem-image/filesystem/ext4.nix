@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   enabled = config.filesystem == "ext4";
@@ -9,10 +14,10 @@ let
     mkOption
     optionalString
     types
-  ;
+    ;
   inherit (config.helpers)
     chopDecimal
-  ;
+    ;
 
   inherit (config) label;
   inherit (config.ext4) partitionID;
@@ -31,20 +36,24 @@ let
 
   # This table was built using a script that built an image with `make_ext4fs`
   # for the given size in MiB, and recorded the available size according to `df`.
-  smallFudgeLookup = lib.strings.concatStringsSep "\n" (lib.lists.reverseList(
-    lib.attrsets.mapAttrsToList (size: factor: ''
-      elif (( size > ${toString size} )); then
-        fudgeFactor=${toString factor}
-    '') {
-    "${toString (config.helpers.size.MiB   5)}" = makeFudge 0.84609375;
-    "${toString (config.helpers.size.MiB   8)}" = makeFudge 0.5419921875;
-    "${toString (config.helpers.size.MiB  16)}" = makeFudge 0.288818359375;
-    "${toString (config.helpers.size.MiB  32)}" = makeFudge 0.1622314453125;
-    "${toString (config.helpers.size.MiB  64)}" = makeFudge 0.09893798828125;
-    "${toString (config.helpers.size.MiB 128)}" = makeFudge 0.067291259765625;
-    "${toString (config.helpers.size.MiB 256)}" = makeFudge 0.0518646240234375;
-  }
-  ));
+  smallFudgeLookup = lib.strings.concatStringsSep "\n" (
+    lib.lists.reverseList (
+      lib.attrsets.mapAttrsToList
+        (size: factor: ''
+          elif (( size > ${toString size} )); then
+            fudgeFactor=${toString factor}
+        '')
+        {
+          "${toString (config.helpers.size.MiB 5)}" = makeFudge 0.84609375;
+          "${toString (config.helpers.size.MiB 8)}" = makeFudge 0.5419921875;
+          "${toString (config.helpers.size.MiB 16)}" = makeFudge 0.288818359375;
+          "${toString (config.helpers.size.MiB 32)}" = makeFudge 0.1622314453125;
+          "${toString (config.helpers.size.MiB 64)}" = makeFudge 0.09893798828125;
+          "${toString (config.helpers.size.MiB 128)}" = makeFudge 0.067291259765625;
+          "${toString (config.helpers.size.MiB 256)}" = makeFudge 0.0518646240234375;
+        }
+    )
+  );
 
   minimumSize = config.helpers.size.MiB 5;
 in
@@ -80,7 +89,7 @@ in
         # ext4fs as there are multiple factors increasing the overhead.
         local reservedSize=0
         local fudgeFactor=${toString fudgeFactor}
-        
+
         # Instead we rely on a lookup table. See how it is built in the derivation file.
         if (( size < ${toString (config.helpers.size.MiB 256)} )); then
           echo "$size is smaller than 256MiB; using the lookup table." 1>&2

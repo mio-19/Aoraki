@@ -1,8 +1,9 @@
-{ pkgs
-, glibcLocales
-, runCommand
-, symlinkJoin
-, ruby
+{
+  pkgs,
+  glibcLocales,
+  runCommand,
+  symlinkJoin,
+  ruby,
 }:
 
 let
@@ -18,15 +19,16 @@ let
   };
 in
 
-runCommand "mobile-nixos-docs-devices" {
-  nativeBuildInputs = [
-    ruby
-    glibcLocales
-  ];
-  inherit devicesDir devicesInfo;
-}
-''
-  mkdir -p $out/devices
-  export LC_CTYPE=en_US.UTF-8
-  ruby ${./generate-devices-listing.rb}
-''
+runCommand "mobile-nixos-docs-devices"
+  {
+    nativeBuildInputs = [
+      ruby
+      glibcLocales
+    ];
+    inherit devicesDir devicesInfo;
+  }
+  ''
+    mkdir -p $out/devices
+    export LC_CTYPE=en_US.UTF-8
+    ruby ${./generate-devices-listing.rb}
+  ''

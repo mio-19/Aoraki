@@ -1,14 +1,19 @@
 # Generated filesystems, contrary to filesystems on a configured system.
 #
 # This contains the machinery to produce filesystem images.
-{ config, lib, pkgs, ...}:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
     mapAttrs
     mkOption
     types
-  ;
+    ;
 in
 {
   options = {
@@ -28,8 +33,8 @@ in
   };
 
   config = {
-    mobile.outputs.generatedFilesystems =
-      mapAttrs (name: config: config.output) config.mobile.generatedFilesystems
-    ;
+    mobile.outputs.generatedFilesystems = mapAttrs (
+      name: config: config.output
+    ) config.mobile.generatedFilesystems;
   };
 }

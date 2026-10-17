@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
@@ -7,24 +12,27 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
   cfg = config.mobile.boot.stage-1.gui;
   inherit (config.boot.initrd) luks;
-  minimalX11Config = pkgs.runCommand "minimalX11Config" {
-    allowedReferences = [ "out" ];
-  } ''
-    (PS4=" $ "; set -x
-    mkdir -vp "$out/xkb"
-    cp -vr -t "$out/xkb/" ${pkgs.xkeyboard-config}/share/X11/xkb/*
-    cp -vr ${pkgs.libx11.out}/share/X11/locale $out/locale
-    )
+  minimalX11Config =
+    pkgs.runCommand "minimalX11Config"
+      {
+        allowedReferences = [ "out" ];
+      }
+      ''
+        (PS4=" $ "; set -x
+        mkdir -vp "$out/xkb"
+        cp -vr -t "$out/xkb/" ${pkgs.xkeyboard-config}/share/X11/xkb/*
+        cp -vr ${pkgs.libx11.out}/share/X11/locale $out/locale
+        )
 
-    for f in $(grep -lIiR '${pkgs.libx11.out}' $out); do
-      printf ':: substituting original path for $out in "%s".\n' "$f"
-      substituteInPlace $f \
-        --replace "${pkgs.libx11.out}/share/X11/locale/en_US.UTF-8/Compose" "$out/locale/en_US.UTF-8/Compose"
-    done
-  '';
+        for f in $(grep -lIiR '${pkgs.libx11.out}' $out); do
+          printf ':: substituting original path for $out in "%s".\n' "$f"
+          substituteInPlace $f \
+            --replace "${pkgs.libx11.out}/share/X11/locale/en_US.UTF-8/Compose" "$out/locale/en_US.UTF-8/Compose"
+        done
+      '';
 in
 {
   options.mobile.boot.stage-1.gui = {
@@ -78,7 +86,7 @@ in
           # When the Mobile NixOS stage-1 is in use, valid configurations are either:
           #   - GUI enabled (luks or not, don't care).
           #   - No LUKS.
-          assertion = cfg.enable || (luks.devices == {} && !luks.forceLuksSupportInInitrd);
+          assertion = cfg.enable || (luks.devices == { } && !luks.forceLuksSupportInInitrd);
           message = "With the Mobile NixOS stage-1, the boot GUI needs to be enabled to use LUKS.";
         }
       ];
@@ -122,7 +130,7 @@ in
             theme = mkDefault "night";
             background = mkDefault "0xFF000000";
             foreground = mkDefault "0xFFFFFFFF";
-            useBGRT    = mkDefault true;
+            useBGRT = mkDefault true;
           };
         }
       ];

@@ -1,34 +1,36 @@
 {
-  runCommandCC
-  , nukeReferences
-  , glibc
-  , buildPackages
+  runCommandCC,
+  nukeReferences,
+  glibc,
+  buildPackages,
 }:
 
 {
-  name ? ""
-  , packages ? []
+  name ? "",
+  packages ? [ ],
 }:
 
 let
   concat = builtins.concatStringsSep "\n";
-  install_package = set:
+  install_package =
+    set:
     let
       pkg = if set ? type && set.type == "derivation" then set else set.package;
       binaries = if set ? binaries then set.binaries else [ "*" ];
     in
-    (concat (map (path: ''
-      for BIN in ${pkg}/{s,}bin/${path}; do
-        if [ -e "$BIN" ]; then
-          copy_bin_and_libs "$BIN"
-        fi
-      done
-    '') binaries ))
-    +
-    ''
+    (concat (
+      map (path: ''
+        for BIN in ${pkg}/{s,}bin/${path}; do
+          if [ -e "$BIN" ]; then
+            copy_bin_and_libs "$BIN"
+          fi
+        done
+      '') binaries
+    ))
+    + ''
       ${if set ? extraCommand then set.extraCommand else ""}
     '';
-  install_packages = concat(map (install_package) packages);
+  install_packages = concat (map (install_package) packages);
 
   # A utility for enumerating the shared-library dependencies of a program
   findLibs = buildPackages.writeShellScriptBin "find-libs" ''

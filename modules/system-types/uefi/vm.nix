@@ -1,11 +1,22 @@
-{ config, pkgs, lib, extendModules, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  extendModules,
+  ...
+}:
 
 let
-  inherit (lib) mkIf mkMerge mkOption types;
+  inherit (lib)
+    mkIf
+    mkMerge
+    mkOption
+    types
+    ;
   inherit (config.mobile) device hardware;
   inherit (config.mobile.generatedDiskImages) disk-image;
 
-  ram  = toString hardware.ram;
+  ram = toString hardware.ram;
   xres = toString hardware.screen.width;
   yres = toString hardware.screen.height;
 in
@@ -41,39 +52,40 @@ in
       mobile.boot.serialConsole = "ttyS0";
 
       mobile.boot.stage-1.kernel.modules = [
-            # Networking
-            "e1000"
+        # Networking
+        "e1000"
 
-            # Input within X11
-            "uinput" "evdev"
+        # Input within X11
+        "uinput"
+        "evdev"
 
-            # Video
-            "bochs_drm"
-          ];
-          mobile.outputs.uefi = {
-            vm = pkgs.writeShellScript "run-vm-${device.name}" ''
-              ARGS=(
-                -enable-kvm
-                -bios   "${pkgs.OVMF.fd}/FV/OVMF.fd"
-                -m      "${ram}M"
-                -serial "mon:stdio"
-                -drive  "file=${disk-image.imagePath},format=raw,snapshot=on"
+        # Video
+        "bochs_drm"
+      ];
+      mobile.outputs.uefi = {
+        vm = pkgs.writeShellScript "run-vm-${device.name}" ''
+          ARGS=(
+            -enable-kvm
+            -bios   "${pkgs.OVMF.fd}/FV/OVMF.fd"
+            -m      "${ram}M"
+            -serial "mon:stdio"
+            -drive  "file=${disk-image.imagePath},format=raw,snapshot=on"
 
-                -device "VGA,edid=on,xres=${xres},yres=${yres}"
-                -device "usb-ehci"
-                -device "usb-kbd"
-                -device "usb-tablet"
+            -device "VGA,edid=on,xres=${xres},yres=${yres}"
+            -device "usb-ehci"
+            -device "usb-kbd"
+            -device "usb-tablet"
 
-                -device "e1000,netdev=net0"
-                -netdev "user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::2323-:23,net=172.16.42.0/24,dhcpstart=172.16.42.1"
+            -device "e1000,netdev=net0"
+            -netdev "user,id=net0,hostfwd=tcp::2222-:22,hostfwd=tcp::2323-:23,net=172.16.42.0/24,dhcpstart=172.16.42.1"
 
-                -device "e1000,netdev=user.0"
-                -netdev "user,id=user.0"
-              )
+            -device "e1000,netdev=user.0"
+            -netdev "user,id=user.0"
+          )
 
-              ${pkgs.qemu}/bin/qemu-system-${pkgs.stdenv.targetPlatform.qemuArch} "''${ARGS[@]}" "''${@}"
-            '';
-          };
+          ${pkgs.qemu}/bin/qemu-system-${pkgs.stdenv.targetPlatform.qemuArch} "''${ARGS[@]}" "''${@}"
+        '';
+      };
 
       mobile.generatedFilesystems.rootfs = lib.mkDefault {
         # Give some headroom in the VM, as it won't be actually resized.
@@ -81,13 +93,14 @@ in
       };
     })
     (mkIf (!config.mobile.quirks.uefi.enableVM) {
-      mobile.outputs.uefi.vm = (extendModules {
-        modules = [
-          {
-            mobile.quirks.uefi.enableVM = true;
-          }
-        ];
-      }).config.mobile.outputs.uefi.vm;
+      mobile.outputs.uefi.vm =
+        (extendModules {
+          modules = [
+            {
+              mobile.quirks.uefi.enableVM = true;
+            }
+          ];
+        }).config.mobile.outputs.uefi.vm;
     })
   ];
 }

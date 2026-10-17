@@ -1,8 +1,12 @@
-{ stdenv, lib, bundlerEnv, glibcLocales }:
+{
+  stdenv,
+  lib,
+  bundlerEnv,
+  glibcLocales,
+}:
 
 let
-  env =
-    bundlerEnv {
+  env = bundlerEnv {
     name = "mobile-nixos-process-doc";
     gemdir = ./.;
 
@@ -18,19 +22,19 @@ let
     };
   };
 in
-  stdenv.mkDerivation {
-    name = env.name;
-    src = ./.;
-    buildInputs = [
-      env
-      env.wrappedRuby
-    ];
-    propagatedBuildInputs = [
-      glibcLocales
-    ];
-    installPhase = ''
-      mkdir -vp $out/
-      cp -vpr bin $out/
-      cp -vpr lib $out/
-    '';
-  }
+stdenv.mkDerivation {
+  name = env.name;
+  src = ./.;
+  buildInputs = [
+    env
+    env.wrappedRuby
+  ];
+  propagatedBuildInputs = [
+    glibcLocales
+  ];
+  installPhase = ''
+    mkdir -vp $out/
+    cp -vpr bin $out/
+    cp -vpr lib $out/
+  '';
+}

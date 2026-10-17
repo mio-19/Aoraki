@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 {
   environment.systemPackages = with pkgs; [
@@ -32,7 +37,10 @@
   '';
 
   networking.networkmanager.enable = true;
-  networking.networkmanager.unmanaged = [ "rndis0" "usb0" ];
+  networking.networkmanager.unmanaged = [
+    "rndis0"
+    "usb0"
+  ];
 
   # Help alleviate OOM issues.
   zramSwap.enable = true;

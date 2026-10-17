@@ -1,4 +1,9 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   enabled = config.filesystem == "squashfs";
@@ -7,12 +12,12 @@ let
     mkMerge
     mkOption
     types
-  ;
+    ;
 
   inherit (config.squashfs)
     compression
     compressionParams
-  ;
+    ;
 in
 {
   options.squashfs = {

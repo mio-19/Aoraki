@@ -1,10 +1,15 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
     mkOption
     types
-  ;
+    ;
 in
 {
   options.mobile.boot = {
@@ -25,7 +30,7 @@ in
     };
     stage-1.contents = mkOption {
       type = types.listOf types.attrs;
-      default = [];
+      default = [ ];
       description = ''
         Additional files for the initrd.
 

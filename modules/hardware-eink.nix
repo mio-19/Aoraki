@@ -1,10 +1,15 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
     mkIf
     mkOption
-  ;
+    ;
   cfg = config.mobile.hardware.eink;
 in
 {
@@ -33,12 +38,12 @@ in
     # Why not use `logo.svg`?
     # It's because it's not pure black, it has blue.
     # Let's use a pure black logo for eink!
-    mobile.boot.stage-1.gui.logo = pkgs.runCommand "logo.eink.svg" {} ''
+    mobile.boot.stage-1.gui.logo = pkgs.runCommand "logo.eink.svg" { } ''
       sed -e 's/#ffffff/#000000/g' ${../artwork/logo/logo.white.svg} > $out
     '';
 
     # With this one, we have to switch colours around!
-    mobile.boot.stage-1.kernel.logo.logo = pkgs.runCommand "kernel-logo.eink.svg" {} ''
+    mobile.boot.stage-1.kernel.logo.logo = pkgs.runCommand "kernel-logo.eink.svg" { } ''
       sed \
         -e 's/#ffffff/#xxxxxx/g' \
         -e 's/#000000/#ffffff/g' \

@@ -1,4 +1,4 @@
-{stdenv, pkgs, ... }:
+{ stdenv, pkgs, ... }:
 
 stdenv.mkDerivation rec {
   name = "pine64-alsa-ucm";
@@ -17,12 +17,12 @@ stdenv.mkDerivation rec {
   ];
 
   installPhase = ''
-      ucm_path=$out/share/alsa/ucm2/
+    ucm_path=$out/share/alsa/ucm2/
 
-      mkdir -p $ucm_path/PinePhone $ucm_path/PinePhonePro $ucm_path/conf.d/simple-card
-      ln -s ../../PinePhonePro/PinePhonePro.conf $ucm_path/conf.d/simple-card/PinePhonePro.conf
-      ln -s ../../PinePhone/PinePhone.conf $ucm_path/conf.d/simple-card/PinePhone.conf
+    mkdir -p $ucm_path/PinePhone $ucm_path/PinePhonePro $ucm_path/conf.d/simple-card
+    ln -s ../../PinePhonePro/PinePhonePro.conf $ucm_path/conf.d/simple-card/PinePhonePro.conf
+    ln -s ../../PinePhone/PinePhone.conf $ucm_path/conf.d/simple-card/PinePhone.conf
 
-      cp -r ucm2/* $ucm_path/
+    cp -r ucm2/* $ucm_path/
   '';
 }

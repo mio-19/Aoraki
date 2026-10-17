@@ -1,9 +1,9 @@
 {
-stdenv
-, fetchFromGitHub
-, libhybris
-, zlib
-, openssl
+  stdenv,
+  fetchFromGitHub,
+  libhybris,
+  zlib,
+  openssl,
 }:
 
 # FIXME : This is currently an "initrd" worthy build.

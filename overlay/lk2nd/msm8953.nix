@@ -1,17 +1,20 @@
 {
-  stdenv
-, fetchFromGitHub
-, fetchpatch
-, dtc
-, gcc-arm-embedded
-, python3
+  stdenv,
+  fetchFromGitHub,
+  fetchpatch,
+  dtc,
+  gcc-arm-embedded,
+  python3,
 }:
 let
-  python = (python3.withPackages (p: [
-    p.libfdt
-  ]));
+  python = (
+    python3.withPackages (p: [
+      p.libfdt
+    ])
+  );
 
-in stdenv.mkDerivation {
+in
+stdenv.mkDerivation {
   pname = "lk2nd";
   version = "0.3.1-msm8953-5912c91";
 
