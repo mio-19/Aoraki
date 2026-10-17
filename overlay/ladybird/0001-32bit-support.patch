@@ -1,13 +1,15 @@
 From: Antigravity <antigravity@internal>
-Subject: [PATCH] LibGC, AK: Add 32-bit architecture support (ARMv7l)
+Subject: [PATCH] LibGC, AK, LibGfx: Add 32-bit architecture and low-memory support (ARMv7l)
 
-Enables compilation of Ladybird on 32-bit systems (such as armv7l):
+Enables compilation and runtime execution of Ladybird on 32-bit systems (such as armv7l):
 - In LibGC/NanBoxedValue.h, relax sizeof(void*) == sizeof(u64) to <=.
   Since payload is 48 bits, 32-bit pointers fit easily within the NaN box.
 - In LibGC/HeapRegion.h, set HEAP_REGION_SIZE to 128 MiB on 32-bit architectures
   instead of 4 TiB, avoiding virtual address space exhaustion.
 - In LibGC/BlockAllocator.cpp, relax sizeof(FlatPtr) >= sizeof(u64) to sizeof(void*).
 - In AK/Platform.h, add AK_IS_ARCH_ARM32() detection macro.
+- In LibGfx/SkiaBackendContext.cpp, scale down Skia cache watermarks from 512 MiB to 64 MiB
+  on 32-bit platforms, preventing kernel OOM killing on constrained 1 GB smartwatches.
 
 diff --git a/AK/Platform.h b/AK/Platform.h
 index 101e4ec..550f837 100644
@@ -65,3 +67,25 @@ index 10a7bc3..b66fa5a 100644
  // To make our Value representation compact we can use the fact that IEEE
  // doubles have a lot (2^52 - 2) of NaN bit patterns. The canonical form being
  // just 0x7FF8000000000000 i.e. sign = 0 exponent is all ones and the top most
+diff --git a/Libraries/LibGfx/SkiaBackendContext.cpp b/Libraries/LibGfx/SkiaBackendContext.cpp
+index e78ab12..35c7a91 100644
+--- a/Libraries/LibGfx/SkiaBackendContext.cpp
++++ b/Libraries/LibGfx/SkiaBackendContext.cpp
+@@ -47,6 +47,11 @@ namespace Gfx {
+ #if defined(AK_OS_MACOS) || defined(USE_DIRECTX) || defined(USE_VULKAN)
+ static constexpr size_t skia_resource_cache_limit = 256 * MiB;
+ #endif
++#if defined(AK_ARCH_32_BIT)
++static constexpr size_t skia_resource_cache_limit = 32 * MiB;
++static constexpr auto skia_resource_cache_high_watermark = 48 * MiB;
++static constexpr auto skia_resource_cache_critical_watermark = 64 * MiB;
++#else
+ static constexpr auto skia_deferred_cleanup_interval = AK::Duration::from_seconds(1);
+ static constexpr auto skia_aggressive_cleanup_interval = AK::Duration::from_seconds(5);
+ static constexpr auto skia_deferred_cleanup_resource_age = std::chrono::seconds(5);
+@@ -54,6 +59,7 @@ static constexpr auto skia_resource_cache_high_watermark = 384 * MiB;
+ static constexpr auto skia_resource_cache_critical_watermark = 512 * MiB;
++#endif
+ 
+ static auto& main_thread_context()
+ {

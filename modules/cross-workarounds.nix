@@ -76,6 +76,7 @@ lib.mkIf isCross (
                     patches = (old.patches or [ ]) ++ [
                       ../overlay/ladybird/0001-32bit-support.patch
                     ];
+                    NIX_LDFLAGS = (old.NIX_LDFLAGS or "") + " -latomic";
                     meta = old.meta // {
                       platforms = (old.meta.platforms or [ ]) ++ [ "armv7l-linux" ];
                     };

@@ -40,4 +40,10 @@ in
   boot.kernelParams = [
     "loop.max_part=7"
   ];
+
+  # Enable zram compressed in-memory swap to avoid OOM on 512MB-1GB smartwatches
+  zramSwap = {
+    enable = mkDefault true;
+    memoryPercent = mkDefault 50;
+  };
 }
