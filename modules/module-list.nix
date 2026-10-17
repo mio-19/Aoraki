@@ -23,6 +23,7 @@
   ./hardware-rockchip.nix
   ./hardware-screen.nix
   ./hardware-soc.nix
+  ./hardware-watch.nix
   ./hardware.nix
   ./initrd-base.nix
   ./initrd-boot-gui.nix
@@ -56,5 +57,6 @@
   ./system-target.nix
   ./system-types.nix
   ./usb-gadget.nix
+  ./watch-power.nix
   ./zram.nix
 ]
