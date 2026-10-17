@@ -394,6 +394,9 @@ class UI
     @ta.set_text("")
     @ta.show()
     @keyboard.set_ta(@ta)
+    if (Configuration["splash"] && Configuration["splash"]["pin_pad"]) || @screen.get_height < 500
+      @keyboard.set_mode(LVGL::KB_MODE::NUM)
+    end
     @keyboard.show()
 
     bottom_space = [

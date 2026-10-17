@@ -4,9 +4,6 @@
   fetchFromGitHub,
   cmake,
   pkg-config,
-  glib,
-  glibmm,
-  bluez,
   systemd,
   qt6,
   kdePackages,
@@ -27,14 +24,13 @@ stdenv.mkDerivation rec {
     cmake
     kdePackages.extra-cmake-modules
     pkg-config
+    qt6.qtdeclarative
   ];
 
   buildInputs = [
-    glib
-    glibmm
-    bluez
     systemd
     qt6.qtbase
+    qt6.qtdeclarative
   ];
 
   meta = with lib; {

@@ -53,6 +53,16 @@ in
       asteroid.apps.hrm
       asteroid.apps.camera
       asteroid.apps.gps-test
+      # Community application suite & unofficial watchfaces
+      asteroid.community-apps.unofficial-watchfaces
+      asteroid.community-apps.blaster
+      asteroid.community-apps.dodger
+      asteroid.community-apps.health
+      asteroid.community-apps.sensorlogd
+      asteroid.community-apps.map
+      asteroid.community-apps.qmltester
+      asteroid.community-apps.skedaddle
+      asteroid.community-apps.weatherfetch
     ];
 
     # AsteroidOS Bluetooth synchronization daemon service

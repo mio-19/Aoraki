@@ -15,5 +15,9 @@ rec {
 
   assets = callPackage ./assets { };
 
+  community-apps = callPackage ./community-apps {
+    inherit qml-asteroid;
+  };
+
   msm-fb-refresher = callPackage ./msm-fb-refresher { };
 }

@@ -39,10 +39,10 @@ in
 
     # Systemd journal volatile storage reduces write cycles on watch eMMC/UFS storage
     # and saves flash controller power draw.
-    services.journald.extraConfig = ''
-      Storage=volatile
-      RuntimeMaxUse=16M
-    '';
+    services.journald.settings.Journal = {
+      Storage = "volatile";
+      RuntimeMaxUse = "16M";
+    };
 
     # Sysctl kernel tuning for battery life and wrist devices
     boot.kernel.sysctl = {

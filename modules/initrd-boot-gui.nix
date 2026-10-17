@@ -65,6 +65,14 @@ in
         '';
       };
     };
+    pinPad = mkOption {
+      type = types.bool;
+      default = config.mobile.hardware.watch.enable or false;
+      description = ''
+        Use a numeric keypad for passphrase/PIN entry during early boot GUI.
+        Recommended for smartwatches where a full QWERTY layout is too dense for finger input.
+      '';
+    };
     logo = mkOption {
       type = with types; either package path;
       internal = true;
@@ -131,6 +139,7 @@ in
             background = mkDefault "0xFF000000";
             foreground = mkDefault "0xFFFFFFFF";
             useBGRT = mkDefault true;
+            pin_pad = cfg.pinPad;
           };
         }
       ];
