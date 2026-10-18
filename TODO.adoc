@@ -29,8 +29,20 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 
 * [ ] *Haptic Feedback (`drv260x`)*:
 ** Connect tactile feedback motor effects to edge-swipe boundaries, crown clicks, notification alerts, and keyboard keypresses via `ngfd`.
-* [ ] *Bluetooth Companion Sync*:
-** Verify AsteroidOS BLE sync daemon (`asteroid-btsyncd`) pairing with Gadgetbridge / AsteroidOS Sync app for bidirectional notifications, call alerts, time sync, and media control.
+* [ ] *Android Companion App & Bluetooth BLE Sync*:
+** Integrate with the companion application workflow maintained in https://github.com/mio-19/repo[mio-19/repo] (where modified Android applications, custom Gradle builds, and F-Droid package repositories are developed).
+** Package and maintain customized Android companion APKs (e.g. customized AsteroidOS Sync or Gadgetbridge variants) through `mio-19/repo` using `buildGradlePackage` / `mk-apk-package` and distribute via its automated F-Droid repository (`fdroid-repo`).
+** Verify and harden BLE synchronization between `asteroid-btsyncd` on the watch and the Android companion app:
+*** Bidirectional phone notification forwarding and dismiss synchronization.
+*** Incoming call notifications and haptic alerts.
+*** Automatic time and timezone synchronization on connect.
+*** Weather forecasts and condition updates (injected via `asteroid-weatherfetch`).
+*** Media playback metadata and transport controls (play, pause, next, volume).
+*** Find Phone BLE GATT service and reciprocal watch locator ringing.
+** Explore advanced companion features:
+*** Smartwatch telemetry, battery health, and charging status reporting to phone widget.
+*** Secure BLE / Wi-Fi local SSH bridge or debug tunnel for headless package updates (`nixos-rebuild`).
+*** Direct watchface configuration and asset transfer from companion app over Bluetooth.
 * [ ] *WLAN & Network Management*:
 ** Automate Qualcomm WCNSS WLAN firmware loading and configuration on device boot.
 * [ ] *Audio Routing & Microphones*:
