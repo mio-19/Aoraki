@@ -41,7 +41,6 @@ def run_adb(adb_prefix, args, input_bytes=None, timeout=30):
       proc.communicate(timeout=2)
     except Exception:
       pass
-    adb_kill_server(adb_prefix)
     raise TimeoutError(f"ADB command timed out after {timeout}s: {' '.join(cmd)}")
   except Exception as e:
     try:
@@ -49,7 +48,6 @@ def run_adb(adb_prefix, args, input_bytes=None, timeout=30):
       proc.communicate(timeout=2)
     except Exception:
       pass
-    adb_kill_server(adb_prefix)
     raise e
 
 
@@ -66,35 +64,34 @@ def adb_kill_server(adb_prefix):
 
 
 def wait_for_device(adb_prefix):
-  """Wait for watch to reconnect, bouncing adb server to prevent stale hangs."""
+  """Wait for watch to reconnect, killing adb server every 10s."""
   print(
       "\n[!] Waiting for device to reconnect (adjust watch on magnetic cradle, or reboot to recovery again)..."
   )
   adb_kill_server(adb_prefix)
   time.sleep(1)
+  last_kill_time = time.time()
 
-  cycles = 0
   while True:
-    cycles += 1
-    if cycles % 5 == 0:
+    now = time.time()
+    if now - last_kill_time >= 10.0:
       adb_kill_server(adb_prefix)
+      last_kill_time = time.time()
       time.sleep(1)
 
     try:
-      code, _, _ = run_adb(adb_prefix, ["wait-for-device"], timeout=5)
+      code, _, _ = run_adb(adb_prefix, ["wait-for-device"], timeout=3)
       if code == 0:
         time.sleep(0.5)
         code2, out, _ = run_adb(
-            adb_prefix, ["shell", "echo ping"], timeout=5
+            adb_prefix, ["shell", "echo ping"], timeout=3
         )
         if code2 == 0 and b"ping" in out:
           print("[+] Device reconnected and responsive!")
           return
-      else:
-        adb_kill_server(adb_prefix)
     except Exception:
-      adb_kill_server(adb_prefix)
-    time.sleep(1)
+      pass
+    time.sleep(0.5)
 
 
 def flash_partition(
