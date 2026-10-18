@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Telegram
+Comment=Smartwatch Telegram client for AsteroidOS
+Exec=asteroid-telegram
+Icon=asteroid-telegram
+Terminal=false
+Categories=Network;InstantMessaging;
+StartupNotify=false

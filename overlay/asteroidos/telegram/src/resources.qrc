@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/ChatsPage.qml</file>
+        <file>qml/ChatViewPage.qml</file>
+        <file>qml/QuickRepliesPage.qml</file>
+        <file>qml/SettingsPage.qml</file>
+        <file>qml/LoginPage.qml</file>
+        <file alias="asteroid-telegram.svg">../asteroid-telegram.svg</file>
+    </qresource>
+</RCC>

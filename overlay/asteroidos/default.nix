@@ -21,7 +21,12 @@ rec {
     webkitgtk_6_0 = pkgs.webkitgtk_6_0 or null;
     goanna = pkgs.goanna or null;
     virtualkeyboard = assets.virtualkeyboard;
+    inherit virtualkeyboard-rime;
     qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
+  };
+
+  telegram = callPackage ./telegram {
+    inherit qml-asteroid;
   };
 
   apps =
@@ -29,10 +34,14 @@ rec {
       inherit qml-asteroid;
     })
     // {
-      inherit browser;
+      inherit browser telegram;
     };
 
-  assets = callPackage ./assets { };
+  assets = (callPackage ./assets { }) // {
+    inherit virtualkeyboard-rime;
+  };
+
+  virtualkeyboard-rime = callPackage ./virtualkeyboard-rime { };
 
   community-apps = callPackage ./community-apps {
     inherit qml-asteroid;

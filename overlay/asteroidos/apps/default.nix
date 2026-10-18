@@ -33,7 +33,12 @@ let
         kdePackages.extra-cmake-modules
         pkg-config
         qt6.qtdeclarative
+        qt6.qttools
         qt6.wrapQtAppsHook
+      ];
+
+      cmakeFlags = [
+        "-DQT_MAJOR_VERSION=6"
       ];
 
       buildInputs = [
