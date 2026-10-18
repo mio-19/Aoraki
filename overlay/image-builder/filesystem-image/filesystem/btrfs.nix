@@ -62,6 +62,7 @@ in
         copyPhase = ''
           mkfs.btrfs \
             -f \
+            -O ^block-group-tree \
             -r . \
             ${optionalString (config.btrfs.compression != null) "--compress ${config.btrfs.compression}"} \
             ${optionalString (partitionID != null) "-U ${partitionID}"} \
