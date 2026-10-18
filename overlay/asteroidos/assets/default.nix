@@ -109,29 +109,4 @@ rec {
       platforms = platforms.all;
     };
   };
-
-  virtualkeyboard-style = stdenv.mkDerivation {
-    pname = "asteroid-virtualkeyboard-style";
-    version = "1.0";
-
-    src = fetchFromGitHub {
-      owner = "AsteroidOS";
-      repo = "asteroid-virtualkeyboard";
-      rev = "666743fc42eaa02b9f82155ff3aff3a40e0d45ac";
-      sha256 = "0yw1xq315p7q7illjpq92cs0060lrw94bfk8ywc7fbrr1gmkmvjf";
-    };
-
-    nativeBuildInputs = [
-      cmake
-    ];
-
-    meta = with lib; {
-      description = "Smartwatch onscreen virtual keyboard style for QtQuick VirtualKeyboard";
-      homepage = "https://asteroidos.org/";
-      license = licenses.gpl3Only;
-      platforms = platforms.linux;
-    };
-  };
-
-  virtualkeyboard = virtualkeyboard-style;
 }

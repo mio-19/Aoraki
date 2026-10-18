@@ -1,20 +1,36 @@
 {
   lib,
   stdenv,
+  fetchFromGitHub,
   cmake,
   pkg-config,
   qt6,
   librime,
   rime-data,
   buildPackages,
-  watchStyle ? null,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
   pname = "asteroid-virtualkeyboard";
-  version = "1.0.0";
+  version = "2.1.0";
 
-  src = ./.;
+  src = fetchFromGitHub {
+    owner = "AsteroidOS";
+    repo = "asteroid-virtualkeyboard";
+    rev = "666743fc42eaa02b9f82155ff3aff3a40e0d45ac";
+    sha256 = "0yw1xq315p7q7illjpq92cs0060lrw94bfk8ywc7fbrr1gmkmvjf";
+  };
+
+  patches = [
+    ./0001-add-rime-plugin-and-layouts.patch
+  ];
+
+  postPatch = ''
+    cp ${./rimeinputmethod.cpp} rimeinputmethod.cpp
+    cp ${./rimeinputmethod.h} rimeinputmethod.h
+    mkdir -p layouts
+    cp -r ${./layouts}/* layouts/
+  '';
 
   strictDeps = true;
 
@@ -59,11 +75,6 @@ stdenv.mkDerivation (finalAttrs: {
 
     cp -n build-deploy/staging/* $out/share/rime-data/build/ 2>/dev/null || true
     cp -n build-deploy/staging/* $out/share/rime-data/ 2>/dev/null || true
-
-    if [ -n "${toString watchStyle}" ] && [ -d "${watchStyle}/lib/qml/QtQuick/VirtualKeyboard/Styles/watch" ]; then
-      mkdir -p $out/lib/qt-6/qml/QtQuick/VirtualKeyboard/Styles
-      cp -r ${watchStyle}/lib/qml/QtQuick/VirtualKeyboard/Styles/watch $out/lib/qt-6/qml/QtQuick/VirtualKeyboard/Styles/
-    fi
   '';
 
   meta = with lib; {

@@ -45,6 +45,7 @@ rec {
     inherit qml-asteroid;
     inherit virtualkeyboard;
     qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
+    tdlib = if pkgs.stdenv.buildPlatform.canExecute pkgs.stdenv.hostPlatform then pkgs.tdlib else null;
   };
 
   kiwix = callPackage ./kiwix {
@@ -65,9 +66,7 @@ rec {
     inherit virtualkeyboard;
   };
 
-  virtualkeyboard = callPackage ./virtualkeyboard {
-    watchStyle = (callPackage ./assets { }).virtualkeyboard-style;
-  };
+  virtualkeyboard = callPackage ./virtualkeyboard { };
 
   community-apps = callPackage ./community-apps {
     inherit mkAsteroidApp mlite;
