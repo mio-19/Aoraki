@@ -49,6 +49,8 @@ rec {
     inherit (pkgs) procps;
   };
 
+  ytmusicd = callPackage ./ytmusicd { };
+
   apps =
     (callPackage ./apps {
       inherit mkAsteroidApp mce-dev ngf-qt6;

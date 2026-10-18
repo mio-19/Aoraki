@@ -39,6 +39,7 @@ in
         asteroid.qml-asteroid
         asteroid.asteroid-launcher
         asteroid.asteroid-btsyncd
+        asteroid.ytmusicd
         # Asset suite
         asteroid.assets.wallpapers
         asteroid.assets.sounds
@@ -150,6 +151,18 @@ in
       serviceConfig = {
         ExecStart = "${pkgs.asteroid.apps.kiwix}/bin/kiwix-watch --daemon-only";
         Restart = "on-failure";
+        RestartSec = "5s";
+      };
+    };
+
+    # Standalone YouTube Music stream resolver daemon user service
+    # Reference: https://github.com/yt-dlp/yt-dlp
+    systemd.user.services.asteroid-ytmusicd = {
+      description = "YouTube Music Audio Stream Resolver Daemon";
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.asteroid.ytmusicd}/bin/asteroid-ytmusicd";
+        Restart = "always";
         RestartSec = "5s";
       };
     };

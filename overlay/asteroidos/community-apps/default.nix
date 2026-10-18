@@ -190,6 +190,9 @@ rec {
     desc = "Direct internet weather forecast fetcher for AsteroidOS";
     rev = "70044bb4904d22f521fa7eb7448d5007bd863f97";
     sha256 = "04m1shcw9a36dpa5ibw5728c6d1vqiah9djlr79fq51c12sy7fvl";
+    patches = [
+      ./weatherfetch-gcc16.patch
+    ];
     extraBuildInputs = [
       mlite
     ];
