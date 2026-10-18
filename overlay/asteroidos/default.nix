@@ -52,7 +52,7 @@ rec {
 
   apps =
     (callPackage ./apps {
-      inherit mkAsteroidApp;
+      inherit mkAsteroidApp mce-dev ngf-qt6;
     })
     // {
       inherit browser telegram;
@@ -65,7 +65,8 @@ rec {
   virtualkeyboard-rime = callPackage ./virtualkeyboard-rime { };
 
   community-apps = callPackage ./community-apps {
-    inherit mkAsteroidApp;
+    inherit mkAsteroidApp mlite;
+    inherit (pkgs) espeak-classic;
   };
 
   msm-fb-refresher = callPackage ./msm-fb-refresher { };

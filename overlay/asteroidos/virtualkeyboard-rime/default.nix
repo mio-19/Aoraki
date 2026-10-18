@@ -34,6 +34,11 @@ stdenv.mkDerivation (finalAttrs: {
   cmakeFlags = [
     "-DCMAKE_INSTALL_LIBDIR=lib"
     "-DCMAKE_INSTALL_DATADIR=share"
+  ]
+  ++ lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+    "-DQt6QuickTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+    "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+    "-DQt6ShaderToolsTools_DIR=${buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
   ];
 
   # Pre-deploy common Chinese schemas (Pinyin, Shuangpin, Wubi, Cangjie, Stroke, Bopomofo, Jyutping)

@@ -5,6 +5,7 @@
   pkg-config,
   qt6,
   qml-asteroid,
+  buildPackages,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
@@ -19,6 +20,12 @@ stdenv.mkDerivation (finalAttrs: {
     cmake
     pkg-config
     qt6.wrapQtAppsHook
+  ];
+
+  cmakeFlags = lib.optionals (!stdenv.buildPlatform.canExecute stdenv.hostPlatform) [
+    "-DQt6QuickTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+    "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+    "-DQt6ShaderToolsTools_DIR=${buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
   ];
 
   buildInputs = [

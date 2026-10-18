@@ -78,24 +78,44 @@ in
   # Fixes to upstream
   # -----------------
   #
-  # Upstream nixpkgs qt6.qtwayland skips QtQuick integration during cross-compilation
-  # because cross Qt6QuickTools and Qt6QmlTools cmake flags are missing.
+  # Upstream nixpkgs Qt6 modules skip QtQuick integration during cross-compilation
+  # because cross Qt6QuickTools, Qt6QmlTools, and Qt6ShaderToolsTools cmake flags are missing.
   qt6 = super.qt6.overrideScope (
-    qfinal: qsuper: {
-      qtwayland = qsuper.qtwayland.overrideAttrs (
-        old:
-        let
-          isCross = !final.stdenv.buildPlatform.canExecute final.stdenv.hostPlatform;
-        in
-        {
-          cmakeFlags =
-            (old.cmakeFlags or [ ])
-            ++ final.lib.optionals isCross [
+    qfinal: qsuper:
+    let
+      isCross = !final.stdenv.buildPlatform.canExecute final.stdenv.hostPlatform;
+      addCrossQuickTools =
+        pkg:
+        pkg.overrideAttrs (
+          old:
+          final.lib.optionalAttrs isCross {
+            cmakeFlags = (old.cmakeFlags or [ ]) ++ [
               "-DQt6QuickTools_DIR=${final.buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
               "-DQt6QmlTools_DIR=${final.buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+              "-DQt6ShaderToolsTools_DIR=${final.buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
             ];
+          }
+        );
+    in
+    {
+      qtwayland = addCrossQuickTools qsuper.qtwayland;
+      qtvirtualkeyboard = addCrossQuickTools qsuper.qtvirtualkeyboard;
+      qtmultimedia = addCrossQuickTools qsuper.qtmultimedia;
+      qtpositioning = addCrossQuickTools qsuper.qtpositioning;
+      qtsensors = addCrossQuickTools qsuper.qtsensors;
+      qtconnectivity = addCrossQuickTools qsuper.qtconnectivity;
+      qtquick3d = qsuper.qtquick3d.overrideAttrs (
+        old:
+        final.lib.optionalAttrs isCross {
+          cmakeFlags = (old.cmakeFlags or [ ]) ++ [
+            "-DQt6QuickTools_DIR=${final.buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+            "-DQt6QmlTools_DIR=${final.buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+            "-DQt6ShaderToolsTools_DIR=${final.buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
+            "-DQt6Quick3DTools_DIR=${final.buildPackages.qt6.qtquick3d}/lib/cmake/Qt6Quick3DTools"
+          ];
         }
       );
+      qtlocation = addCrossQuickTools qsuper.qtlocation;
     }
   );
 

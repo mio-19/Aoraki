@@ -91,6 +91,7 @@
     KERNEL=="vndbinder", MODE="0666"
     KERNEL=="mdss_rotator", MODE="0666"
     SUBSYSTEM=="leds", KERNEL=="vibrator", ATTR{trigger}="transient", MODE="0666"
+    DEVPATH=="/devices/platform/soc/soc:qcom,bg-rsb", ATTR{enable}=="*", MODE="0666"
   '';
 
   # Subsystem boots and firmware mount setup
@@ -101,6 +102,9 @@
     "L+ /dev/graphics/fb0 - - - - /dev/fb0"
     "d /mnt/vendor 0755 root root -"
     "L+ /mnt/vendor/persist - - - - /persist"
+    "d /data/vendor 0755 root root -"
+    "d /data/vendor/ssrdump 0755 root root -"
+    "d /data/vendor/bgdaemon 0755 root root -"
   ];
 
   # Fossil Gen 6 Qualcomm ADSP, CDSP, and SLPI subsystem initialization
@@ -123,6 +127,13 @@
             echo 1 > "/sys/kernel/boot_$sub/boot" 2>/dev/null || true
           fi
         done
+        # Qualcomm Blackghost RSB companion processor bus permissions and init
+        if [ -f "/sys/devices/platform/soc/soc:qcom,bg-rsb/enable" ]; then
+          chmod 0666 /sys/devices/platform/soc/soc:qcom,bg-rsb/enable 2>/dev/null || true
+        fi
+        if [ -x "/vendor/bin/init.rsb.sh" ]; then
+          /vendor/bin/init.rsb.sh 2>/dev/null || true
+        fi
       '';
     };
   };
@@ -181,6 +192,14 @@
   # GNSS AGPS NTP injection configuration & Android HAL library symlink
   # Upstream PR: https://github.com/AsteroidOS/meta-smartwatch/pull/342 ("hoki: gnss: symlink real vendor HAL service, enable NTP AGPS assistance")
   environment.etc."gps_xtra.ini".source = ./gps_xtra.ini;
+
+  # Non-graphic feedback (haptics) DRV260X configuration for tactile feedback
+  # Upstream reference: https://github.com/AsteroidOS/meta-smartwatch/blob/master/meta-hoki/recipes-nemomobile/ngfd/ngfd/51-ffmemless.ini
+  environment.etc."ngf/51-ffmemless.ini".source = ./51-ffmemless.ini;
+
+  # Near Field Communication (NFC) controller configuration
+  # Upstream reference: https://github.com/AsteroidOS/meta-smartwatch/blob/master/meta-hoki/recipes-nemomobile/libnci/libncicore/libncicore.conf
+  environment.etc."libncicore.conf".source = ./libncicore.conf;
 
   # Audio support on Fossil Gen 6 (hoki) is handled natively via Android Audio HAL (audio.primary.sdm429w.so)
   # and pulseaudio-modules-droid with `source_channel_map=mono rate=48000` (48 kHz DSP frontend clock).

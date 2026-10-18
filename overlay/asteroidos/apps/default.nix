@@ -2,6 +2,8 @@
   lib,
   qt6,
   mkAsteroidApp,
+  mce-dev,
+  ngf-qt6,
 }:
 
 {
@@ -38,6 +40,10 @@
     desc = "Smartwatch preferences and configuration application";
     rev = "60340bd1c27a7b9e4884bd61c0563d091bc8b240";
     sha256 = "13iax0c449wsb24a945xaqi5g9jshng244sfiiy191ag6q2gp6p2";
+    extraBuildInputs = [
+      mce-dev
+      ngf-qt6
+    ];
   };
 
   weather = mkAsteroidApp {
@@ -101,6 +107,9 @@
     desc = "Remote phone camera shutter and preview controller";
     rev = "53c3e636a4f71b05950d125b622cfd8876985fc9";
     sha256 = "0b0vkjh31hjmn5fxvcan5d75xn6ajfslp35hxm7a19g2v5vmij4z";
+    extraBuildInputs = [
+      qt6.qtmultimedia
+    ];
   };
 
   gps-test = mkAsteroidApp {

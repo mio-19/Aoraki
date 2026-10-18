@@ -4,6 +4,8 @@
   fetchFromGitHub,
   qt6,
   mkAsteroidApp,
+  mlite,
+  espeak-classic,
 }:
 
 rec {
@@ -64,8 +66,71 @@ rec {
     desc = "Background sensor logging daemon and QML plugin for health metrics on AsteroidOS";
     rev = "bdc9f0bb0fd6ef39f08fb01697d95cb2b98c86b6";
     sha256 = "1lb5m8g4k8sq9j9kynmffmzfj6q98rnwzbi7dr1i8fs6iq12a1ri";
+    postPatch = ''
+            for dir in . daemon qmlplugin; do
+              mkdir -p $dir/QtSensors
+              cat <<'EOF' > $dir/QtSensors/QStepCounterSensor
+      #pragma once
+      #include <QtSensors/QSensor>
+      #include <QtSensors/QSensorReading>
+
+      class QStepCounterReading : public QSensorReading {
+      public:
+          explicit QStepCounterReading(QObject *parent = nullptr) : QSensorReading(parent, nullptr), m_steps(0) {}
+          int steps() const { return m_steps; }
+          void setSteps(int steps) { m_steps = steps; }
+      private:
+          int m_steps;
+      };
+
+      class QStepCounterSensor : public QSensor {
+      public:
+          explicit QStepCounterSensor(QObject *parent = nullptr)
+              : QSensor(QByteArray("QStepCounterSensor"), parent), m_reading(new QStepCounterReading(this)) {}
+          QStepCounterReading *reading() const { return m_reading; }
+      private:
+          QStepCounterReading *m_reading;
+      };
+      EOF
+              cp $dir/QtSensors/QStepCounterSensor $dir/QtSensors/qstepcountersensor.h
+
+              cat <<'EOF' > $dir/QtSensors/QHrmSensor
+      #pragma once
+      #include <QtSensors/QSensor>
+      #include <QtSensors/QSensorReading>
+
+      class QHrmReading : public QSensorReading {
+      public:
+          explicit QHrmReading(QObject *parent = nullptr) : QSensorReading(parent, nullptr), m_bpm(0) {}
+          int bpm() const { return m_bpm; }
+          void setBpm(int bpm) { m_bpm = bpm; }
+      private:
+          int m_bpm;
+      };
+
+      class QHrmSensor : public QSensor {
+      public:
+          enum Status {
+              NoContact,
+              Unreliable,
+              AccuracyLow,
+              AccuracyMedium,
+              AccuracyHigh
+          };
+          explicit QHrmSensor(QObject *parent = nullptr)
+              : QSensor(QByteArray("QHrmSensor"), parent), m_reading(new QHrmReading(this)) {}
+          QHrmReading *reading() const { return m_reading; }
+          Status status() const { return AccuracyHigh; }
+      private:
+          QHrmReading *m_reading;
+      };
+      EOF
+              cp $dir/QtSensors/QHrmSensor $dir/QtSensors/qhrmsensor.h
+            done
+    '';
     extraBuildInputs = [
       qt6.qtsensors
+      mlite
     ];
   };
 
@@ -76,6 +141,7 @@ rec {
     sha256 = "1kk8y094sva6y3hnw0lbrk1liacpnfqknbrlv6hsry9fwgdxv3kq";
     extraBuildInputs = [
       qt6.qtsensors
+      mlite
       sensorlogd
     ];
   };
@@ -113,6 +179,7 @@ rec {
     sha256 = "0v07y2fzh1zvnsnsg7b77fjpv9mq1sn4lc0k050pyf7yziy6liya";
     extraBuildInputs = [
       qt6.qtpositioning
+      espeak-classic
     ];
   };
 
@@ -123,6 +190,9 @@ rec {
     desc = "Direct internet weather forecast fetcher for AsteroidOS";
     rev = "70044bb4904d22f521fa7eb7448d5007bd863f97";
     sha256 = "04m1shcw9a36dpa5ibw5728c6d1vqiah9djlr79fq51c12sy7fvl";
+    extraBuildInputs = [
+      mlite
+    ];
   };
 
   # A metronome and chromatic tuning fork app for smartwatches
@@ -157,12 +227,35 @@ rec {
   };
 
   # Docking bay and charging status: https://github.com/moWerk/asteroid-docking-bay
-  docking-bay = mkAsteroidApp {
-    name = "docking-bay";
-    owner = "moWerk";
-    desc = "Docking bay and battery charge status monitor for smartwatches";
-    rev = "37503828b30c4061a815b10887c46b548137b34f";
-    sha256 = "0g8x6v27ni3zqwir2sif7a0csb78adii47g4y4mnqm3vfklknnp1";
+  docking-bay = stdenv.mkDerivation {
+    pname = "asteroid-docking-bay";
+    version = "nightly";
+
+    src = fetchFromGitHub {
+      owner = "moWerk";
+      repo = "asteroid-docking-bay";
+      rev = "37503828b30c4061a815b10887c46b548137b34f";
+      sha256 = "0g8x6v27ni3zqwir2sif7a0csb78adii47g4y4mnqm3vfklknnp1";
+    };
+
+    dontBuild = true;
+
+    installPhase = ''
+      runHook preInstall
+      mkdir -p $out/bin $out/share/asteroid-docking-bay
+      cp -r * $out/share/asteroid-docking-bay/
+      if [ -f bin/watchctl ]; then
+        install -m 755 bin/watchctl $out/bin/watchctl
+      fi
+      runHook postInstall
+    '';
+
+    meta = with lib; {
+      description = "Docking bay and battery charge status monitor for smartwatches";
+      homepage = "https://github.com/moWerk/asteroid-docking-bay";
+      license = licenses.gpl3Plus;
+      platforms = platforms.all;
+    };
   };
 
   # Solar elevation and daylight tracker: https://github.com/moWerk/asteroid-heliograph
@@ -210,16 +303,33 @@ rec {
     sha256 = "10ddg0ig5nmx7mczxxbw67qpawqv04261y8fmm92dzm1b4qb59yz";
   };
 
-  # Ragtime music companion: https://github.com/moWerk/asteroid-rag
-  rag = mkAsteroidApp {
-    name = "rag";
-    owner = "moWerk";
-    desc = "Ragtime piano roll and syncopated music companion for smartwatches";
-    rev = "0eaf32483ac17a69ee2ce79524c2d8704fcce619";
-    sha256 = "0s9zh7cqhwzbh99xwd812bfc7xz64axwaagbzg926mi4yz87h5cx";
-    extraBuildInputs = [
-      qt6.qtmultimedia
-    ];
+  # RAG dataset and design specification: https://github.com/moWerk/asteroid-rag
+  rag = stdenv.mkDerivation {
+    pname = "asteroid-rag";
+    version = "nightly";
+
+    src = fetchFromGitHub {
+      owner = "moWerk";
+      repo = "asteroid-rag";
+      rev = "0eaf32483ac17a69ee2ce79524c2d8704fcce619";
+      sha256 = "0s9zh7cqhwzbh99xwd812bfc7xz64axwaagbzg926mi4yz87h5cx";
+    };
+
+    dontBuild = true;
+
+    installPhase = ''
+      runHook preInstall
+      mkdir -p $out/share/doc/asteroid-rag
+      cp -r * $out/share/doc/asteroid-rag/
+      runHook postInstall
+    '';
+
+    meta = with lib; {
+      description = "Reference design guide and RAG dataset for AsteroidOS";
+      homepage = "https://github.com/moWerk/asteroid-rag";
+      license = licenses.gpl3Plus;
+      platforms = platforms.all;
+    };
   };
 
   # Checklist and shopping list app: https://github.com/moWerk/asteroid-shopper
