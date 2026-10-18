@@ -153,17 +153,5 @@ in
         RestartSec = "5s";
       };
     };
-
-    # Standalone YouTube Music stream resolver daemon user service (temporarily disabled pending armv7l JS runtime)
-    # Reference: https://github.com/yt-dlp/yt-dlp
-    # systemd.user.services.asteroid-ytmusicd = {
-    #   description = "YouTube Music Audio Stream Resolver Daemon";
-    #   wantedBy = [ "default.target" ];
-    #   serviceConfig = {
-    #     ExecStart = "${pkgs.asteroid.ytmusicd}/bin/asteroid-ytmusicd";
-    #     Restart = "always";
-    #     RestartSec = "5s";
-    #   };
-    # };
   };
 }

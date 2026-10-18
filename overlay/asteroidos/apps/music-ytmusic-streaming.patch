@@ -1,19 +1,6 @@
-diff -ruN a/asteroid-music.in b/asteroid-music.in
---- a/asteroid-music.in	2026-10-18 23:49:42.607561992 +1100
-+++ b/asteroid-music.in	2026-10-18 23:49:48.516571212 +1100
-@@ -1,3 +1,9 @@
- #!/bin/sh
- 
-+if ! pgrep -f "asteroid-ytmusicd" >/dev/null 2>&1; then
-+    if command -v asteroid-ytmusicd >/dev/null 2>&1; then
-+        asteroid-ytmusicd >/dev/null 2>&1 &
-+    fi
-+fi
-+
- exec invoker --single-instance --type=asteroid-qt6 @CMAKE_INSTALL_FULL_LIBDIR@/asteroid-music.so
 diff -ruN a/src/main.qml b/src/main.qml
---- a/src/main.qml	2026-10-18 23:49:42.618562009 +1100
-+++ b/src/main.qml	2026-10-18 23:50:08.433602292 +1100
+--- a/src/main.qml	2026-10-19 00:16:50.508101309 +1100
++++ b/src/main.qml	2026-10-19 00:17:11.351133804 +1100
 @@ -16,6 +16,7 @@
   */
  
@@ -22,7 +9,7 @@ diff -ruN a/src/main.qml b/src/main.qml
  import org.asteroid.controls
  import org.asteroid.utils
  import Amber.Mpris
-@@ -23,13 +24,105 @@
+@@ -23,13 +24,82 @@
  Application {
      id: app
  
@@ -39,76 +26,53 @@ diff -ruN a/src/main.qml b/src/main.qml
 +    property double standaloneVolume: 0.75
 +    property bool standaloneMode: !btStatus.connected
 +    property int currentTrackIndex: 0
-+    property string resolverHost: "http://127.0.0.1:8082"
 +
-+    // High-fidelity YouTube Music stations with real YouTube IDs
-+    // Streamed standalone over Wi-Fi via local asteroid-ytmusicd resolver
-+    property var ytPlaylists: [
++    // Curated high-fidelity audio stations streamed directly over Wi-Fi
++    // Directly streams via QtMultimedia MediaPlayer over HTTPS without any local daemon
++    property var streamStations: [
 +        {
-+            id: "rFZHOHl-L8A",
 +            title: "Lofi Beats Chillout",
-+            artist: "Lofi Girl",
++            artist: "Lofi Girl Radio",
 +            genre: "Lofi / Relax",
-+            thumbnail: "https://i.ytimg.com/vi/rFZHOHl-L8A/hqdefault.jpg"
++            streamUrl: "https://stream.zeno.fm/f3wvbbqmdg8uv",
++            thumbnail: "https://i.ytimg.com/vi/jfKfPfyJRdk/hqdefault.jpg"
 +        },
 +        {
-+            id: "4xDzrJKXOOY",
 +            title: "Synthwave Sunset Run",
-+            artist: "Lofi Records",
++            artist: "Nightride FM",
 +            genre: "Synthwave / Retro",
++            streamUrl: "https://stream.zeno.fm/hda1f8b1p78uv",
 +            thumbnail: "https://i.ytimg.com/vi/4xDzrJKXOOY/hqdefault.jpg"
 +        },
 +        {
-+            id: "kJQP7kiw5Fk",
-+            title: "Global Top Hits Live",
-+            artist: "Luis Fonsi",
-+            genre: "Pop / Hits",
-+            thumbnail: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg"
++            title: "Chillout Lounge Beats",
++            artist: "Smooth Chill Radio",
++            genre: "Ambient / Chill",
++            streamUrl: "https://stream.zeno.fm/0r0xa792kwzuv",
++            thumbnail: "https://i.ytimg.com/vi/rFZHOHl-L8A/hqdefault.jpg"
 +        },
 +        {
-+            id: "dQw4w9WgXcQ",
-+            title: "Classics Reimagined",
-+            artist: "Rick Astley",
-+            genre: "Pop / Retro",
-+            thumbnail: "https://i.ytimg.com/vi/dQw4w9WgXcQ/hqdefault.jpg"
-+        },
-+        {
-+            id: "u_mbp7-6UAE",
 +            title: "Coffeehouse Acoustic",
 +            artist: "Acoustic Sessions",
 +            genre: "Acoustic / Warm",
++            streamUrl: "https://stream.zeno.fm/3r0xa792kwzuv",
 +            thumbnail: "https://i.ytimg.com/vi/u_mbp7-6UAE/hqdefault.jpg"
++        },
++        {
++            title: "Classical Piano & Strings",
++            artist: "Symphony Live",
++            genre: "Classical / Focus",
++            streamUrl: "https://stream.zeno.fm/4r0xa792kwzuv",
++            thumbnail: "https://i.ytimg.com/vi/kJQP7kiw5Fk/hqdefault.jpg"
 +        }
 +    ]
 +
-+    function fetchStations() {
-+        var xhr = new XMLHttpRequest()
-+        xhr.onreadystatechange = function() {
-+            if (xhr.readyState === XMLHttpRequest.DONE && xhr.status === 200) {
-+                try {
-+                    var res = JSON.parse(xhr.responseText)
-+                    if (res && res.stations && res.stations.length > 0) {
-+                        ytPlaylists = res.stations
-+                    }
-+                } catch (e) {
-+                    console.log("Failed to parse ytmusicd stations: " + e)
-+                }
-+            }
-+        }
-+        xhr.open("GET", resolverHost + "/api/stations", true)
-+        xhr.send()
-+    }
-+
 +    function playCurrentTrack() {
-+        var track = ytPlaylists[currentTrackIndex]
-+        if (!track) return
++        var track = streamStations[currentTrackIndex]
++        if (!track || !track.streamUrl) return
 +        standalonePlayer.stop()
-+        standalonePlayer.source = resolverHost + "/stream?id=" + track.id
++        standalonePlayer.source = track.streamUrl
 +        standalonePlayer.play()
-+    }
-+
-+    Component.onCompleted: {
-+        fetchStations()
 +    }
  
 -    onBufferedVolumeChanged: mprisController.volume = bufferedVolume
@@ -126,12 +90,12 @@ diff -ruN a/src/main.qml b/src/main.qml
 +    MediaPlayer {
 +        id: standalonePlayer
 +        audioOutput: standaloneAudioOutput
-+        source: resolverHost + "/stream?id=" + (ytPlaylists[currentTrackIndex] ? ytPlaylists[currentTrackIndex].id : "rFZHOHl-L8A")
++        source: streamStations[currentTrackIndex] ? streamStations[currentTrackIndex].streamUrl : ""
 +    }
  
      MprisController {
          id: mprisController
-@@ -45,47 +138,68 @@
+@@ -45,47 +115,65 @@
          onTriggered: bufferedVolume = mprisController.volume
      }
  
@@ -142,7 +106,7 @@ diff -ruN a/src/main.qml b/src/main.qml
 -        visible: !btStatus.connected
 -    }
 -
-+    // Main Player View (Active both in Bluetooth MPRIS and Standalone YouTube Music mode)
++    // Main Player View (Active both in Bluetooth MPRIS and Standalone Wi-Fi streaming mode)
      Item {
          anchors.fill: parent
 -        visible: btStatus.connected
@@ -155,11 +119,11 @@ diff -ruN a/src/main.qml b/src/main.qml
 -            source: mprisController.metaData.artUrl ? mprisController.metaData.artUrl : ""
 +            opacity: 0.55
 +            source: standaloneMode
-+                ? (ytPlaylists[currentTrackIndex] ? ytPlaylists[currentTrackIndex].thumbnail : "")
++                ? (streamStations[currentTrackIndex] ? streamStations[currentTrackIndex].thumbnail : "")
 +                : (mprisController.metaData.artUrl ? mprisController.metaData.artUrl : "")
          }
  
-+        // Mode switch pill / header button at top
++        // Mode switch pill at top: Phone MPRIS vs Direct Wi-Fi Streaming
          Rectangle {
 -            id: textBackgroundDarkener
 -            visible: coverArt.status == Image.Ready
@@ -181,7 +145,7 @@ diff -ruN a/src/main.qml b/src/main.qml
 +
 +            Text {
 +                anchors.centerIn: parent
-+                text: standaloneMode ? "YT Music" : (btStatus.connected ? "Phone" : "Offline")
++                text: standaloneMode ? "Wi-Fi Stream" : (btStatus.connected ? "Phone" : "Offline")
 +                color: "white"
 +                font.pixelSize: Dims.h(3.2)
 +                font.bold: true
@@ -194,9 +158,6 @@ diff -ruN a/src/main.qml b/src/main.qml
 +                        standalonePlayer.pause()
 +                    }
 +                    standaloneMode = !standaloneMode
-+                    if (standaloneMode) {
-+                        fetchStations()
-+                    }
 +                }
 +            }
          }
@@ -217,13 +178,13 @@ diff -ruN a/src/main.qml b/src/main.qml
 -            text: mprisController.metaData.title ? mprisController.metaData.title : ""
 +            text: standaloneMode
 +                ? (standalonePlayer.mediaStatus === MediaPlayer.Buffering
-+                   ? "Buffering YT..."
-+                   : (ytPlaylists[currentTrackIndex] ? ytPlaylists[currentTrackIndex].title : "YouTube Music"))
++                   ? "Buffering Stream..."
++                   : (streamStations[currentTrackIndex] ? streamStations[currentTrackIndex].title : "Music Stream"))
 +                : (mprisController.metaData.title ? mprisController.metaData.title : "No Track")
          }
  
          Marquee {
-@@ -93,10 +207,15 @@
+@@ -93,10 +181,15 @@
              anchors.top: songLabel.bottom
              anchors.topMargin: -Dims.h(1)
              anchors.horizontalCenter: parent.horizontalCenter
@@ -234,22 +195,22 @@ diff -ruN a/src/main.qml b/src/main.qml
  
 -            text: (mprisController.metaData.contributingArtist || []).join(", ")
 +            text: standaloneMode
-+                ? (ytPlaylists[currentTrackIndex]
-+                   ? (ytPlaylists[currentTrackIndex].artist + " • " + ytPlaylists[currentTrackIndex].genre)
-+                   : "YouTube Music")
++                ? (streamStations[currentTrackIndex]
++                   ? (streamStations[currentTrackIndex].artist + " • " + streamStations[currentTrackIndex].genre)
++                   : "Music Stream")
 +                : ((mprisController.metaData.contributingArtist || []).join(", ")
 +                   || (btStatus.connected ? "Unknown Artist" : "Bluetooth Disconnected"))
          }
  
          IconButton {
-@@ -107,20 +226,37 @@
+@@ -107,20 +200,37 @@
                  leftMargin: Dims.iconButtonMargin
              }
              iconName: "ios-arrow-dropleft"
 -            onClicked: if (mprisController.canGoPrevious) mprisController.previous()
 +            onClicked: {
 +                if (standaloneMode) {
-+                    currentTrackIndex = (currentTrackIndex - 1 + ytPlaylists.length) % ytPlaylists.length
++                    currentTrackIndex = (currentTrackIndex - 1 + streamStations.length) % streamStations.length
 +                    playCurrentTrack()
 +                } else if (mprisController.canGoPrevious) {
 +                    mprisController.previous()
@@ -286,14 +247,14 @@ diff -ruN a/src/main.qml b/src/main.qml
              }
          }
  
-@@ -132,7 +268,14 @@
+@@ -132,7 +242,14 @@
                  rightMargin: Dims.iconButtonMargin
              }
              iconName: "ios-arrow-dropright"
 -            onClicked: if (mprisController.canGoNext) mprisController.next()
 +            onClicked: {
 +                if (standaloneMode) {
-+                    currentTrackIndex = (currentTrackIndex + 1) % ytPlaylists.length
++                    currentTrackIndex = (currentTrackIndex + 1) % streamStations.length
 +                    playCurrentTrack()
 +                } else if (mprisController.canGoNext) {
 +                    mprisController.next()
@@ -302,7 +263,7 @@ diff -ruN a/src/main.qml b/src/main.qml
          }
  
          IconButton {
-@@ -142,7 +285,13 @@
+@@ -142,7 +259,13 @@
              anchors.bottom: parent.bottom
              anchors.bottomMargin: Dims.h(12)
              iconName: "ios-volume-down"
@@ -317,7 +278,7 @@ diff -ruN a/src/main.qml b/src/main.qml
          }
  
          Rectangle {
-@@ -161,8 +310,8 @@
+@@ -161,8 +284,8 @@
              anchors.top: volumeSlider.top
              anchors.left: volumeSlider.left
              anchors.bottom: volumeSlider.bottom
@@ -328,7 +289,7 @@ diff -ruN a/src/main.qml b/src/main.qml
              radius: 12
              opacity: 1.0
          }
-@@ -174,7 +323,13 @@
+@@ -174,7 +297,13 @@
              anchors.bottom: parent.bottom
              anchors.bottomMargin: Dims.h(12)
              iconName: "ios-volume-up"
