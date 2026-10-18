@@ -44,8 +44,9 @@ class UI
   def add_title_bar()
     @title_bar = LVGL::LVContainer.new(@screen)
     @title_bar.set_width(@screen.get_width())
-    @title_bar.set_height(16*unit)
-    @title_bar.set_pos(0, 0)
+    @title_bar.set_height(16 * unit)
+    top_offset = round_screen? ? 6 * unit : 0
+    @title_bar.set_pos(0, top_offset)
 
     @title_bar.get_style(LVGL::CONT_STYLE::MAIN).dup.tap do |style|
       @title_bar.set_style(LVGL::CONT_STYLE::MAIN, style)
@@ -56,7 +57,7 @@ class UI
       style.body_opa = (255 * 0.30).to_i
     end
 
-    add_sad_phone
+    add_sad_phone unless round_screen?
     add_title
   end
 
@@ -115,17 +116,24 @@ class UI
 
   def add_title()
     @title = new_text($code, parent: @title_bar)
-    @title.set_align(LVGL::LABEL_ALIGN::LEFT)
-    @title.set_x(@sad_phone.get_x()*2 + @sad_phone.get_width())
-    @title.set_y(@title_bar.get_height / 2 - @title.get_height / 2)
-    @title.set_width(@title_bar.get_width() - @title.get_x())
+    if round_screen?
+      @title.set_align(LVGL::LABEL_ALIGN::CENTER)
+      @title.set_x(@title_bar.get_width / 2 - @title.get_width / 2)
+      @title.set_y(@title_bar.get_height / 2 - @title.get_height / 2)
+      @title.set_width(@title_bar.get_width() - 2 * padding)
+    else
+      @title.set_align(LVGL::LABEL_ALIGN::LEFT)
+      @title.set_x(@sad_phone.get_x() * 2 + @sad_phone.get_width())
+      @title.set_y(@title_bar.get_height / 2 - @title.get_height / 2)
+      @title.set_width(@title_bar.get_width() - @title.get_x())
+    end
   end
 
   # Messages pane elements
 
   def add_message_title()
     @message_title = new_text($title, parent: @messages_pane)
-    @message_title.set_align(LVGL::LABEL_ALIGN::LEFT)
+    @message_title.set_align(round_screen? ? LVGL::LABEL_ALIGN::CENTER : LVGL::LABEL_ALIGN::LEFT)
     @message_title.set_pos(
       padding,
       padding,
@@ -134,7 +142,7 @@ class UI
 
   def add_message()
     @message = new_text($message, parent: @messages_pane)
-    @message.set_align(LVGL::LABEL_ALIGN::LEFT)
+    @message.set_align(round_screen? ? LVGL::LABEL_ALIGN::CENTER : LVGL::LABEL_ALIGN::LEFT)
     @message.set_pos(
       padding,
       @message_title.get_height() + @message_title.get_y() + padding
@@ -208,8 +216,9 @@ class UI
         last_element.get_y() + last_element.get_height() + padding
       )
 
-      # Always push it as far down as possible!
-      @actions_pane.set_pos(0, @screen.get_height() - @actions_pane.get_height())
+      # Always push it as far down as possible, respecting round screen insets!
+      bottom_margin = round_screen? ? 6 * unit : 0
+      @actions_pane.set_pos(0, @screen.get_height() - @actions_pane.get_height() - bottom_margin)
     end
   end
 
@@ -257,8 +266,16 @@ class UI
     end) / 128
   end
 
+  def round_screen?()
+    @screen.get_width == @screen.get_height && @screen.get_width <= 500
+  end
+
   def padding()
-    2 * unit
+    if round_screen?
+      8 * unit
+    else
+      2 * unit
+    end
   end
 
   def horizontal?()

@@ -1,0 +1,52 @@
+= NixOS for Smartwatches: Project Roadmap & TODO
+:toc: left
+:toclevels: 3
+:icons: font
+
+This document tracks upcoming milestones, architectural enhancements, hardware enablement tasks, and community feature requests for running declarative NixOS on wearable hardware.
+
+== Storage & Filesystems
+
+* [ ] *`btrfs+compress` Root Filesystem / Userdata*:
+** Smartwatches have constrained eMMC storage (typically 4GB–8GB total, with 2GB–4GB allocated to `userdata`).
+** Enable transparent filesystem compression with Btrfs (`compress=zstd:3` or `compress=lzo`) on the main system/userdata partition.
+** Fix cross-compilation of `btrfs-progs` for 32-bit ARM (`armv7l`) by disabling Python bindings (`--disable-python`) to avoid cross Python `LONG_BIT` header mismatches.
+** Add kernel configuration flags (`CONFIG_BTRFS_FS=y`, `CONFIG_BTRFS_FS_POSIX_ACL=y`, `CONFIG_CRYPTO_XXHASH=y`) to wearable defconfigs.
+** Update stage-1 initrd mounting tasks to support Btrfs subvolumes (`@` and `@home`).
+* [ ] *Direct Sparse Image Output (`img2simg`)*:
+** Streamline fastboot deployment by outputting native Android sparse filesystem images directly from the Nix build, reducing image transfer times and fastboot chunking overhead.
+
+== Smartwatch Web Browsing
+
+* [ ] *NetSurf Browser Engine Cross-Compilation*:
+** Finalize host tooling pass-through (`BUILD_CC=${buildPackages.stdenv.cc}/bin/gcc`) for `split-messages` in `netsurf-browser`.
+** Provide round-screen CSS injection and touch kinetic scrolling for `netsurf-gtk3`.
+* [ ] *Ladybird 32-bit ARM Port*:
+** Continue upstreaming/maintaining 32-bit ARM patches for LibGC and Skia.
+** Investigate WebContent process memory footprint reduction for devices with 512MB–1GB RAM.
+* [ ] *Ultralight / Headless Engine Drivers*:
+** Evaluate minimal WebKit / Servo / Goanna builds stripped of unnecessary multimedia dependencies.
+
+== Display, Compositor & UI Adaptations
+
+* [ ] *Circular AMOLED Visual Optimization*:
+** Ensure all stage-1 LVGL applets (`boot-splash`, `boot-error`, `boot-selection`) adapt gracefully to circular viewports with circular-safe margins and centered layouts.
+** Add burn-in protection shifts and low-power Ambient / Always-On-Display (AOD) watchfaces.
+* [ ] *Hardware Rotary Crown Integration*:
+** Map hardware crown rotational encoder events (`/dev/input/eventX` relative axis) directly to Wayland wheel / scroll events in `asteroid-launcher` and application views.
+* [ ] *On-Screen Virtual Keyboard Enhancements*:
+** Optimize RIME input method suggestions and key layout spacing for 400x400+ circular displays.
+** Provide flick-to-type or swipe input support.
+
+== Peripherals & Hardware Enablement
+
+* [ ] *Haptic Feedback (`drv260x`)*:
+** Connect tactile feedback motor effects to edge-swipe boundaries, crown clicks, notification alerts, and keyboard keypresses via `ngfd`.
+* [ ] *Bluetooth Companion Sync*:
+** Verify AsteroidOS BLE sync daemon (`asteroid-btsyncd`) pairing with Gadgetbridge / AsteroidOS Sync app for bidirectional notifications, call alerts, time sync, and media control.
+* [ ] *WLAN & Network Management*:
+** Automate Qualcomm WCNSS WLAN firmware loading and configuration on device boot.
+* [ ] *Audio Routing & Microphones*:
+** Configure Pulseaudio / PipeWire integration with Qualcomm Android Audio HAL (`audio.primary.sdm429w.so`) for speaker and microphone support.
+* [ ] *Sensor Hub & Health Monitoring*:
+** Interrogate sensorhub / IIO devices for accelerometer, gyroscope, step counter, and photoplethysmogram (PPG) heart rate monitor.

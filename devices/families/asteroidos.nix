@@ -46,4 +46,7 @@ in
     enable = mkDefault true;
     memoryPercent = lib.mkOptionDefault 50;
   };
+
+  # Increase stage-1 failure delay to 60s so errors can be inspected on wrist without immediate reboot
+  mobile.boot.stage-1.fail.delay = mkDefault 60;
 }
