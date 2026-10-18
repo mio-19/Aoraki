@@ -1,0 +1,240 @@
+diff -u -r a/src/main.qml b/src/main.qml
+--- a/src/main.qml	2026-10-18 12:15:04.500668765 +1100
++++ b/src/main.qml	2026-10-18 12:16:49.512713045 +1100
+@@ -138,6 +138,22 @@
+         event: "press"
+     }
+ 
++    NonGraphicalFeedback {
++        id: hapticAccent
++        event: "warning"
++    }
++
++    readonly property var timeSignatures: [
++        { name: "1/4", beats: 1 },
++        { name: "2/4", beats: 2 },
++        { name: "3/4", beats: 3 },
++        { name: "4/4", beats: 4 },
++        { name: "6/8", beats: 6 }
++    ]
++    property int timeSignatureIndex: 3
++    property int beatIndex:          0
++    property bool isAccent:          true
++
+     Timer {
+         id: beatTimer
+         interval:         Math.max(1, Math.round(60000 / bpmConfig.value))
+@@ -186,9 +202,14 @@
+     signal beat()
+ 
+     function beatFlash() {
++        app.beatIndex = (app.beatIndex + 1) % app.timeSignatures[app.timeSignatureIndex].beats
++        app.isAccent = (app.beatIndex === 0)
+         app.beat()
+-        if (page1State.soundActive)  tickSound.play()
+-            if (page1State.hapticActive) hapticFeedback.play()
++        if (page1State.soundActive) tickSound.play()
++        if (page1State.hapticActive) {
++            if (app.isAccent) hapticAccent.play()
++            else hapticFeedback.play()
++        }
+     }
+ 
+     ListView {
+@@ -265,6 +286,15 @@
+                 soundActive:    page1State.soundActive
+                 hapticActive:   page1State.hapticActive
+                 beatSource:     app
++                isAccent:           app.isAccent
++                timeSignatureIndex: app.timeSignatureIndex
++                timeSignatures:     app.timeSignatures
++                currentBeat:        app.beatIndex
++                onTimeSignatureCycle: {
++                    app.timeSignatureIndex = (app.timeSignatureIndex + 1) % app.timeSignatures.length
++                    app.beatIndex = 0
++                    app.isAccent = true
++                }
+                 onPulseVisibleSet: page1State.pulseVisible = active
+                 onSoundActiveSet:  page1State.soundActive  = active
+                 onHapticActiveSet: page1State.hapticActive = active
+diff -u -r a/src/MetronomePage.qml b/src/MetronomePage.qml
+--- a/src/MetronomePage.qml	2026-10-18 12:15:04.973668965 +1100
++++ b/src/MetronomePage.qml	2026-10-18 12:16:07.418695296 +1100
+@@ -30,13 +30,40 @@
+ 
+     property bool   pageActive: false
+ 
++    property bool   isAccent:     false
++    property int    timeSignatureIndex: 3
++    property var    timeSignatures: [ { name: "1/4", beats: 1 }, { name: "2/4", beats: 2 }, { name: "3/4", beats: 3 }, { name: "4/4", beats: 4 }, { name: "6/8", beats: 6 } ]
++    property int    currentBeat:  0
++    property var    tapTimes:     []
++
+     // Write-back signals
+     signal pulseVisibleSet(bool active)
+     signal soundActiveSet(bool active)
+     signal hapticActiveSet(bool active)
+     signal colorIndexSet(int idx)
++    signal timeSignatureCycle()
+     signal bpmPending(int bpm)          // main restarts spinnerDebounce and sets pendingBpm
+ 
++    function registerTap() {
++        var now = Date.now()
++        if (tapTimes.length > 0 && (now - tapTimes[tapTimes.length - 1]) > 2000) {
++            tapTimes = []
++        }
++        tapTimes.push(now)
++        if (tapTimes.length > 6) tapTimes.shift()
++        if (tapTimes.length >= 2) {
++            var total = 0
++            for (var i = 1; i < tapTimes.length; i++) {
++                total += (tapTimes[i] - tapTimes[i - 1])
++            }
++            var avgDelta = total / (tapTimes.length - 1)
++            var newBpm = Math.round(60000 / avgDelta)
++            if (newBpm >= page.bpmMin && newBpm <= page.bpmMax) {
++                page.bpmPending(newBpm)
++            }
++        }
++    }
++
+     // ── Settle guard ──────────────────────────────────────────────────────────
+     property bool settled: false
+ 
+@@ -288,7 +315,7 @@
+ 
+         SequentialAnimation {
+             id: pulseBigAnim
+-            NumberAnimation { target: pulseBig; property: "opacity"; to: 1.0; duration: 60;  easing.type: Easing.OutQuad }
++            NumberAnimation { target: pulseBig; property: "opacity"; to: page.isAccent ? 1.0 : 0.6; duration: 60;  easing.type: Easing.OutQuad }
+             NumberAnimation { target: pulseBig; property: "opacity"; to: 0.0; duration: 140; easing.type: Easing.InQuad }
+         }
+ 
+@@ -300,6 +327,86 @@
+         }
+     }
+ 
++    // ── Concentric visual pulse ring (Tack-inspired) ─────────────────────────
++    Rectangle {
++        id: pulseRing
++        anchors.centerIn: parent
++        width: Dims.l(25)
++        height: width
++        radius: width / 2
++        color: "transparent"
++        border.color: page.pulseColor
++        border.width: page.isAccent ? Dims.l(3.5) : Dims.l(1.8)
++        opacity: 0.0
++        z: 10
++
++        ParallelAnimation {
++            id: pulseRingAnim
++            NumberAnimation { target: pulseRing; property: "width"; from: Dims.l(25); to: page.isAccent ? Dims.l(95) : Dims.l(78); duration: 250; easing.type: Easing.OutQuad }
++            NumberAnimation { target: pulseRing; property: "opacity"; from: page.isAccent ? 0.95 : 0.65; to: 0.0; duration: 250; easing.type: Easing.OutQuad }
++        }
++
++        Connections {
++            target: page.beatSource
++            function onBeat() {
++                if (page.settled && page.pulseVisible) pulseRingAnim.restart()
++            }
++        }
++    }
++
++    // ── Subdivision indicator & Time Signature Selector (Tack-inspired) ────────
++    Item {
++        id: subdivisionControl
++        anchors.top: parent.top
++        anchors.topMargin: Dims.h(13)
++        anchors.horizontalCenter: parent.horizontalCenter
++        width: Dims.w(50)
++        height: Dims.h(12)
++        z: 3
++
++        Rectangle {
++            anchors.fill: parent
++            radius: height / 2
++            color: "#182030"
++            opacity: 0.85
++            border.color: page.isAccent ? page.pulseColor : "#3a4660"
++            border.width: 1
++        }
++
++        Row {
++            anchors.centerIn: parent
++            spacing: Dims.w(2)
++
++            Text {
++                text: page.timeSignatures[page.timeSignatureIndex].name
++                color: page.pulseColor
++                font.bold: true
++                font.pixelSize: Dims.l(6)
++                anchors.verticalCenter: parent.verticalCenter
++            }
++
++            Row {
++                anchors.verticalCenter: parent.verticalCenter
++                spacing: Dims.w(1.2)
++                Repeater {
++                    model: page.timeSignatures[page.timeSignatureIndex].beats
++                    Rectangle {
++                        width: Dims.l(index === 0 ? 3.5 : 2.5)
++                        height: width
++                        radius: width / 2
++                        color: index === page.currentBeat ? page.pulseColor : (index === 0 ? "#708090" : "#404855")
++                        opacity: index === page.currentBeat ? 1.0 : 0.6
++                    }
++                }
++            }
++        }
++
++        MouseArea {
++            anchors.fill: parent
++            onClicked: page.timeSignatureCycle()
++        }
++    }
++
+     // ── BPM CircularSpinner ───────────────────────────────────────────────────
+     CircularSpinner {
+         id: bpmSpinner
+@@ -317,6 +424,40 @@
+         }
+     }
+ 
++    // ── Tap Tempo Button (Tack-inspired) ──────────────────────────────────────
++    Item {
++        id: tapTempoButton
++        anchors.bottom: parent.bottom
++        anchors.bottomMargin: Dims.h(10)
++        anchors.horizontalCenter: parent.horizontalCenter
++        width: Dims.w(28)
++        height: Dims.h(9)
++        z: 3
++
++        Rectangle {
++            anchors.fill: parent
++            radius: height / 2
++            color: tapMouse.pressed ? page.pulseColor : "#1c2538"
++            opacity: 0.85
++            border.color: page.pulseColor
++            border.width: 1
++        }
++
++        Text {
++            anchors.centerIn: parent
++            text: "TAP"
++            color: tapMouse.pressed ? "#000000" : page.pulseColor
++            font.bold: true
++            font.pixelSize: Dims.l(5)
++        }
++
++        MouseArea {
++            id: tapMouse
++            anchors.fill: parent
++            onClicked: page.registerTap()
++        }
++    }
++
+     Connections {
+         target: bpmSpinner
+         function onCurrentIndexChanged() {

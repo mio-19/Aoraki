@@ -59,6 +59,7 @@ in
         asteroid.assets.icons
         asteroid.assets.fonts
         asteroid.assets.virtualkeyboard
+        asteroid.assets.virtualkeyboard-rime
         # Complete application suite
         asteroid.apps.stopwatch
         asteroid.apps.timer
@@ -74,6 +75,7 @@ in
         asteroid.apps.hrm
         asteroid.apps.camera
         asteroid.apps.gps-test
+        asteroid.apps.telegram
         # Community application suite & unofficial watchfaces
         asteroid.community-apps.unofficial-watchfaces
         asteroid.community-apps.blaster
@@ -85,12 +87,29 @@ in
         asteroid.community-apps.skedaddle
         asteroid.community-apps.weatherfetch
         asteroid.community-apps.beatfork
+        asteroid.community-apps.benchymark
+        asteroid.community-apps.docking-bay
+        asteroid.community-apps.heliograph
+        asteroid.community-apps.horizon
+        asteroid.community-apps.meteormatch
+        asteroid.community-apps.pulsar
+        asteroid.community-apps.rag
+        asteroid.community-apps.shopper
+        asteroid.community-apps.toolwatch
+        asteroid.community-apps.touchdown
       ]
       ++ lib.optionals cfg.browser.enable [
         (asteroid.browser.override {
           engine = cfg.browser.engine;
         })
       ];
+
+    environment.variables = {
+      QT_IM_MODULE = "qtvirtualkeyboard";
+      QT_VIRTUALKEYBOARD_STYLE = "watch";
+      QT_VIRTUALKEYBOARD_LAYOUT_PATH = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/qtvirtualkeyboard/layouts";
+      RIME_SHARED_DATA_DIR = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/rime-data";
+    };
 
     # AsteroidOS Bluetooth synchronization daemon service
     systemd.services.asteroid-btsyncd = {

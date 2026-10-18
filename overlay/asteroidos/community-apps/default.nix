@@ -21,11 +21,12 @@ let
       extraNativeBuildInputs ? [ ],
       extraBuildInputs ? [ ],
       postPatch ? "",
+      patches ? [ ],
     }:
     stdenv.mkDerivation {
       pname = repo;
       version = "nightly";
-      inherit postPatch;
+      inherit patches;
 
       src = fetchFromGitHub {
         inherit
@@ -41,9 +42,14 @@ let
         kdePackages.extra-cmake-modules
         pkg-config
         qt6.qtdeclarative
+        qt6.qttools
         qt6.wrapQtAppsHook
       ]
       ++ extraNativeBuildInputs;
+
+      cmakeFlags = [
+        "-DQT_MAJOR_VERSION=6"
+      ];
 
       buildInputs = [
         qt6.qtbase
@@ -52,6 +58,11 @@ let
         qml-asteroid
       ]
       ++ extraBuildInputs;
+
+      postPatch = ''
+        find . -name CMakeLists.txt -exec sed -i 's|/usr/share|share|g' {} +
+      ''
+      + postPatch;
 
       meta = with lib; {
         description = desc;
@@ -135,11 +146,15 @@ rec {
     ];
   };
 
+  # Inspired by CoMaps offline map caching and compass heading orientation: https://github.com/comaps/comaps
   map = mkAsteroidApp {
     name = "map";
     desc = "Touch and GPS map viewer for AsteroidOS smartwatches";
     rev = "8263b2175843e83c32baee2eec5380559db2b735";
     sha256 = "0f9rfbkr42fpa5f1bj3w9b8hwp1qn9v9zy7rwrjr10m1c5q64c7h";
+    patches = [
+      ./map-comaps-improvements.patch
+    ];
     extraBuildInputs = [
       qt6.qtlocation
       qt6.qtpositioning
@@ -178,6 +193,7 @@ rec {
 
   # A metronome and chromatic tuning fork app for smartwatches
   # Upstream repository: https://github.com/moWerk/asteroid-beatfork
+  # Inspired by Tack metronome features (tap tempo, accented subdivisions, pulse ring, haptics): https://github.com/patzly/tack-android
   beatfork = mkAsteroidApp {
     name = "beatfork";
     owner = "moWerk";
@@ -185,12 +201,123 @@ rec {
     desc = "Metronome and chromatic tuning fork app for smartwatches";
     rev = "e3fbc5dd6da40868e0f338c9a0d3f6e877afca25";
     sha256 = "1s4n5qfqximi05szksjbl806rpd37j3q7245z1iip5rrnlbkc7m2";
-    postPatch = ''
-      substituteInPlace src/CMakeLists.txt \
-        --replace-fail '/usr/share' 'share'
-    '';
+    patches = [
+      ./beatfork-tack-improvements.patch
+    ];
     extraBuildInputs = [
       qt6.qtmultimedia
+    ];
+  };
+
+  # Benchmark tool for smartwatches: https://github.com/moWerk/benchymark
+  benchymark = mkAsteroidApp {
+    name = "benchymark";
+    owner = "moWerk";
+    repo = "benchymark";
+    desc = "Benchmark tool for AsteroidOS smartwatches";
+    rev = "11e90920e76e6c62fe1076d4c3927b81b1154e96";
+    sha256 = "0x3c5rm2b8b8cfq7a1kl1699lmn88id70zmrsqzf53bxiv1ms8x4";
+    extraBuildInputs = [
+      qt6.qtsensors
+    ];
+  };
+
+  # Docking bay and charging status: https://github.com/moWerk/asteroid-docking-bay
+  docking-bay = mkAsteroidApp {
+    name = "docking-bay";
+    owner = "moWerk";
+    desc = "Docking bay and battery charge status monitor for smartwatches";
+    rev = "37503828b30c4061a815b10887c46b548137b34f";
+    sha256 = "0g8x6v27ni3zqwir2sif7a0csb78adii47g4y4mnqm3vfklknnp1";
+  };
+
+  # Solar elevation and daylight tracker: https://github.com/moWerk/asteroid-heliograph
+  heliograph = mkAsteroidApp {
+    name = "heliograph";
+    owner = "moWerk";
+    desc = "Solar elevation, daylight tracker, and sundial calculator for smartwatches";
+    rev = "612fd6b1e9229cbacb5f724bc21e239cd034f632";
+    sha256 = "11khf2f2fj2vgvrc7m95n13ac7f09phi1x07xf5g12rwc09yw648";
+    extraBuildInputs = [
+      qt6.qtpositioning
+    ];
+  };
+
+  # Artificial horizon and spirit level: https://github.com/moWerk/asteroid-horizon
+  horizon = mkAsteroidApp {
+    name = "horizon";
+    owner = "moWerk";
+    desc = "Artificial horizon and spirit level bubble display for smartwatches";
+    rev = "3339b36ab549e11949f3399e49ced07e1035ee96";
+    sha256 = "1gvy5nkgdr62f1aqss6sxbzlwc4n74r3xa82ymvyml0ccnp80iql";
+    extraBuildInputs = [
+      qt6.qtsensors
+    ];
+  };
+
+  # Space arcade memory reflex matching game: https://github.com/moWerk/asteroid-meteormatch
+  meteormatch = mkAsteroidApp {
+    name = "meteormatch";
+    owner = "moWerk";
+    desc = "Fast-paced space arcade memory and reflex matching game for smartwatches";
+    rev = "3a597047d1e4021d8eddf715e4c6e110c04080d1";
+    sha256 = "043jmqf4hb4fci13ikn88r32cr0r280jy16kaik43k7cnnacbgzv";
+    extraBuildInputs = [
+      qt6.qtmultimedia
+    ];
+  };
+
+  # Stroboscope and visual flasher: https://github.com/moWerk/asteroid-pulsar
+  pulsar = mkAsteroidApp {
+    name = "pulsar";
+    owner = "moWerk";
+    desc = "Stroboscope and pulsing visual flasher tool for smartwatches";
+    rev = "a7b9339bc6ba882ec0717a45e2edddc1e304cd84";
+    sha256 = "10ddg0ig5nmx7mczxxbw67qpawqv04261y8fmm92dzm1b4qb59yz";
+  };
+
+  # Ragtime music companion: https://github.com/moWerk/asteroid-rag
+  rag = mkAsteroidApp {
+    name = "rag";
+    owner = "moWerk";
+    desc = "Ragtime piano roll and syncopated music companion for smartwatches";
+    rev = "0eaf32483ac17a69ee2ce79524c2d8704fcce619";
+    sha256 = "0s9zh7cqhwzbh99xwd812bfc7xz64axwaagbzg926mi4yz87h5cx";
+    extraBuildInputs = [
+      qt6.qtmultimedia
+    ];
+  };
+
+  # Checklist and shopping list app: https://github.com/moWerk/asteroid-shopper
+  shopper = mkAsteroidApp {
+    name = "shopper";
+    owner = "moWerk";
+    desc = "Simple and handy checklist and shopping list app for smartwatches";
+    rev = "c0eea7e655611d060071fa213a64fa03f03de0ff";
+    sha256 = "0mgvbhp6spahhp2jz94k7id9l18axk0blnl4rpcgngbfqg7awqgd";
+  };
+
+  # Mechanical watch timegrapher: https://github.com/moWerk/asteroid-toolwatch
+  toolwatch = mkAsteroidApp {
+    name = "toolwatch";
+    owner = "moWerk";
+    desc = "Mechanical watch accuracy checker and timegrapher tool for smartwatches";
+    rev = "07b6675ae6e4734fee7971d4f4a22a9637f5f1a9";
+    sha256 = "0jd3nj6pi9by5i8rpalsmpj63yiqjqqri6fz5v45lhis4add0p0v";
+    extraBuildInputs = [
+      qt6.qtmultimedia
+    ];
+  };
+
+  # Lunar lander retro thruster game: https://github.com/moWerk/asteroid-touchdown
+  touchdown = mkAsteroidApp {
+    name = "touchdown";
+    owner = "moWerk";
+    desc = "Lunar lander retro thruster landing game for smartwatches";
+    rev = "660a26f3bd06846766c0114357c06fa195081c6c";
+    sha256 = "1h47612wf7zfb76glg78099xysvidpln71pmjyafi1ras81jfvk3";
+    extraBuildInputs = [
+      qt6.qtsensors
     ];
   };
 }

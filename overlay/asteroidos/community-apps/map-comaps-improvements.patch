@@ -1,0 +1,254 @@
+diff -u -r a/src/DefaultMapControls.qml b/src/DefaultMapControls.qml
+--- a/src/DefaultMapControls.qml	2026-10-18 12:17:56.851741439 +1100
++++ b/src/DefaultMapControls.qml	2026-10-18 12:21:42.046836394 +1100
+@@ -19,80 +19,191 @@
+ import org.asteroid.utils
+ 
+ Item {
+-    IconButton {
+-        iconName: "ios-add-circle-outline"
++    // Zoom in (+) circular button
++    Rectangle {
++        id: zoomInDisc
+         anchors.right: parent.right
++        anchors.rightMargin: Dims.w(3)
+         anchors.verticalCenter: parent.verticalCenter
+-        anchors.verticalCenterOffset: - height/2 + DeviceSpecs.flatTireHeight/2
+-        height: parent.height*0.2
++        anchors.verticalCenterOffset: - height * 0.7 + DeviceSpecs.flatTireHeight/2
++        height: parent.height * 0.18
+         width: height
+-        iconColor: colors.primary
++        radius: height / 2
++        color: zoomInMouse.pressed ? colors.secondary : "#20000000"
++        border.color: colors.secondary
++        border.width: 1.5
+         z: 2
+-        onClicked: mapView.zoomLevel = mapView.zoomLevel + 0.3
++
++        Icon {
++            anchors.centerIn: parent
++            width: parent.width * 0.7
++            height: width
++            name: "ios-add"
++            color: zoomInMouse.pressed ? "#000000" : colors.secondary
++        }
++        MouseArea {
++            id: zoomInMouse
++            anchors.fill: parent
++            onClicked: mapView.zoomLevel = Math.min(mapView.maximumZoomLevel, mapView.zoomLevel + 0.5)
++        }
+     }
+-    IconButton {
+-        iconName: "ios-remove-circle-outline"
++
++    // Zoom out (-) circular button
++    Rectangle {
++        id: zoomOutDisc
+         anchors.right: parent.right
++        anchors.rightMargin: Dims.w(3)
+         anchors.verticalCenter: parent.verticalCenter
+-        anchors.verticalCenterOffset: height/2 + DeviceSpecs.flatTireHeight/2
+-        height: parent.height*0.2
++        anchors.verticalCenterOffset: height * 0.7 + DeviceSpecs.flatTireHeight/2
++        height: parent.height * 0.18
+         width: height
+-        iconColor: colors.primary
++        radius: height / 2
++        color: zoomOutMouse.pressed ? colors.secondary : "#20000000"
++        border.color: colors.secondary
++        border.width: 1.5
+         z: 2
+-        onClicked: mapView.zoomLevel = mapView.zoomLevel - 0.3
++
++        Icon {
++            anchors.centerIn: parent
++            width: parent.width * 0.7
++            height: width
++            name: "ios-remove"
++            color: zoomOutMouse.pressed ? "#000000" : colors.secondary
++        }
++        MouseArea {
++            id: zoomOutMouse
++            anchors.fill: parent
++            onClicked: mapView.zoomLevel = Math.max(mapView.minimumZoomLevel, mapView.zoomLevel - 0.5)
++        }
+     }
+-    MouseArea {
++
++    // Compass Heading Orientation circular disc (CoMaps style)
++    Rectangle {
++        id: compassDisc
+         anchors.left: parent.left
++        anchors.leftMargin: Dims.w(3)
+         anchors.verticalCenter: parent.verticalCenter
+-        anchors.verticalCenterOffset: - height/2 + DeviceSpecs.flatTireHeight/2
+-        height: parent.height*0.2
++        anchors.verticalCenterOffset: - height * 0.7 + DeviceSpecs.flatTireHeight/2
++        height: parent.height * 0.18
+         width: height
++        radius: height / 2
++        color: compassMouse.pressed ? colors.secondary : "#20000000"
++        border.color: colors.secondary
++        border.width: 1.5
+         z: 2
+-        rotation: compassMode.value == 1 ? 360 - compass.reading.azimuth : 45
+-        onClicked: compassMode.value = enableCompass.value ? (compassMode.value+1)%3 : 0
+-        onPressAndHold: {
+-            if (compassMode.value == 2) {compassMode.value = 0}
+-            mapView.bearing = 0
+-        }
++
+         Icon {
++            anchors.centerIn: parent
++            width: parent.width * 0.7
++            height: width
++            name: compassMode.value == 2 ? "ios-navigate" : (compass.reading && compass.reading.calibrationLevel > 0 ? "ios-compass-outline" : "ios-infinite-outline")
++            rotation: compassMode.value == 1 ? (compass.reading ? 360 - compass.reading.azimuth : 0) : 0
++            color: compassMouse.pressed ? "#000000" : (compassMode.value == 2 ? "#FFCC00" : colors.secondary)
++            Behavior on rotation { NumberAnimation { duration: 150 } }
++        }
++        MouseArea {
++            id: compassMouse
+             anchors.fill: parent
+-            name: compass.reading.calibrationLevel > 0 ? "ios-compass-outline" : "ios-infinite-outline"
+-            rotation: -45
+-            color: colors.primary
++            onClicked: compassMode.value = enableCompass.value ? (compassMode.value + 1) % 3 : 0
++            onPressAndHold: {
++                compassMode.value = 0
++                mapView.bearing = 0
++            }
+         }
+     }
+-    IconButton {
+-        iconName: "ios-locate-outline"
+-        anchors.verticalCenter: parent.verticalCenter
+-        anchors.verticalCenterOffset: height/2 + DeviceSpecs.flatTireHeight/2
++
++    // Locate / Recenter circular disc
++    Rectangle {
++        id: locateDisc
+         anchors.left: parent.left
+-        height: parent.height*0.2
++        anchors.leftMargin: Dims.w(3)
++        anchors.verticalCenter: parent.verticalCenter
++        anchors.verticalCenterOffset: height * 0.7 + DeviceSpecs.flatTireHeight/2
++        height: parent.height * 0.18
+         width: height
+-        iconColor: colors.primary
++        radius: height / 2
++        color: locateMouse.pressed ? colors.secondary : "#20000000"
++        border.color: colors.secondary
++        border.width: 1.5
+         z: 2
+-        onClicked: positionProvider.update()
++
++        Icon {
++            anchors.centerIn: parent
++            width: parent.width * 0.7
++            height: width
++            name: "ios-locate-outline"
++            color: locateMouse.pressed ? "#000000" : colors.secondary
++        }
++        MouseArea {
++            id: locateMouse
++            anchors.fill: parent
++            onClicked: {
++                positionProvider.update()
++                if (positionProvider.position && positionProvider.position.coordinate.isValid) {
++                    mapView.center = positionProvider.position.coordinate
++                }
++            }
++        }
+     }
+-    IconButton {
+-        iconName: "ios-menu-outline"
++
++    // Settings circular disc
++    Rectangle {
++        id: settingsDisc
+         anchors.bottom: parent.bottom
++        anchors.bottomMargin: Dims.h(4)
+         anchors.right: parent.horizontalCenter
+-        height: parent.height*0.2
++        anchors.rightMargin: Dims.w(4)
++        height: parent.height * 0.17
+         width: height
+-        iconColor: colors.primary
++        radius: height / 2
++        color: settingsMouse.pressed ? colors.secondary : "#20000000"
++        border.color: colors.secondary
++        border.width: 1.5
+         z: 2
+-        onClicked: pageStack.push(settingsPage,{})
++
++        Icon {
++            anchors.centerIn: parent
++            width: parent.width * 0.65
++            height: width
++            name: "ios-menu-outline"
++            color: settingsMouse.pressed ? "#000000" : colors.secondary
++        }
++        MouseArea {
++            id: settingsMouse
++            anchors.fill: parent
++            onClicked: pageStack.push(settingsPage, {})
++        }
+     }
+-    IconButton {
+-        iconName: "ios-pin-outline"
++
++    // Pin waypoint circular disc
++    Rectangle {
++        id: pinDisc
+         anchors.bottom: parent.bottom
++        anchors.bottomMargin: Dims.h(4)
+         anchors.left: parent.horizontalCenter
+-        height: parent.height*0.2
++        anchors.leftMargin: Dims.w(4)
++        height: parent.height * 0.17
+         width: height
+-        iconColor: colors.primary
++        radius: height / 2
++        color: pinMouse.pressed ? colors.secondary : "#20000000"
++        border.color: colors.secondary
++        border.width: 1.5
+         z: 2
+-        onClicked: {
+-            parent.visible = false
+-            setPointControls.visible = true
++
++        Icon {
++            anchors.centerIn: parent
++            width: parent.width * 0.65
++            height: width
++            name: "ios-pin-outline"
++            color: pinMouse.pressed ? "#000000" : colors.secondary
++        }
++        MouseArea {
++            id: pinMouse
++            anchors.fill: parent
++            onClicked: {
++                parent.visible = false
++                setPointControls.visible = true
++            }
+         }
+     }
+ }
+diff -u -r a/src/main.qml b/src/main.qml
+--- a/src/main.qml	2026-10-18 12:17:56.402741249 +1100
++++ b/src/main.qml	2026-10-18 12:21:07.771821942 +1100
+@@ -36,6 +36,12 @@
+     Plugin {
+         id: mapProvider
+         name: "osm"
++        // CoMaps-inspired offline tile caching configuration: https://github.com/comaps/comaps
++        PluginParameter { name: "osm.mapping.offline.directory"; value: "/home/nixos/.cache/maps/offline" }
++        PluginParameter { name: "osm.mapping.cache.directory"; value: "/home/nixos/.cache/maps" }
++        PluginParameter { name: "osm.mapping.cache.disk.size"; value: 200000000 }
++        PluginParameter { name: "osm.mapping.highdpi"; value: true }
++        PluginParameter { name: "osm.useragent"; value: "NixOS-Smartwatch-Map/1.0 (AsteroidOS; Linux)" }
+     }
+     PositionSource {
+         id: positionProvider
