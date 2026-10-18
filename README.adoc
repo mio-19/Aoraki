@@ -121,6 +121,81 @@ fastboot reboot
   fastboot reboot
   ----
 
+== System Updates over USB Gadget / SSH
+
+One of the key benefits of NixOS is atomic, rollback-capable system updates over USB or Wi-Fi without needing to reflash partitions in fastboot.
+
+=== USB Networking Setup
+
+When booted, the smartwatch automatically exposes a USB Ethernet Gadget interface with a static IPv4 address:
+
+* **Watch IP**: `192.168.2.15`
+* **Host Subnet**: `192.168.2.0/24`
+
+Configure the USB network interface on your host machine:
+
+[source,bash]
+----
+# Identify USB network interface (e.g., usb0, enp0s20f0u...)
+ip link
+
+# Assign host IP and bring interface up
+sudo ip addr add 192.168.2.14/24 dev usb0
+sudo ip link set usb0 up
+
+# Test connectivity
+ping -c 3 192.168.2.15
+----
+
+=== Connecting via SSH
+
+Open a remote shell on the watch:
+
+[source,bash]
+----
+ssh root@192.168.2.15
+----
+
+=== Updating Live System Configurations
+
+To deploy updates, bug fixes, or new packages directly to the running smartwatch:
+
+==== Option A: Direct NixOS Rebuild over SSH
+
+[source,bash]
+----
+nixos-rebuild switch \
+  -I nixos-config=./examples/asteroid/configuration.nix \
+  --target-host root@192.168.2.15
+----
+
+==== Option B: Closure Copy & Instant Activation
+
+[source,bash]
+----
+# 1. Build updated toplevel closure on host for fossil-hoki
+nix-build examples/asteroid --argstr device fossil-hoki -A build.toplevel --keep-going
+
+# 2. Copy the store closure to the watch
+nix-copy-closure --to root@192.168.2.15 ./result
+
+# 3. Activate the new generation on the watch
+ssh root@192.168.2.15 "nix-env -p /nix/var/nix/profiles/system --set \$(readlink -f result) && /nix/var/nix/profiles/system/bin/switch-to-configuration switch"
+----
+
+== Application Suite
+
+The environment includes a rich catalog of touch-optimized smartwatch applications:
+
+* *`asteroid-browser`*: Lightweight web browser with integrated virtual keyboard support and wearable quick-links.
+* *`asteroid-telegram`*: Native smartwatch Telegram client with touch-friendly chat lists, message history, voice reply integration, and quick canned responses.
+* *`asteroid-virtualkeyboard-rime`*: On-screen touch keyboard featuring integrated link:https://rime.im/[RIME] input method engine support and bundled Chinese dictionaries.
+* *`asteroid-beatfork`*: High-precision metronome and chromatic tuning fork with Tack-inspired tap tempo calculation, accented subdivisions (1/4, 2/4, 3/4, 4/4, 6/8), concentric visual pulse ring, and distinct smartwatch haptics.
+* *`asteroid-map`*: Touch GPS map viewer featuring offline tile cache persistence, compass heading orientation, and circular edge controls.
+* *`asteroid-music`*: Media playback remote controller for phone media players via Bluetooth MPRIS, enhanced with standalone YouTube Music streaming directly on the watch.
+* *`asteroid-2048`*: Classic sliding-tile puzzle game packaged directly from upstream with Qt 6 touch acceleration.
+* *Core Utilities*: Stopwatch, Countdown Timer, Alarm Clock, Calculator, Weather, Compass, Flashlight, and Heart Rate Monitor.
+
 == Prior Work and Acknowledgments
 
 This project stands on the shoulders of giants:
