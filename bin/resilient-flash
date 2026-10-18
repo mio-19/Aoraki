@@ -431,8 +431,12 @@ def main():
       )
   )
   parser.add_argument(
-      "system_image",
-      help="Path to system.img (sparse or raw) or directory containing images",
+      "targets",
+      nargs="+",
+      help=(
+          "Path to system.img, directory containing images, boot.img, and/or"
+          " device name (in any order)"
+      ),
   )
   parser.add_argument(
       "--boot-img",
@@ -486,32 +490,45 @@ def main():
   # Ensure ADB server is running and smartwatch is connected in recovery mode
   ensure_device_ready(adb_prefix, max_wait=30)
 
-  # Resolve paths
-  system_path = os.path.abspath(args.system_image)
+  # Resolve paths from flexible arguments
+  system_path = None
   boot_img = os.path.abspath(args.boot_img) if args.boot_img else None
 
-  if os.path.isdir(system_path):
-    candidate_sys = os.path.join(system_path, "system.img")
-    if not os.path.exists(candidate_sys):
-      print(
-          f"Error: Directory '{system_path}' does not contain system.img",
-          file=sys.stderr,
-      )
-      sys.exit(1)
-    if not boot_img and not args.no_boot:
-      candidate_boot = os.path.join(system_path, "boot.img")
-      if os.path.exists(candidate_boot):
-        boot_img = candidate_boot
-    system_path = candidate_sys
-  elif not boot_img and not args.no_boot:
+  for t in args.targets:
+    t_abs = os.path.abspath(t)
+    if os.path.isdir(t_abs):
+      candidate_sys = os.path.join(t_abs, "system.img")
+      if os.path.exists(candidate_sys):
+        system_path = candidate_sys
+      if not boot_img and not args.no_boot:
+        candidate_boot = os.path.join(t_abs, "boot.img")
+        if os.path.exists(candidate_boot):
+          boot_img = candidate_boot
+    elif os.path.isfile(t_abs):
+      if os.path.basename(t_abs) == "boot.img":
+        boot_img = t_abs
+      elif os.path.basename(t_abs) in ("system.img", "rootfs.img") or t_abs.endswith(".img"):
+        if not system_path or os.path.basename(t_abs) == "system.img":
+          system_path = t_abs
+      elif not system_path:
+        system_path = t_abs
+    elif os.path.exists(os.path.join("devices", t)):
+      # Ignored device name parameter (e.g. 'fossil-hoki')
+      pass
+    elif not system_path and not os.path.exists(t_abs):
+      # Might be device name without matching devices directory
+      pass
+
+  # Fallback auto-detection for boot.img if not specified
+  if system_path and not boot_img and not args.no_boot:
     sibling_boot = os.path.join(os.path.dirname(system_path), "boot.img")
     if os.path.exists(sibling_boot):
       boot_img = sibling_boot
     elif os.path.exists("result/boot.img"):
       boot_img = os.path.abspath("result/boot.img")
 
-  if not os.path.exists(system_path):
-    print(f"Error: System image not found: {system_path}", file=sys.stderr)
+  if not system_path or not os.path.exists(system_path):
+    print(f"Error: Valid system image or directory not found in targets: {args.targets}", file=sys.stderr)
     sys.exit(1)
 
   # Check sparse vs raw
