@@ -22,14 +22,22 @@ class Tasks::UDev < SingletonTask
 
   def run()
     udevd
-    udevadm("trigger", "--action=add", "--wait-daemon")
-    udevadm("settle", "--timeout=15")
+    udevadm("trigger", "--action=add")
+    begin
+      udevadm("settle", "--timeout=10")
+    rescue System::CommandError => e
+      $logger.warn("udevadm settle non-fatal timeout (proceeding): #{e.message}")
+    end
   end
 
   def udevd()
     *args = []
     args << "--debug" if debug?
     System.run("systemd-udevd", "--daemon", *args)
+    20.times do
+      break if File.exist?("/run/udev/control")
+      sleep(0.1)
+    end
   end
 
   # TODO: Allow configuring its debug state
