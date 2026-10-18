@@ -18,6 +18,8 @@ let
     cfg.mediatek-mt6785.enable
     cfg.mediatek-mt8127.enable
     cfg.mediatek-mt8183.enable
+    cfg.mediatek-mt2601.enable
+    cfg.mediatek-mt6580.enable
   ];
 in
 {
@@ -41,6 +43,16 @@ in
       type = types.bool;
       default = false;
       description = "enable when SOC is Mediatek MT8183";
+    };
+    hardware.socs.mediatek-mt2601.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "enable when SOC is Mediatek MT2601";
+    };
+    hardware.socs.mediatek-mt6580.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "enable when SOC is Mediatek MT6580";
     };
   };
 
@@ -73,6 +85,16 @@ in
     {
       mobile = mkIf cfg.mediatek-mt8183.enable {
         system.system = "aarch64-linux";
+      };
+    }
+    {
+      mobile = mkIf cfg.mediatek-mt2601.enable {
+        system.system = "armv7l-linux";
+      };
+    }
+    {
+      mobile = mkIf cfg.mediatek-mt6580.enable {
+        system.system = "armv7l-linux";
       };
     }
     (mkIf anyMediatek {

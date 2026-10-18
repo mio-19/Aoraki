@@ -30,6 +30,16 @@ in
       description = "Enable when system is a generic armv7l";
       internal = true;
     };
+    ti-omap3630.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable when system is TI OMAP 3630";
+    };
+    broadcom-bcm23550.enable = mkOption {
+      type = types.bool;
+      default = false;
+      description = "Enable when system is Broadcom BCM23550";
+    };
   };
 
   config = {
@@ -37,6 +47,8 @@ in
       (lib.mkIf cfg.generic-x86_64.enable "x86_64-linux")
       (lib.mkIf cfg.generic-armv7l.enable "armv7l-linux")
       (lib.mkIf cfg.generic-aarch64.enable "aarch64-linux")
+      (lib.mkIf cfg.ti-omap3630.enable "armv7l-linux")
+      (lib.mkIf cfg.broadcom-bcm23550.enable "armv7l-linux")
     ];
   };
 }

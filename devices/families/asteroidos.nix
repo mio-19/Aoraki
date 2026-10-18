@@ -44,6 +44,6 @@ in
   # Enable zram compressed in-memory swap to avoid OOM on 512MB-1GB smartwatches
   zramSwap = {
     enable = mkDefault true;
-    memoryPercent = mkDefault 50;
+    memoryPercent = lib.mkOptionDefault 50;
   };
 }

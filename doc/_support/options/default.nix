@@ -19,6 +19,7 @@ let
       buildingForSystem = system;
       system = system;
       config = {
+        mobile.system.system = system;
         nixpkgs.config = {
           # Skip eval issues.
           # This allows the documentation generation to work even though
