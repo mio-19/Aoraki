@@ -81,6 +81,7 @@
     QPA_HWC_FORCE_GLES = "1";
     QPA_HWC2_FORCE_DOZE_UPDATE = "1";
     QT_OPENGL_NO_BGRA = "1";
+    LIPSTICK_OPTIONS = "-plugin evdevkeyboard:/dev/input/event4:keymap=/usr/share/qt6/keymaps/keys.qmap -plugin evdevkeyboard:/dev/input/event0:keymap=/usr/share/qt6/keymaps/keys.qmap -plugin evdevmouse:/dev/input/event1";
   };
 
   # Hardware node permissions and symlinks for Android HAL / libhybris
@@ -93,8 +94,10 @@
   '';
 
   # Subsystem boots and firmware mount setup
+  # GNSS vendor service symlink PR: https://github.com/AsteroidOS/meta-smartwatch/pull/342
   systemd.tmpfiles.rules = [
     "L+ /system/lib/hw/gps.default.so - - - - /vendor/lib/hw/gps.default.so"
+    "L+ /vendor/bin/hw/android.hardware.gnss@1.0-service - - - - /vendor/bin/hw/android.hardware.gnss@1.0-service-qti"
     "L+ /dev/graphics/fb0 - - - - /dev/fb0"
     "d /mnt/vendor 0755 root root -"
     "L+ /mnt/vendor/persist - - - - /persist"
