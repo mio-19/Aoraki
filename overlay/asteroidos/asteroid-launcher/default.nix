@@ -25,6 +25,8 @@ stdenv.mkDerivation rec {
   patches = [
     # QuickPanel quick-toggle button to trigger the find-phone alarm on the companion phone
     ./find-phone.patch
+    # Visible skip button for first-time tutorial and initial setup guide
+    ./skip-firstrun.patch
   ];
 
   nativeBuildInputs = [

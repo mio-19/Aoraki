@@ -1,0 +1,45 @@
+--- a/src/qml/firstrun/FirstRunConfig.qml
++++ b/src/qml/firstrun/FirstRunConfig.qml
+@@ -226,6 +226,18 @@
+         text: qsTrId("id-language-page") + localeManager.changesObserver
+     }
+ 
++    IconButton {
++        id: skipButton
++        iconName: "ios-close"
++        anchors {
++            top: parent.top
++            horizontalCenter: parent.horizontalCenter
++            topMargin: Dims.iconButtonMargin
++        }
++        onClicked: {
++            firstRun.stopFirstRun()
++            config.destroy()
++        }
++    }
++
+     IconButton {
+         id: nextButton
+         iconName: "ios-arrow-dropright"
+--- a/src/qml/firstrun/Tutorial.qml
++++ b/src/qml/firstrun/Tutorial.qml
+@@ -321,6 +321,18 @@
+             horizontalAlignment: Text.AlignHCenter
+         }
+ 
++        IconButton {
++            id: skipButton
++            iconName: "ios-close"
++            anchors {
++                top: parent.top
++                horizontalCenter: parent.horizontalCenter
++                topMargin: Dims.iconButtonMargin
++            }
++            onClicked: {
++                tuto.state = "DONE";
++            }
++        }
++
+         IconButton {
+             id: nextButton
+             iconName: "ios-arrow-dropright"

@@ -76,11 +76,22 @@ lib.mkIf isCross (
                     patches = (old.patches or [ ]) ++ [
                       ../overlay/ladybird/0001-32bit-support.patch
                     ];
-                    NIX_LDFLAGS = (old.NIX_LDFLAGS or "") + " -latomic";
+                    env = (old.env or { }) // {
+                      NIX_LDFLAGS = (old.env.NIX_LDFLAGS or "") + " -latomic";
+                    };
                     meta = old.meta // {
                       platforms = (old.meta.platforms or [ ]) ++ [ "armv7l-linux" ];
                     };
                   });
+
+              # NetSurf buildsystem fails to guess BUILD in cross-compilation when host cc is not on PATH.
+              # Upstream repository: https://git.netsurf-browser.org/buildsystem.git/
+              netsurf-buildsystem = super.netsurf-buildsystem.overrideAttrs (old: {
+                postPatch = (old.postPatch or "") + ''
+                  substituteInPlace makefiles/Makefile.tools \
+                    --replace-fail 'BUILD := $(shell $(BUILD_CC) -dumpmachine)' 'BUILD ?= ${super.stdenv.buildPlatform.config}'
+                '';
+              });
             }
         )
       ];

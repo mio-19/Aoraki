@@ -1,0 +1,81 @@
+/*
+ * Qt Stylesheet adapted for 400x400 Circular Smartwatch Displays
+ * High-contrast AMOLED black theme with circular safe area insets
+ */
+
+QMainWindow {
+    background-color: #000000;
+    color: #f0f4f8;
+}
+
+QWidget#LadybirdToolbarContainer {
+    background-color: #000000;
+    padding-top: 6px;
+    padding-left: 24px;
+    padding-right: 24px;
+    border-bottom: 1px solid #1a2233;
+}
+
+QWidget#LadybirdNavigationToolbar {
+    background-color: #000000;
+    min-height: 36px;
+    max-height: 40px;
+}
+
+/* Rounded pill address / location edit */
+QLineEdit, QWidget[objectName="LocationEdit"] {
+    background-color: #121824;
+    color: #f0f4f8;
+    border: 1px solid #243044;
+    border-radius: 14px;
+    padding: 2px 10px;
+    font-size: 11px;
+    selection-background-color: #00e5ff;
+    selection-color: #000000;
+}
+
+QLineEdit:focus, QWidget[objectName="LocationEdit"]:focus {
+    border: 1px solid #00e5ff;
+    background-color: #162030;
+}
+
+/* Touch-friendly circular toolbar buttons */
+QToolButton {
+    background-color: #121824;
+    color: #f0f4f8;
+    border: 1px solid #243044;
+    border-radius: 14px;
+    min-width: 28px;
+    min-height: 28px;
+    max-width: 28px;
+    max-height: 28px;
+    margin: 1px 2px;
+}
+
+QToolButton:pressed {
+    background-color: #00e5ff;
+    color: #000000;
+    border-color: #00e5ff;
+}
+
+/* Hide desktop scrollbars that clip on circular screen bezels */
+QScrollBar:vertical, QScrollBar:horizontal {
+    width: 0px;
+    height: 0px;
+    background: transparent;
+}
+
+/* Menus and Popups */
+QMenu {
+    background-color: #121824;
+    color: #f0f4f8;
+    border: 1px solid #243044;
+    border-radius: 12px;
+    padding: 6px;
+}
+
+QMenu::item:selected {
+    background-color: #1e293b;
+    color: #00e5ff;
+    border-radius: 8px;
+}

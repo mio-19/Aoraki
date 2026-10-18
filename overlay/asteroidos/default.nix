@@ -14,9 +14,23 @@ rec {
     inherit qml-asteroid amber-mpris mlite;
   };
 
-  apps = callPackage ./apps {
-    inherit qml-asteroid;
+  browser = callPackage ./browser {
+    inherit (pkgs) ladybird;
+    netsurf = pkgs.netsurf-browser or null;
+    servo = pkgs.servo or null;
+    webkitgtk_6_0 = pkgs.webkitgtk_6_0 or null;
+    goanna = pkgs.goanna or null;
+    virtualkeyboard = assets.virtualkeyboard;
+    qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
   };
+
+  apps =
+    (callPackage ./apps {
+      inherit qml-asteroid;
+    })
+    // {
+      inherit browser;
+    };
 
   assets = callPackage ./assets { };
 

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Browser
+GenericName=Web Browser
+Comment=Web Browser for Smartwatches
+Exec=asteroid-browser %U
+Icon=asteroid-browser
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+StartupNotify=true
+MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+Keywords=web;browser;internet;ladybird;
