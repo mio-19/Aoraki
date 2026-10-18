@@ -5,10 +5,6 @@
 
 This document tracks upcoming milestones, architectural enhancements, hardware enablement tasks, and community feature requests for running declarative NixOS on wearable hardware.
 
-== Storage & Filesystems
-
-* [ ] *Direct Sparse Image Output (`img2simg`)*:
-** Streamline fastboot deployment by outputting native Android sparse filesystem images directly from the Nix build, reducing image transfer times and fastboot chunking overhead.
 
 == Smartwatch Web Browsing
 

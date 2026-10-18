@@ -50,6 +50,10 @@ The Fossil Gen 6 utilizes Qualcomm A/B partition architecture on its internal eM
 
 ## Flashing Instructions
 
+### Method 1: Fastboot with Native Sparse Image (Recommended)
+
+The generated `result/system.img` is automatically formatted as a native Android sparse filesystem image (`img2simg`). This avoids fastboot client-side chunking errors (`Invalid sparse file format at header magic` / `Error reading sparse file`) and skips empty blocks to speed up transfers over USB pogo pins:
+
 ```bash
 # 1. Verify fastboot communication:
 fastboot devices
@@ -67,6 +71,48 @@ fastboot format cache
 # 5. Reboot into NixOS:
 fastboot reboot
 ```
+
+---
+
+### Method 2: Alternative Flashing via TWRP Recovery (Untested / Community Method)
+
+> [!WARNING]
+> **Experimental / Untested**: Flashing via TWRP recovery on `fossil-hoki` is a community-developed workaround and is currently **untested** in our primary pipeline. Use the native sparse fastboot method (Method 1) whenever possible.
+
+The magnetic charging cradle on the Fossil Gen 6 can be physically sensitive; slight shifts during multi-minute fastboot writes can reset the USB interface (`Write to device failed`, `Status read failed (No such device)`).
+
+An alternative community method is to temporarily boot **TWRP Recovery for Fossil Gen 6 (hoki)** (developed by Malvik on [XDA Forums](https://xdaforums.com/t/twrp-twrp-for-fossil-gen-6-aka-hoki.4474863/)):
+
+1. **Boot TWRP temporarily via fastboot** (does not overwrite stock recovery):
+   ```bash
+   fastboot boot twrp_hoki.img
+   ```
+
+2. **Wait for TWRP to start ADB**:
+   Verify the watch is recognized in recovery mode:
+   ```bash
+   adb devices
+   ```
+
+3. **Stream the rootfs image directly to the eMMC partition**:
+   You can stream the image directly to the block device without needing intermediate storage space on the watch:
+   ```bash
+   # Convert/stream to the raw userdata partition via ADB:
+   simg2img result/system.img - | adb shell "dd of=/dev/block/bootdevice/by-name/userdata bs=4M"
+   ```
+   *(Alternatively, if pushing the file first: `adb push result/system.img /tmp/system.simg && adb shell "simg2img /tmp/system.simg /dev/block/bootdevice/by-name/userdata"`)*
+
+4. **Flash kernel and stage-1 initrd to both boot slots**:
+   ```bash
+   adb shell "dd of=/dev/block/bootdevice/by-name/boot_a bs=4M" < result/boot.img
+   adb shell "dd of=/dev/block/bootdevice/by-name/boot_b bs=4M" < result/boot.img
+   ```
+
+5. **Wipe stale cache and reboot**:
+   ```bash
+   adb shell "mke2fs -t ext4 /dev/block/bootdevice/by-name/cache" || adb shell "make_ext4fs /dev/block/bootdevice/by-name/cache"
+   adb reboot
+   ```
 
 ---
 

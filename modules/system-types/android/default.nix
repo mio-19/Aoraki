@@ -40,59 +40,76 @@ let
   # either of fastboot or the outputs.
   # This is because this output should have no refs. A simple tarball of this
   # output should be usable even on systems without Nix.
-  android-fastboot-images = pkgs.runCommand "android-fastboot-images-${device.name}" { } ''
-    mkdir -p $out
-    cp -v ${rootfs.imagePath} $out/system.img
-    cp -v ${android-bootimg} $out/boot.img
-    ${optionalString has_recovery_partition ''
-      cp -v ${android-recovery} $out/recovery.img
-    ''}
-    cat > $out/flash-critical.sh <<'EOF'
-    #!/usr/bin/env bash
-    dir="$(cd "$(dirname "''${BASH_SOURCE[0]}")"; echo "$PWD")"
-    PS4=" $ "
-    ${
-      if has_recovery_partition then
-        ''
-          echo "NOTE: This script flashes the boot and recovery partitions only."
-        ''
-      else
-        ''
-          echo "NOTE: This script flashes the boot partition only."
-        ''
-    }
-    (
-    set -x
-    ${
-      if flashingMethod == "fastboot" then
-        ''
-          fastboot flash ${optionalString ab_partitions "--slot=all"} boot "$dir"/boot.img
-          ${optionalString has_recovery_partition ''
-            fastboot flash ${optionalString ab_partitions "--slot=all"} recovery "$dir"/recovery.img
-          ''}
-        ''
-      else if flashingMethod == "odin" then
-        ''
-          heimdall flash \
-            --BOOT "$dir"/boot.img ${optionalString has_recovery_partition ''
-              --RECOVERY "$dir"/recovery.img
+  android-fastboot-images =
+    pkgs.runCommand "android-fastboot-images-${device.name}"
+      {
+        nativeBuildInputs = lib.optionals config.mobile.system.android.sparseSystemImage [
+          pkgs.buildPackages.android-tools
+        ];
+      }
+      ''
+            mkdir -p $out
+            ${
+              if config.mobile.system.android.sparseSystemImage then
+                ''
+                  echo "Converting rootfs image to Android sparse format with img2simg..."
+                  img2simg ${rootfs.imagePath} $out/system.img
+                ''
+              else
+                ''
+                  cp -v ${rootfs.imagePath} $out/system.img
+                ''
+            }
+            cp -v ${android-bootimg} $out/boot.img
+            ${optionalString has_recovery_partition ''
+              cp -v ${android-recovery} $out/recovery.img
             ''}
-        ''
-      else if flashingMethod == "lk2nd" then
-        ''
-          echo "There is no automated script for flashing with lk2nd yet."
-          echo "Please refer to the installation instructions for your device."
-          exit 1
-        ''
-      else
-        builtins.throw "No flashing method for ${flashingMethod}"
-    })
-    echo ""
-    echo "Flashing completed."
-    echo "The system image needs to be flashed manually to the ${config.mobile.system.android.system_partition_destination} partition."
-    EOF
-    chmod +x $out/flash-critical.sh
-  '';
+        cat > $out/flash-critical.sh <<'EOF'
+        #!/usr/bin/env bash
+        dir="$(cd "$(dirname "''${BASH_SOURCE[0]}")"; echo "$PWD")"
+        PS4=" $ "
+        ${
+          if has_recovery_partition then
+            ''
+              echo "NOTE: This script flashes the boot and recovery partitions only."
+            ''
+          else
+            ''
+              echo "NOTE: This script flashes the boot partition only."
+            ''
+        }
+        (
+        set -x
+        ${
+          if flashingMethod == "fastboot" then
+            ''
+              fastboot flash ${optionalString ab_partitions "--slot=all"} boot "$dir"/boot.img
+              ${optionalString has_recovery_partition ''
+                fastboot flash ${optionalString ab_partitions "--slot=all"} recovery "$dir"/recovery.img
+              ''}
+            ''
+          else if flashingMethod == "odin" then
+            ''
+              heimdall flash \
+                --BOOT "$dir"/boot.img ${optionalString has_recovery_partition ''
+                  --RECOVERY "$dir"/recovery.img
+                ''}
+            ''
+          else if flashingMethod == "lk2nd" then
+            ''
+              echo "There is no automated script for flashing with lk2nd yet."
+              echo "Please refer to the installation instructions for your device."
+              exit 1
+            ''
+          else
+            builtins.throw "No flashing method for ${flashingMethod}"
+        })
+        echo ""
+        echo "Flashing completed."
+        echo "The system image needs to be flashed manually to the ${config.mobile.system.android.system_partition_destination} partition."
+        EOF
+        chmod +x $out/flash-critical.sh
+      '';
 
   mkBootimgOption =
     name:
@@ -159,6 +176,12 @@ in
         description = "Partition label on which to install the system image. E.g. change to `userdata` when it does not fit in the system partition.";
         default = "system";
         internal = true;
+      };
+
+      sparseSystemImage = lib.mkOption {
+        type = types.bool;
+        description = "Whether to convert the system rootfs image into an Android sparse image format using img2simg for faster, reliable fastboot flashing.";
+        default = true;
       };
 
       bootimg = {

@@ -186,8 +186,8 @@
   </div>
 
   <div class="search-box">
-    <form class="search-form" action="https://html.duckduckgo.com/html/" method="get">
-      <input class="search-input" type="search" name="q" placeholder="Search or URL..." autocomplete="off">
+    <form class="search-form" action="https://html.duckduckgo.com/html/" method="get" onsubmit="return handleNavigate(event);">
+      <input id="url-input" class="search-input" type="search" name="q" placeholder="Search or URL..." autocomplete="off">
       <button class="search-btn" type="submit">&#8594;</button>
     </form>
   </div>
@@ -218,5 +218,20 @@
   </div>
 
   <div class="footer">Optimized for 400x400 Circular Display</div>
+
+  <script>
+    function handleNavigate(event) {
+      var input = document.getElementById('url-input').value.trim();
+      if (!input) return false;
+      if (/^https?:\/\//i.test(input)) {
+        window.location.href = input;
+        return false;
+      } else if (/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(\/.*)?$/i.test(input)) {
+        window.location.href = 'https://' + input;
+        return false;
+      }
+      return true;
+    }
+  </script>
 </body>
 </html>

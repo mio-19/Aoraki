@@ -1,0 +1,95 @@
+/*
+ * GTK3 Stylesheet Override for NetSurf on Smartwatch Displays
+ * Tailored for 400x400+ circular AMOLED screens running Wayland
+ */
+
+window, .background {
+    background-color: #000000;
+    color: #f1f5f9;
+}
+
+/* Eliminate desktop menubar borders and bulky frames */
+menubar, .menubar {
+    background-color: #000000;
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+menubar > menuitem {
+    color: #94a3b8;
+    padding: 2px 6px;
+    font-size: 10px;
+}
+
+/* Compact toolbar styled as a watch navigation pill */
+toolbar, .toolbar {
+    background-color: #000000;
+    border: none;
+    padding: 4px 12px;
+    min-height: 34px;
+}
+
+/* Rounded address and search entry */
+entry {
+    background-color: #121824;
+    color: #f1f5f9;
+    border: 1px solid #243044;
+    border-radius: 16px;
+    padding: 2px 10px;
+    min-height: 28px;
+    font-size: 11px;
+    box-shadow: none;
+}
+
+entry:focus {
+    border-color: #00e5ff;
+    background-color: #162030;
+}
+
+/* Touch-friendly circular action buttons */
+button, toolbar button {
+    background-color: #121824;
+    color: #00e5ff;
+    border: 1px solid #243044;
+    border-radius: 14px;
+    min-width: 28px;
+    min-height: 28px;
+    padding: 2px;
+    margin: 1px 2px;
+    box-shadow: none;
+}
+
+button:active, toolbar button:active {
+    background-color: #00e5ff;
+    color: #000000;
+    border-color: #00e5ff;
+}
+
+/* Minimal overlay scrollbars */
+scrollbar {
+    background-color: transparent;
+    border: none;
+    opacity: 0.4;
+}
+
+scrollbar slider {
+    background-color: #334155;
+    border-radius: 4px;
+    min-width: 4px;
+    min-height: 4px;
+}
+
+scrollbar slider:hover, scrollbar slider:active {
+    background-color: #00e5ff;
+}
+
+/* Statusbar hidden or minimal */
+statusbar {
+    background-color: #000000;
+    color: #64748b;
+    font-size: 9px;
+    padding: 0 4px;
+    min-height: 12px;
+    border: none;
+}

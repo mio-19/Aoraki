@@ -162,6 +162,21 @@ nix build ".#nixosConfigurations.my-watch.config.mobile.outputs.android-bootimg"
 nix build ".#nixosConfigurations.my-watch.config.system.build.toplevel"
 ----
 
+== Flashing Smartwatch Devices
+
+Smartwatch images are deployed using Fastboot or custom recovery (TWRP):
+
+[source,bash]
+----
+# Flash boot image (kernel + stage-1 initramfs) to both A/B slots:
+fastboot flash --slot=all boot result/boot.img
+
+# Flash native sparse rootfs image to the main storage partition (userdata):
+fastboot flash userdata result/system.img
+----
+
+TIP: Smartwatch charging docks use magnetic pogo pins that may drop data connections during large fastboot writes. If fastboot encounters USB timeouts or drops, you can boot TWRP recovery temporarily (`fastboot boot twrp.img`) and stream the image directly to the eMMC block device via ADB (`simg2img result/system.img - | adb shell "dd of=/dev/block/bootdevice/by-name/userdata bs=4M"`). Note that this TWRP method is currently experimental and untested; see device-specific notes (e.g. `devices/fossil-hoki/README.md`) for detailed steps.
+
 == Contributing
 
 This is a big topic, and not something about getting started! Though, quickly

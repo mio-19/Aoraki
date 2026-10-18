@@ -47,8 +47,9 @@ in
   services.udisks2.enable = mkDefault false;
   environment.defaultPackages = mkDefault [ ];
 
-  # Flashing method defaults to fastboot
+  # Flashing method defaults to fastboot, destination to userdata partition
   mobile.system.android.flashingMethod = mkDefault "fastboot";
+  mobile.system.android.system_partition_destination = mkDefault "userdata";
 
   # Default stateVersion
   system.stateVersion = mkDefault "26.11";

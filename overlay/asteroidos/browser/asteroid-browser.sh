@@ -11,7 +11,7 @@ SYSTEM_CONFIG="/etc/asteroid-browser/engine.conf"
 
 # Defaults
 DEFAULT_ENGINE="@defaultEngine@"
-[ -z "$DEFAULT_ENGINE" ] && DEFAULT_ENGINE="ladybird"
+[ -z "$DEFAULT_ENGINE" ] && DEFAULT_ENGINE="netsurf"
 ENGINE="$DEFAULT_ENGINE"
 SCALE="0.75"
 URL=""
