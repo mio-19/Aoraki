@@ -3,6 +3,8 @@
   stdenv,
   cpio,
   fetchFromGitHub,
+  fetchurl,
+  runCommand,
   ...
 }:
 
@@ -42,11 +44,30 @@ let
   kernel-builder-gcc8 = mobile-nixos.kernel-builder.override {
     stdenv = stdenvGcc8;
   };
+
+  # Upstream AsteroidOS defconfig for Fossil Gen 6 (hoki):
+  # https://github.com/AsteroidOS/meta-smartwatch/blob/master/meta-hoki/recipes-kernel/linux/linux-hoki/defconfig
+  upstreamDefconfig = fetchurl {
+    url = "https://raw.githubusercontent.com/AsteroidOS/meta-smartwatch/873c865ca06593d239f911b76b09228ddd70eccc/meta-hoki/recipes-kernel/linux/linux-hoki/defconfig";
+    sha256 = "0fk14m3h7qdbyjlidifddrsp76j0wgq5wsg86vzisv65s8ha84as";
+  };
+
+  # Patch upstream defconfig to enable required Bluetooth protocols (RFCOMM, BNEP, HIDP),
+  # Btrfs filesystem support, and transparent Zstandard/XXHash compression.
+  configfile =
+    runCommand "fossil-hoki-defconfig"
+      {
+        upstream = upstreamDefconfig;
+        patch = ./defconfig.patch;
+      }
+      ''
+        patch -p1 -i "$patch" -o "$out" "$upstream"
+      '';
 in
 
 kernel-builder-gcc8 {
   version = "4.14.206";
-  configfile = ./config.armv7;
+  inherit configfile;
 
   src = fetchFromGitHub {
     owner = "fossil-engineering";
