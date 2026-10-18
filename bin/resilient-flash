@@ -188,15 +188,15 @@ def ensure_device_ready(adb_prefix, max_wait=30):
     time.sleep(1.5)
 
   print("\n[!] Error: Smartwatch not detected over ADB within timeout.", file=sys.stderr)
-  print("    Please check that the watch is securely seated on the charging puck", file=sys.stderr)
-  print("    and booted into TWRP recovery.", file=sys.stderr)
+  print("    Please check that the watch is securely seated on the charging puck / magnetic cradle,", file=sys.stderr)
+  print("    booted into TWRP recovery, or try replugging the USB cable / using a different USB port.", file=sys.stderr)
   raise TimeoutError("No ADB recovery device detected")
 
 
 def wait_for_retry(adb_prefix, reason="retry", delay=10):
   """On failure: kill-server, start-server, wait 10s, then attempt writing directly."""
   print(
-      "\n[!] Failure detected (adjust watch on magnetic cradle, or reboot to recovery if needed)."
+      "\n[!] Failure detected (adjust watch on magnetic cradle, reboot to recovery, replug USB cable, or plug into a different USB port if needed)."
   )
   adb_kill_server(adb_prefix, reason=reason)
   adb_start_server(adb_prefix)
