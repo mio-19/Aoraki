@@ -41,6 +41,7 @@ def run_adb(adb_prefix, args, input_bytes=None, timeout=30):
       proc.communicate(timeout=2)
     except Exception:
       pass
+    adb_kill_server(adb_prefix)
     raise TimeoutError(f"ADB command timed out after {timeout}s: {' '.join(cmd)}")
   except Exception as e:
     try:
@@ -48,6 +49,7 @@ def run_adb(adb_prefix, args, input_bytes=None, timeout=30):
       proc.communicate(timeout=2)
     except Exception:
       pass
+    adb_kill_server(adb_prefix)
     raise e
 
 
@@ -68,15 +70,13 @@ def wait_for_device(adb_prefix):
   print(
       "\n[!] Waiting for device to reconnect (adjust watch on magnetic cradle, or reboot to recovery again)..."
   )
-  # Kill potentially stuck ADB daemon to clear hung USB transfers
   adb_kill_server(adb_prefix)
   time.sleep(1)
 
   cycles = 0
   while True:
     cycles += 1
-    # Every 10 attempts (~15 seconds), bounce adb-server in case daemon is wedged
-    if cycles % 10 == 0:
+    if cycles % 5 == 0:
       adb_kill_server(adb_prefix)
       time.sleep(1)
 
@@ -90,8 +90,10 @@ def wait_for_device(adb_prefix):
         if code2 == 0 and b"ping" in out:
           print("[+] Device reconnected and responsive!")
           return
+      else:
+        adb_kill_server(adb_prefix)
     except Exception:
-      pass
+      adb_kill_server(adb_prefix)
     time.sleep(1)
 
 
@@ -196,6 +198,7 @@ def flash_partition(
 
         except Exception as ex:
           sys.stdout.write(f" FAILED: {ex}\n")
+          adb_kill_server(adb_prefix)
           wait_for_device(adb_prefix)
 
     # Sync device filesystem buffers
