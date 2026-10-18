@@ -1,77 +1,93 @@
-# AsteroidOS smartwatch browser powered by WebKitGTK 6.0
+# AsteroidOS smartwatch browser powered by QtWebEngine
 # Architecture inspired by AsteroidOS application suite: https://asteroidos.org/
 {
   lib,
   stdenv,
+  cmake,
   pkg-config,
-  makeWrapper,
-  gtk4,
-  webkitgtk_6_0,
+  qt6,
+  qml-asteroid,
+  virtualkeyboard ? null,
+  virtualkeyboard-rime ? null,
+  qtvirtualkeyboard ? qt6.qtvirtualkeyboard,
+  buildPackages,
 }:
 
-stdenv.mkDerivation {
+let
+  isCross = !stdenv.buildPlatform.canExecute stdenv.hostPlatform;
+in
+stdenv.mkDerivation (finalAttrs: {
   pname = "asteroid-browser";
   version = "1.0.0";
 
   src = ./.;
 
+  strictDeps = true;
+
   nativeBuildInputs = [
+    cmake
     pkg-config
-    makeWrapper
+    qt6.wrapQtAppsHook
+  ];
+
+  cmakeFlags = lib.optionals isCross [
+    "-DQt6QuickTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+    "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+    "-DQt6ShaderToolsTools_DIR=${buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
   ];
 
   buildInputs = [
-    gtk4
-    webkitgtk_6_0
+    qt6.qtbase
+    qt6.qtdeclarative
+    qt6.qtwebengine
+    qml-asteroid
   ];
 
-  buildPhase = ''
-    runHook preBuild
-
-    $CC -O2 src/main.c \
-      $(pkg-config --cflags --libs gtk4 webkitgtk-6.0) \
-      -o asteroid-browser
-
-    runHook postBuild
-  '';
-
-  installPhase = ''
-    runHook preInstall
-
-    mkdir -p $out/bin
-    mkdir -p $out/share/asteroid-browser
-    mkdir -p $out/share/applications
-    mkdir -p $out/share/icons/hicolor/scalable/apps
-
-    # Install compiled binary
-    install -Dm755 asteroid-browser $out/bin/asteroid-browser
-
-    # Install UI assets (watch portal and GTK watch theme)
-    install -Dm644 portal.html $out/share/asteroid-browser/portal.html
-    install -Dm644 watch-gtk.css $out/share/asteroid-browser/watch-gtk.css
-
-    # Install desktop entries
-    install -Dm644 asteroid-browser.desktop $out/share/applications/asteroid-browser.desktop
-    install -Dm644 asteroid-browser.desktop $out/share/applications/org.asteroidos.browser.desktop
-
-    # Install application icons
-    install -Dm644 asteroid-browser.svg $out/share/icons/hicolor/scalable/apps/asteroid-browser.svg
-    install -Dm644 asteroid-browser.svg $out/share/icons/hicolor/scalable/apps/org.asteroidos.browser.svg
-
-    # Wrap binary with Wayland display environment and resource paths
-    wrapProgram $out/bin/asteroid-browser \
-      --set-default GDK_BACKEND "wayland" \
-      --set-default WEBKIT_FORCE_SANDBOX "0" \
-      --set-default ASTEROID_BROWSER_SHARE "$out/share/asteroid-browser"
-
-    runHook postInstall
-  '';
+  qtWrapperArgs = [
+    "--prefix"
+    "QML2_IMPORT_PATH"
+    ":"
+    "${qml-asteroid}/lib/qt-6/qml"
+    "--prefix"
+    "QML2_IMPORT_PATH"
+    ":"
+    "${qt6.qtwebengine}/lib/qt-6/qml"
+    "--set-default"
+    "QT_IM_MODULE"
+    "qtvirtualkeyboard"
+    "--set-default"
+    "QT_VIRTUALKEYBOARD_STYLE"
+    "watch"
+    "--set-default"
+    "ASTEROID_BROWSER_SHARE"
+    "${placeholder "out"}/share/asteroid-browser"
+  ]
+  ++ lib.optionals (qtvirtualkeyboard != null) [
+    "--prefix"
+    "QT_PLUGIN_PATH"
+    ":"
+    "${qtvirtualkeyboard}/lib/qt-6/plugins"
+    "--prefix"
+    "QML2_IMPORT_PATH"
+    ":"
+    "${lib.optionalString (virtualkeyboard != null) "${virtualkeyboard}/lib/qml:"}${
+      lib.optionalString (virtualkeyboard-rime != null) "${virtualkeyboard-rime}/lib/qt-6/qml:"
+    }${qtvirtualkeyboard}/lib/qt-6/qml"
+  ]
+  ++ lib.optionals (virtualkeyboard-rime != null) [
+    "--set-default"
+    "QT_VIRTUALKEYBOARD_LAYOUT_PATH"
+    "${virtualkeyboard-rime}/share/qtvirtualkeyboard/layouts"
+    "--set-default"
+    "RIME_SHARED_DATA_DIR"
+    "${virtualkeyboard-rime}/share/rime-data"
+  ];
 
   meta = with lib; {
-    description = "Smartwatch web browser interface for AsteroidOS powered by WebKitGTK 6.0";
+    description = "Smartwatch web browser interface for AsteroidOS powered by QtWebEngine with virtual keyboard integration";
     homepage = "https://asteroidos.org/";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
     mainProgram = "asteroid-browser";
   };
-}
+})

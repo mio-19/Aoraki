@@ -36,7 +36,10 @@ rec {
   };
 
   browser = callPackage ./browser {
-    inherit (pkgs) gtk4 webkitgtk_6_0;
+    inherit qml-asteroid;
+    virtualkeyboard = assets.virtualkeyboard;
+    inherit virtualkeyboard-rime;
+    qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
   };
 
   telegram = callPackage ./telegram {
