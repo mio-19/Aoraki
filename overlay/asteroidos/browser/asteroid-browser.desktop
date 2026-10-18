@@ -9,4 +9,4 @@ Type=Application
 Categories=Network;WebBrowser;
 StartupNotify=true
 MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
-Keywords=web;browser;internet;ladybird;
+Keywords=web;browser;internet;webkit;

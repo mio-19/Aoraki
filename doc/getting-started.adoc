@@ -179,7 +179,7 @@ TIP: Smartwatch charging docks use magnetic pogo pins that may drop data connect
 
 == Offline Encyclopedias with Kiwix
 
-Smartwatch systems include an offline reader based on Kiwix (`asteroid.apps.kiwix`) and NetSurf. Simply drop any `.zim` archive (from https://library.kiwix.org/[library.kiwix.org]) into `/var/lib/kiwix/` or `~/.local/share/kiwix/` on the watch to browse full-text Wikipedia, Wiktionary, or Project Gutenberg without an active internet connection.
+Smartwatch systems include an offline reader based on Kiwix (`asteroid.apps.kiwix`) and the WebKit-powered AsteroidOS browser. Simply drop any `.zim` archive (from https://library.kiwix.org/[library.kiwix.org]) into `/var/lib/kiwix/` or `~/.local/share/kiwix/` on the watch to browse full-text Wikipedia, Wiktionary, or Project Gutenberg without an active internet connection.
 
 == Contributing
 

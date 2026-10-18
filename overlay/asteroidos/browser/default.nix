@@ -1,84 +1,53 @@
+# AsteroidOS smartwatch browser powered by WebKitGTK 6.0
+# Architecture inspired by AsteroidOS application suite: https://asteroidos.org/
 {
   lib,
   stdenv,
+  pkg-config,
   makeWrapper,
-  engine ? "ladybird",
-  ladybird ? null,
-  netsurf ? null,
-  servo ? null,
-  webkitgtk_6_0 ? null,
-  goanna ? null,
-  virtualkeyboard ? null,
-  virtualkeyboard-rime ? null,
-  qtvirtualkeyboard ? null,
+  gtk4,
+  webkitgtk_6_0,
 }:
 
-assert lib.assertOneOf "engine" engine [
-  "ladybird"
-  "servo"
-  "netsurf"
-  "goanna"
-  "webkit"
-];
-
-let
-  availableEngines = lib.filter (pkg: pkg != null) [
-    ladybird
-    netsurf
-    servo
-    webkitgtk_6_0
-    goanna
-  ];
-
-  extraBinEnv = lib.concatStringsSep " " (
-    lib.optional (ladybird != null) ''--set-default LADYBIRD_BIN "${ladybird}/bin/Ladybird"''
-    ++ lib.optional (netsurf != null) ''--set-default NETSURF_BIN "${netsurf}/bin/netsurf-gtk3"''
-    ++ lib.optional (servo != null) ''--set-default SERVO_BIN "${servo}/bin/servo"''
-    ++ lib.optional (
-      webkitgtk_6_0 != null
-    ) ''--set-default WEBKIT_BIN "${webkitgtk_6_0}/libexec/webkitgtk-6.0/MiniBrowser"''
-    ++ lib.optional (goanna != null) ''--set-default GOANNA_BIN "${goanna}/bin/goanna"''
-  );
-in
-# AsteroidOS smartwatch browser shell and interface abstraction with pluggable rendering backends
-# Architecture inspired by AsteroidOS application suite: https://github.com/AsteroidOS
-# Pluggable engine integration for Ladybird: https://github.com/LadybirdBrowser/ladybird
-# NetSurf browser project: https://www.netsurf-browser.org/
-# Servo parallel browser engine: https://servo.org/
-stdenv.mkDerivation rec {
+stdenv.mkDerivation {
   pname = "asteroid-browser";
   version = "1.0.0";
 
   src = ./.;
 
-  nativeBuildInputs = [ makeWrapper ];
+  nativeBuildInputs = [
+    pkg-config
+    makeWrapper
+  ];
 
-  dontBuild = true;
+  buildInputs = [
+    gtk4
+    webkitgtk_6_0
+  ];
+
+  buildPhase = ''
+    runHook preBuild
+
+    $CC -O2 src/main.c \
+      $(pkg-config --cflags --libs gtk4 webkitgtk-6.0) \
+      -o asteroid-browser
+
+    runHook postBuild
+  '';
 
   installPhase = ''
     runHook preInstall
 
-    mkdir -p $out/bin $out/share/asteroid-browser/engines
+    mkdir -p $out/bin
+    mkdir -p $out/share/asteroid-browser
     mkdir -p $out/share/applications
     mkdir -p $out/share/icons/hicolor/scalable/apps
 
-    # Install main launcher with configured default engine and path substitution
-    substitute asteroid-browser.sh $out/bin/asteroid-browser \
-      --subst-var-by out "$out" \
-      --subst-var-by defaultEngine "${engine}"
-    chmod +x $out/bin/asteroid-browser
+    # Install compiled binary
+    install -Dm755 asteroid-browser $out/bin/asteroid-browser
 
-    # Install engine drivers
-    install -Dm755 engines/ladybird.sh $out/share/asteroid-browser/engines/ladybird.sh
-    install -Dm755 engines/netsurf.sh $out/share/asteroid-browser/engines/netsurf.sh
-    install -Dm755 engines/servo.sh $out/share/asteroid-browser/engines/servo.sh
-    install -Dm755 engines/webkit.sh $out/share/asteroid-browser/engines/webkit.sh
-    install -Dm755 engines/goanna.sh $out/share/asteroid-browser/engines/goanna.sh
-
-    # Install UI assets (watch portal, Qt theme, GTK watch theme, and NetSurf circular AMOLED stylesheet)
+    # Install UI assets (watch portal and GTK watch theme)
     install -Dm644 portal.html $out/share/asteroid-browser/portal.html
-    install -Dm644 watch-theme.qss $out/share/asteroid-browser/watch-theme.qss
-    install -Dm644 watch-round.css $out/share/asteroid-browser/watch-round.css
     install -Dm644 watch-gtk.css $out/share/asteroid-browser/watch-gtk.css
 
     # Install desktop entries
@@ -89,33 +58,17 @@ stdenv.mkDerivation rec {
     install -Dm644 asteroid-browser.svg $out/share/icons/hicolor/scalable/apps/asteroid-browser.svg
     install -Dm644 asteroid-browser.svg $out/share/icons/hicolor/scalable/apps/org.asteroidos.browser.svg
 
-    # Wrap launcher with engine binaries, configured default engine, and virtual keyboard
+    # Wrap binary with Wayland display environment and resource paths
     wrapProgram $out/bin/asteroid-browser \
-      ${
-        lib.optionalString (availableEngines != [ ]) "--prefix PATH : ${lib.makeBinPath availableEngines}"
-      } \
-      --set ASTEROID_BROWSER_DEFAULT_ENGINE "${engine}" \
-      ${extraBinEnv} \
-      ${lib.optionalString (qtvirtualkeyboard != null) ''
-        --set-default QT_IM_MODULE "qtvirtualkeyboard" \
-        --set-default QT_VIRTUALKEYBOARD_STYLE "watch" \
-        --prefix QT_PLUGIN_PATH : "${qtvirtualkeyboard}/lib/qt-6/plugins" \
-        --prefix QML2_IMPORT_PATH : "${
-          lib.optionalString (virtualkeyboard != null) "${virtualkeyboard}/lib/qml:"
-        }${
-          lib.optionalString (virtualkeyboard-rime != null) "${virtualkeyboard-rime}/lib/qt-6/qml:"
-        }${qtvirtualkeyboard}/lib/qt-6/qml" \
-        ${lib.optionalString (virtualkeyboard-rime != null) ''
-          --set-default QT_VIRTUALKEYBOARD_LAYOUT_PATH "${virtualkeyboard-rime}/share/qtvirtualkeyboard/layouts" \
-          --set-default RIME_SHARED_DATA_DIR "${virtualkeyboard-rime}/share/rime-data" \
-        ''}
-      ''}
+      --set-default GDK_BACKEND "wayland" \
+      --set-default WEBKIT_FORCE_SANDBOX "0" \
+      --set-default ASTEROID_BROWSER_SHARE "$out/share/asteroid-browser"
 
     runHook postInstall
   '';
 
   meta = with lib; {
-    description = "Smartwatch web browser interface for AsteroidOS with build-time pluggable engine selection";
+    description = "Smartwatch web browser interface for AsteroidOS powered by WebKitGTK 6.0";
     homepage = "https://asteroidos.org/";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;

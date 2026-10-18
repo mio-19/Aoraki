@@ -15,28 +15,10 @@ in
 
     browser = {
       enable = lib.mkEnableOption "AsteroidOS smartwatch web browser";
-
-      engine = lib.mkOption {
-        type = lib.types.enum [
-          "ladybird"
-          "servo"
-          "netsurf"
-          "goanna"
-          "webkit"
-        ];
-        default = "ladybird";
-        description = "Rendering engine backend for asteroid-browser built into the watch system.";
-      };
     };
   };
 
   config = mkIf cfg.enable {
-    # System-wide AsteroidOS browser engine selection configuration
-    environment.etc = lib.mkIf cfg.browser.enable {
-      "asteroid-browser/engine.conf".text = ''
-        ENGINE="${cfg.browser.engine}"
-      '';
-    };
 
     # Watch system beautification and silent boot
     mobile.beautification = {
@@ -83,9 +65,7 @@ in
         asteroid.apps.twenty48
       ]
       ++ lib.optionals cfg.browser.enable [
-        (asteroid.apps.browser.override {
-          engine = cfg.browser.engine;
-        })
+        asteroid.apps.browser
         asteroid.apps.kiwix
       ]
       ++ (with pkgs; [

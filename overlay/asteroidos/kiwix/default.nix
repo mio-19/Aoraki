@@ -58,7 +58,7 @@ stdenv.mkDerivation {
   '';
 
   meta = with lib; {
-    description = "Offline Wikipedia and reference reader adapted for smartwatches using kiwix-tools and NetSurf";
+    description = "Offline Wikipedia and reference reader adapted for smartwatches using kiwix-tools and asteroid-browser";
     homepage = "https://www.kiwix.org/";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;

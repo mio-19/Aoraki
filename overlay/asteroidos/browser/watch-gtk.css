@@ -1,95 +1,106 @@
 /*
- * GTK3 Stylesheet Override for NetSurf on Smartwatch Displays
- * Tailored for 400x400+ circular AMOLED screens running Wayland
+ * AsteroidOS Smartwatch GTK4 Stylesheet
+ * High-contrast AMOLED pitch black styling with circular display safe margins
+ * Architecture reference: https://asteroidos.org/
  */
 
 window, .background {
     background-color: #000000;
-    color: #f1f5f9;
+    color: #f0f4f8;
 }
 
-/* Eliminate desktop menubar borders and bulky frames */
-menubar, .menubar {
+/* Safe-area navigation header padded for round smartwatches (320px to 454px) */
+.asteroid-header {
     background-color: #000000;
-    border: none;
-    padding: 0;
-    margin: 0;
+    padding-top: 8px;
+    padding-bottom: 6px;
+    padding-left: 28px;
+    padding-right: 28px;
+    border-bottom: 1px solid #1a2233;
 }
 
-menubar > menuitem {
-    color: #94a3b8;
-    padding: 2px 6px;
-    font-size: 10px;
-}
-
-/* Compact toolbar styled as a watch navigation pill */
-toolbar, .toolbar {
-    background-color: #000000;
-    border: none;
-    padding: 4px 12px;
-    min-height: 34px;
-}
-
-/* Rounded address and search entry */
-entry {
+/* Asteroid pill address and search input */
+.asteroid-url-entry {
     background-color: #121824;
-    color: #f1f5f9;
+    color: #f0f4f8;
     border: 1px solid #243044;
     border-radius: 16px;
-    padding: 2px 10px;
-    min-height: 28px;
+    padding: 3px 10px;
     font-size: 11px;
+    outline: none;
     box-shadow: none;
 }
 
-entry:focus {
+.asteroid-url-entry:focus {
     border-color: #00e5ff;
     background-color: #162030;
+    box-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
 }
 
-/* Touch-friendly circular action buttons */
-button, toolbar button {
+/* Circular touch navigation buttons */
+.asteroid-nav-btn {
     background-color: #121824;
     color: #00e5ff;
     border: 1px solid #243044;
-    border-radius: 14px;
-    min-width: 28px;
-    min-height: 28px;
-    padding: 2px;
-    margin: 1px 2px;
+    border-radius: 16px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    margin: 0 1px;
+    font-size: 13px;
+    font-weight: bold;
     box-shadow: none;
 }
 
-button:active, toolbar button:active {
+.asteroid-nav-btn:hover, .asteroid-nav-btn:active {
     background-color: #00e5ff;
     color: #000000;
     border-color: #00e5ff;
+}
+
+.asteroid-nav-btn:disabled {
+    color: #475569;
+    background-color: #0b0f19;
+    border-color: #1e293b;
+    opacity: 0.6;
+}
+
+/* Thin cyan progress indicator */
+.asteroid-progress-bar {
+    min-height: 2px;
+    max-height: 2px;
+}
+
+.asteroid-progress-bar trough {
+    background-color: transparent;
+    border: none;
+    min-height: 2px;
+}
+
+.asteroid-progress-bar progress {
+    background-color: #00e5ff;
+    border: none;
+    min-height: 2px;
+}
+
+/* AMOLED Web View */
+.asteroid-webview {
+    background-color: #000000;
 }
 
 /* Minimal overlay scrollbars */
 scrollbar {
     background-color: transparent;
     border: none;
-    opacity: 0.4;
 }
 
 scrollbar slider {
-    background-color: #334155;
+    background-color: rgba(0, 229, 255, 0.35);
     border-radius: 4px;
     min-width: 4px;
     min-height: 4px;
 }
 
-scrollbar slider:hover, scrollbar slider:active {
-    background-color: #00e5ff;
-}
-
-/* Statusbar hidden or minimal */
-statusbar {
-    background-color: #000000;
-    color: #64748b;
-    font-size: 9px;
-    padding: 0 4px;
-    min-height: 12px;
-    border: none;
+scrollbar slider:hover {
+    background-color: rgba(0, 229, 255, 0.7);
 }

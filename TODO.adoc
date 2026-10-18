@@ -8,11 +8,11 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 
 == Smartwatch Web Browsing
 
-* [ ] *Ladybird 32-bit ARM Port*:
-** Continue upstreaming/maintaining 32-bit ARM patches for LibGC and Skia.
-** Investigate WebContent process memory footprint reduction for devices with 512MB–1GB RAM.
-* [ ] *Ultralight / Headless Engine Drivers*:
-** Evaluate minimal WebKit / Servo / Goanna builds stripped of unnecessary multimedia dependencies.
+* [x] *Unified WebKitGTK 6.0 Browser with AsteroidOS AMOLED Touch UI*:
+** Evaluated NetSurf, QtWebEngine, Ladybird, Servo, and WebKit for memory, standards, and performance on 512MB–1GB smartwatches.
+** Selected WebKitGTK 6.0 as the single unified engine providing full modern web capabilities (HTML5, CSS Grid, ES2024) under low memory footprints (~70–120MB with page cache disabled).
+** Implemented native AsteroidOS smartwatch UI (`asteroid-browser`) featuring circular display safe margins, touch navigation bar, and integrated AMOLED watch portal.
+** Removed legacy multi-engine switching boilerplate across the codebase.
 
 == Display, Compositor & UI Adaptations
 

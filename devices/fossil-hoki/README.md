@@ -156,7 +156,7 @@ dmesg | grep -iE "msm|drm|bluetooth|wlan|touch"
 
 ## Kiwix Offline Wikipedia & Reference Reader
 
-The watch environment includes Kiwix (`asteroid.apps.kiwix`) paired with an ultra-lightweight NetSurf browser backend. To load offline encyclopedias or books:
+The watch environment includes Kiwix (`asteroid.apps.kiwix`) paired with the WebKit-powered AsteroidOS smartwatch browser. To load offline encyclopedias or books:
 
 1. Download `.zim` files from [library.kiwix.org](https://library.kiwix.org/) (e.g. *Wikipedia Simple English*, *Wiktionary*, or *Project Gutenberg*).
 2. Transfer the `.zim` file to the watch over USB or SSH:

@@ -36,15 +36,7 @@ rec {
   };
 
   browser = callPackage ./browser {
-    engine = "netsurf";
-    ladybird = null;
-    netsurf = pkgs.netsurf-browser or null;
-    servo = null;
-    webkitgtk_6_0 = null;
-    goanna = null;
-    virtualkeyboard = assets.virtualkeyboard;
-    inherit virtualkeyboard-rime;
-    qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
+    inherit (pkgs) gtk4 webkitgtk_6_0;
   };
 
   telegram = callPackage ./telegram {
