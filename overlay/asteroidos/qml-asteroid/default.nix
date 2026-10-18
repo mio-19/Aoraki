@@ -6,6 +6,7 @@
   pkg-config,
   qt6,
   kdePackages,
+  buildPackages,
 }:
 
 stdenv.mkDerivation rec {
@@ -23,7 +24,6 @@ stdenv.mkDerivation rec {
     cmake
     kdePackages.extra-cmake-modules
     pkg-config
-    qt6.qtdeclarative
   ];
 
   buildInputs = [
@@ -34,21 +34,33 @@ stdenv.mkDerivation rec {
     qt6.qtwayland
   ];
 
+  postPatch = ''
+        substituteInPlace CMakeLists.txt \
+          --replace-fail 'find_package(Mapplauncherd_qt6 MODULE REQUIRED)' ""
+        substituteInPlace src/app/CMakeLists.txt \
+          --replace-fail 'Mapplauncherd_qt6::Mapplauncherd_qt6' ""
+        substituteInPlace src/app/asteroidapp.cpp \
+          --replace-fail '#include <MDeclarativeCache>' '#include <QGuiApplication>
+    #include <QQuickView>
+    namespace MDeclarativeCache { inline QGuiApplication *qApplication(int &argc, char **argv) { return new QGuiApplication(argc, argv); } inline QQuickView *qQuickView() { return new QQuickView(); } }'
+  '';
+
   cmakeFlags = [
-    "-DWITH_ASTEROIDAPP=OFF"
+    "-DWITH_ASTEROIDAPP=ON"
     "-DWITH_CMAKE_MODULES=ON"
+    "-DECM_DIR=${kdePackages.extra-cmake-modules}/share/ECM/cmake"
+    "-DQt6Quick_DIR=${qt6.qtdeclarative}/lib/cmake/Qt6Quick"
+    "-DQt6Qml_DIR=${qt6.qtdeclarative}/lib/cmake/Qt6Qml"
+    "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+    "-DQt6QuickTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+    "-DQt6ShaderToolsTools_DIR=${buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
   ];
 
   dontWrapQtApps = true;
 
   postInstall = ''
-    mkdir -p $out/lib/cmake/AsteroidApp6 $out/lib/cmake/asteroidapp6
-    cat << 'EOF' > $out/lib/cmake/AsteroidApp6/AsteroidApp6Config.cmake
-    get_filename_component(_dir "''${CMAKE_CURRENT_LIST_DIR}/../../../share/asteroidapp/cmake" ABSOLUTE)
-    set(ASTEROID_MODULE_PATH "''${_dir}")
-    set(AsteroidApp6_FOUND TRUE)
-    EOF
-    cp $out/lib/cmake/AsteroidApp6/AsteroidApp6Config.cmake $out/lib/cmake/asteroidapp6/asteroidapp6-config.cmake
+    mkdir -p $out/lib/cmake/AsteroidApp6
+    cp -r $out/lib/cmake/asteroidapp6/* $out/lib/cmake/AsteroidApp6/ || true
   '';
 
   meta = with lib; {

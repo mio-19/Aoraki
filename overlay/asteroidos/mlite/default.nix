@@ -5,6 +5,7 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  cmake,
   pkg-config,
   qt6,
   dconf,
@@ -22,14 +23,15 @@ stdenv.mkDerivation rec {
     hash = "sha256-rtWtDJhSUpamqj61aLr2QTopY9QfighPcMlUxdACTlg=";
   };
 
-  nativeBuildInputs = [
-    pkg-config
-    qt6.qmake
-  ];
-
-  postPatch = ''
-    substituteInPlace mlite.pro --replace-fail 'tests' ""
+  preConfigure = ''
+    cp ${./CMakeLists.txt} CMakeLists.txt
   '';
+
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+    qt6.wrapQtAppsHook
+  ];
 
   buildInputs = [
     qt6.qtbase
@@ -38,31 +40,6 @@ stdenv.mkDerivation rec {
   ];
 
   dontWrapQtApps = true;
-
-  qmakeFlags = [
-    "PREFIX=$(out)"
-  ];
-
-  installFlags = [
-    "INSTALL_ROOT=$(out)"
-  ];
-
-  postInstall = ''
-    mkdir -p $out/lib $out/include
-    if [ -d "$out/usr/include" ]; then
-      cp -r $out/usr/include/* $out/include/
-      rm -rf $out/usr
-    fi
-    STORE_LIB=$(find $out/nix/store -name "lib" -type d | head -n 1)
-    if [ -n "$STORE_LIB" ] && [ -d "$STORE_LIB" ]; then
-      cp -r $STORE_LIB/* $out/lib/
-      rm -rf $out/nix
-    fi
-    if [ -f "$out/lib/pkgconfig/mlite6.pc" ]; then
-      sed -i "s|^prefix=.*|prefix=$out|" "$out/lib/pkgconfig/mlite6.pc"
-      sed -i "s|^includedir=.*|includedir=$out/include/mlite6|" "$out/lib/pkgconfig/mlite6.pc"
-    fi
-  '';
 
   meta = with lib; {
     description = "MeeGo Touch Framework utilities and configuration item classes";

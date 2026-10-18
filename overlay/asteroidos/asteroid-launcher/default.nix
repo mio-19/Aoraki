@@ -33,8 +33,11 @@ stdenv.mkDerivation rec {
     cmake
     kdePackages.extra-cmake-modules
     pkg-config
-    qt6.qtdeclarative
     qt6.wrapQtAppsHook
+  ];
+
+  cmakeFlags = [
+    "-DECM_DIR=${kdePackages.extra-cmake-modules}/share/ECM/cmake"
   ];
 
   buildInputs = [

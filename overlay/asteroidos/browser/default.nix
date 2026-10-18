@@ -9,6 +9,7 @@
   webkitgtk_6_0 ? null,
   goanna ? null,
   virtualkeyboard ? null,
+  virtualkeyboard-rime ? null,
   qtvirtualkeyboard ? null,
 }:
 
@@ -110,7 +111,13 @@ stdenv.mkDerivation rec {
         --prefix QT_PLUGIN_PATH : "${qtvirtualkeyboard}/lib/qt-6/plugins" \
         --prefix QML2_IMPORT_PATH : "${
           lib.optionalString (virtualkeyboard != null) "${virtualkeyboard}/lib/qml:"
-        }${qtvirtualkeyboard}/lib/qt-6/qml"
+        }${
+          lib.optionalString (virtualkeyboard-rime != null) "${virtualkeyboard-rime}/lib/qt-6/qml:"
+        }${qtvirtualkeyboard}/lib/qt-6/qml" \
+        ${lib.optionalString (virtualkeyboard-rime != null) ''
+          --set-default QT_VIRTUALKEYBOARD_LAYOUT_PATH "${virtualkeyboard-rime}/share/qtvirtualkeyboard/layouts" \
+          --set-default RIME_SHARED_DATA_DIR "${virtualkeyboard-rime}/share/rime-data" \
+        ''}
       ''}
 
     runHook postInstall

@@ -5,8 +5,10 @@
   lib,
   stdenv,
   fetchFromGitHub,
+  cmake,
   pkg-config,
   qt6,
+  buildPackages,
 }:
 
 stdenv.mkDerivation rec {
@@ -20,9 +22,18 @@ stdenv.mkDerivation rec {
     hash = "sha256-kOjzaF6Xu1D06V8Dq9i0mUXwROH0rXTNC2zVnbiYUHI=";
   };
 
+  preConfigure = ''
+    cp ${./CMakeLists.txt} CMakeLists.txt
+  '';
+
   nativeBuildInputs = [
+    cmake
     pkg-config
-    qt6.qmake
+  ];
+
+  cmakeFlags = [
+    "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+    "-DQt6QuickTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
   ];
 
   buildInputs = [
@@ -31,31 +42,6 @@ stdenv.mkDerivation rec {
   ];
 
   dontWrapQtApps = true;
-
-  qmakeFlags = [
-    "PREFIX=$(out)"
-  ];
-
-  installFlags = [
-    "INSTALL_ROOT=$(out)"
-  ];
-
-  postInstall = ''
-    mkdir -p $out/lib $out/include
-    if [ -d "$out/usr/include" ]; then
-      cp -r $out/usr/include/* $out/include/
-      rm -rf $out/usr
-    fi
-    STORE_LIB=$(find $out/nix/store -name "lib" -type d | head -n 1)
-    if [ -n "$STORE_LIB" ] && [ -d "$STORE_LIB" ]; then
-      cp -r $STORE_LIB/* $out/lib/
-      rm -rf $out/nix
-    fi
-    if [ -f "$out/lib/pkgconfig/ambermpris6.pc" ]; then
-      sed -i "s|^prefix=.*|prefix=$out|" "$out/lib/pkgconfig/ambermpris6.pc"
-      sed -i "s|^includedir=.*|includedir=$out/include/AmberMpris|" "$out/lib/pkgconfig/ambermpris6.pc"
-    fi
-  '';
 
   meta = with lib; {
     description = "Qt and QML MPRIS interface and adaptor";
