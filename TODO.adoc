@@ -56,3 +56,14 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 ** Integrate `cachix/cachix-action` into `.github/workflows/ci.yml` with auth token secret to automatically upload build outputs.
 ** Cache cross-compiled kernels, rootfs closures, and AsteroidOS UI components to avoid long local compilation times.
 
+== Kernel, Storage & Stage-1 Boot Architecture
+
+* [ ] *Stage-1 Partition Discovery & UDev Trigger Upstreaming*:
+** Android vendor kernels feature synthetic sysfs nodes (such as `/sys/class/android_usb`) that reject synthetic `udevadm trigger --action=add` uevents with `EINVAL` (exit code 1). Upstream a filter or ignore rule in Mobile NixOS `boot/init/tasks/udev.rb` instead of rescuing generic `CommandError`.
+** Replace the temporary fallback in `ensure_partition_links()` once upstream stage-1 udev rules cleanly parse GPT partition names on 32-bit ARM downstream Qualcomm kernels.
+* [ ] *Btrfs Transparent Compression Evaluation on Smartwatches*:
+** Downstream Qualcomm 4.14 vendor kernel currently fails to mount Btrfs root partitions (`mount -t btrfs`), necessitating ext4 as the standard root filesystem.
+** Investigate backporting modern Btrfs fixes or kernel upgrade (4.19 / mainlined kernel) to allow zstd transparent rootfs compression on eMMC.
+* [ ] *Stage-2 Graphical Compositor Configuration on Qualcomm MDSS fbdev*:
+** Configure `asteroid-launcher` (Lipstick QtWayland compositor) to render on Qualcomm Mobile Display Subsystem (`/dev/fb0`) via `eglfs` / `linuxfb`.
+

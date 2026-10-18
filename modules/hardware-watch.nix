@@ -109,6 +109,21 @@ in
         for safe prolonged skin contact on the wrist.
       '';
     };
+
+    debug = {
+      enable = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Enables debug facilities for smartwatch development:
+          - Visible kernel and systemd console on display (console=tty0, consoleblank=0)
+          - Non-silent boot (shows boot progress and service startup status)
+          - USB CDC Ethernet networking (192.168.2.15 / 172.16.42.1)
+          - OpenSSH server with root access for inspection and recovery
+          - Early stage-1 SSH and networking fallback
+        '';
+      };
+    };
   };
 
   config = mkIf (config.mobile.enable && watchCfg.enable) {

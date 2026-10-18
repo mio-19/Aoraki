@@ -22,11 +22,14 @@ class Tasks::UDev < SingletonTask
 
   def run()
     udevd
+    # TODO: Upstream Android kernels have synthetic sysfs nodes (e.g. android_usb) that reject
+    # synthetic uevents with EINVAL. Long-term fix is upstreaming filtering in mobile-nixos udev task.
     begin
       udevadm("trigger", "--action=add")
     rescue System::CommandError => e
       $logger.warn("udevadm trigger non-fatal warning (proceeding): #{e.message}")
     end
+    # TODO: Android synthetic devices may never settle, causing settle timeout.
     begin
       udevadm("settle", "--timeout=10")
     rescue System::CommandError => e
@@ -36,6 +39,8 @@ class Tasks::UDev < SingletonTask
     ensure_partition_links
   end
 
+  # TODO: Temporary workaround until udev rules reliably parse GPT/Android partition tables on 4.14 downstream kernels.
+  # Ensures /dev/disk/by-label/NIXOS_SYSTEM and /dev/disk/by-partlabel/userdata point to the userdata block device.
   def ensure_partition_links()
     FileUtils.mkdir_p("/dev/disk/by-partlabel")
     FileUtils.mkdir_p("/dev/disk/by-label")

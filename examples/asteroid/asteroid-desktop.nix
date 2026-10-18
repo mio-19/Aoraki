@@ -20,9 +20,9 @@ in
 
   config = mkIf cfg.enable {
 
-    # Watch system beautification and silent boot
+    # Watch system beautification and boot visibility
     mobile.beautification = {
-      silentBoot = mkDefault true;
+      silentBoot = mkDefault false;
       splash = mkDefault true;
     };
 
