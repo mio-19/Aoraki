@@ -75,8 +75,8 @@ module Tasks
         failed_dependencies = failed_tasks.map(&:dependencies).inject(:+).uniq.reject(&:fulfilled?)
 
         if elapsed > HUNG_BOOT_NOTIFICATION
-          label = "#{failed_tasks.length} tasks are waiting on #{failed_dependencies.length} unique dependencies.\n\n" +
-            "(#{(HUNG_BOOT_TIMEOUT - elapsed).ceil} seconds left until boot is aborted.)"
+          label = "#{failed_tasks.length} tasks waiting on #{failed_dependencies.length} dependencies\n" +
+            "(#{(HUNG_BOOT_TIMEOUT - elapsed).ceil}s before abort)"
 
           Progress.update({label: label, hung: elapsed})
         end

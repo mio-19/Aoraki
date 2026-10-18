@@ -22,16 +22,8 @@ class Tasks::UDev < SingletonTask
 
   def run()
     udevd
-    begin
-      udevadm("trigger", "--action=add", "--wait-daemon")
-    rescue System::CommandError => e
-      $logger.warn("udevadm trigger non-fatal warning (ignored): #{e.message}")
-    end
-    begin
-      udevadm("settle", "--timeout=10")
-    rescue System::CommandError => e
-      $logger.warn("udevadm settle non-fatal warning (ignored): #{e.message}")
-    end
+    udevadm("trigger", "--action=add", "--wait-daemon")
+    udevadm("settle", "--timeout=15")
   end
 
   def udevd()
@@ -46,10 +38,6 @@ class Tasks::UDev < SingletonTask
   end
 
   def teardown()
-    begin
-      udevadm("control", "--exit")
-    rescue System::CommandError => e
-      $logger.warn("udevadm exit non-fatal warning (ignored): #{e.message}")
-    end
+    udevadm("control", "--exit")
   end
 end

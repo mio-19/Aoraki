@@ -56,20 +56,32 @@
     "dtbs/sda429-hoki.dtb"
   ];
 
+  # Kernel parameters matching upstream AsteroidOS / Android bootloader configuration
+  # Reference: https://github.com/AsteroidOS/meta-smartwatch/blob/master/meta-hoki/recipes-kernel/linux/linux-hoki/img_info
   boot.kernelParams = [
     "console=ttyMSM0,115200,n8"
     "androidboot.console=ttyMSM0"
     "androidboot.hardware=hoki"
+    "androidboot.selinux=permissive"
+    "audit=0"
     "user_debug=30"
     "msm_rtb.filter=0x237"
     "ehci-hcd.park=3"
+    "androidboot.bootdevice=7824900.sdhci"
     "lpm_levels.sleep_disabled=1"
     "earlycon=msm_serial_dm,0x78b0000"
     "vmalloc=300M"
+    "androidboot.usbconfigfs=true"
     "loop.max_part=7"
+    "cgroup.memory=nokmem,nosocket"
   ];
 
   mobile.system.type = "android";
+
+  # Ensure stage-1 udev immediately links userdata to /dev/disk/by-label/NIXOS_SYSTEM
+  mobile.boot.stage-1.extraUdevRules = ''
+    ENV{ID_PART_ENTRY_NAME}=="userdata", SYMLINK+="disk/by-label/NIXOS_SYSTEM"
+  '';
 
   environment.systemPackages = [
     pkgs.alsa-utils

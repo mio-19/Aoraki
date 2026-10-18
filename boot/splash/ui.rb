@@ -183,7 +183,8 @@ class UI
     @label.set_long_mode(LVGL::LABEL_LONG::BREAK)
     @label.set_align(LVGL::LABEL_ALIGN::CENTER)
 
-    @label.set_width(@page.get_width * 0.9)
+    round = @screen.get_width == @screen.get_height && @screen.get_width <= 500
+    @label.set_width(round ? (@page.get_width * 0.70).to_i : (@page.get_width * 0.9).to_i)
     @label.set_pos(*center(@label, 0, @spacing))
     @label.set_text("")
   end

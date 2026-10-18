@@ -43,10 +43,12 @@ class UI
 
   def add_title_bar()
     @title_bar = LVGL::LVContainer.new(@screen)
-    @title_bar.set_width(@screen.get_width())
+    top_offset = round_screen? ? 5 * unit : 0
+    title_width = get_pane_width()
+    title_x = (@screen.get_width() - title_width) / 2
+    @title_bar.set_width(title_width)
     @title_bar.set_height(round_screen? ? 10 * unit : 16 * unit)
-    top_offset = round_screen? ? 2 * unit : 0
-    @title_bar.set_pos(0, top_offset)
+    @title_bar.set_pos(title_x, top_offset)
 
     @title_bar.get_style(LVGL::CONT_STYLE::MAIN).dup.tap do |style|
       @title_bar.set_style(LVGL::CONT_STYLE::MAIN, style)
@@ -63,12 +65,16 @@ class UI
 
   def add_actions_pane()
     @actions_pane = LVGL::LVContainer.new(@screen)
-    @actions_pane.set_width(get_pane_width())
+    pane_width = get_pane_width()
+    pane_x = (@screen.get_width() - pane_width) / 2
+    @actions_pane.set_width(pane_width)
 
     # When horizontal, we know it's placed to the right, full height.
     if horizontal?
       @actions_pane.set_height(@screen.get_height() - @title_bar.get_height())
       @actions_pane.set_pos(get_pane_width(), @title_bar.get_height())
+    else
+      @actions_pane.set_pos(pane_x, 0)
     end
 
     @actions_pane.get_style(LVGL::CONT_STYLE::MAIN).dup.tap do |style|
@@ -85,8 +91,10 @@ class UI
 
   def add_messages_pane()
     @messages_pane = LVGL::LVPage.new(@screen)
-    @messages_pane.set_width(get_pane_width())
-    @messages_pane.set_pos(0, @title_bar.get_height() + (round_screen? ? 2 * unit : 0))
+    pane_width = get_pane_width()
+    pane_x = (@screen.get_width() - pane_width) / 2
+    @messages_pane.set_width(pane_width)
+    @messages_pane.set_pos(pane_x, @title_bar.get_height() + (round_screen? ? 4 * unit : 0))
 
     # When horizontal, full height
     if horizontal?
@@ -214,7 +222,8 @@ class UI
 
       # Always push it as far down as possible, respecting round screen insets!
       bottom_margin = round_screen? ? 6 * unit : 0
-      @actions_pane.set_pos(0, @screen.get_height() - @actions_pane.get_height() - bottom_margin)
+      pane_x = (@screen.get_width() - get_pane_width()) / 2
+      @actions_pane.set_pos(pane_x, @screen.get_height() - @actions_pane.get_height() - bottom_margin)
 
       @messages_pane.set_height(
         @actions_pane.get_y() - @messages_pane.get_y()
@@ -239,7 +248,7 @@ class UI
   # Updates the UI with the time left.
   def set_time_left(value)
     if value
-      @time_left.set_text("#{value} seconds left before crashing.")
+      @time_left.set_text("#{value}s before reboot")
     else
       @time_left.set_text("Select an option:")
     end
@@ -253,6 +262,8 @@ class UI
   def get_pane_width()
     if horizontal?
       @screen.get_width() / 2
+    elsif round_screen?
+      (@screen.get_width() * 0.74).to_i
     else
       @screen.get_width()
     end
