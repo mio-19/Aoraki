@@ -53,11 +53,15 @@ in
       # Rounded up to 110MiB.
       minimumSize = config.helpers.size.MiB 110;
 
-      computeMinimalSize = "";
+      computeMinimalSize = ''
+        # Btrfs metadata overhead and compression buffer space before shrinking
+        size=$(( size + (size * 10 / 100) + 150 * 1024 * 1024 ))
+      '';
 
       buildPhases = {
         copyPhase = ''
           mkfs.btrfs \
+            -f \
             -r . \
             ${optionalString (config.btrfs.compression != null) "--compress ${config.btrfs.compression}"} \
             ${optionalString (partitionID != null) "-U ${partitionID}"} \

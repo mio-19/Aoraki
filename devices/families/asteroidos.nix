@@ -30,6 +30,23 @@ in
   # Watches are embedded appliances; disable installer tools to shrink image and avoid heavy cross-compilation
   system.disableInstallerTools = mkDefault true;
 
+  # Disable documentation and manual pages on constrained smartwatch storage to shrink closure
+  documentation = {
+    enable = mkDefault false;
+    man.enable = mkDefault false;
+    doc.enable = mkDefault false;
+    info.enable = mkDefault false;
+    nixos.enable = mkDefault false;
+  };
+
+  # Disable heavy desktop/server utilities not used on smartwatches
+  programs.command-not-found.enable = mkDefault false;
+  services.lvm.enable = mkDefault false;
+  boot.bcache.enable = mkDefault false;
+  services.logrotate.enable = mkDefault false;
+  services.udisks2.enable = mkDefault false;
+  environment.defaultPackages = mkDefault [ ];
+
   # Flashing method defaults to fastboot
   mobile.system.android.flashingMethod = mkDefault "fastboot";
 
@@ -49,4 +66,7 @@ in
 
   # Increase stage-1 failure delay to 60s so errors can be inspected on wrist without immediate reboot
   mobile.boot.stage-1.fail.delay = mkDefault 60;
+
+  # Default to Btrfs root filesystem with transparent Zstandard compression to save eMMC space and reduce wear
+  mobile.generatedFilesystems.rootfs.filesystem = lib.mkOverride 900 "btrfs";
 }

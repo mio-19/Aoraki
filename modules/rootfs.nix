@@ -46,9 +46,9 @@ in
   config = mkIf (config.mobile.rootfs.enableDefaultConfiguration) {
     boot.growPartition = lib.mkDefault true;
 
-    mobile.generatedFilesystems.rootfs = lib.mkDefault {
-      filesystem = "ext4";
-      label = "NIXOS_SYSTEM";
+    mobile.generatedFilesystems.rootfs = {
+      filesystem = lib.mkDefault "ext4";
+      label = lib.mkDefault "NIXOS_SYSTEM";
       ext4.partitionID = "44444444-4444-4444-8888-888888888888";
       btrfs.partitionID = "44444444-4444-4444-8888-888888888888";
       btrfs.compression = "zstd:3";

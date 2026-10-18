@@ -19,17 +19,6 @@ in
         default = false;
         description = "Whether to install the AsteroidOS web browser package (opt-in for wearable devices).";
       };
-      engine = lib.mkOption {
-        type = lib.types.enum [
-          "ladybird"
-          "servo"
-          "netsurf"
-          "goanna"
-          "webkit"
-        ];
-        default = "netsurf";
-        description = "Rendering engine backend for asteroid-browser built into the watch system.";
-      };
     };
   };
 
@@ -100,9 +89,7 @@ in
         asteroid.community-apps.touchdown
       ]
       ++ lib.optionals cfg.browser.enable [
-        (asteroid.browser.override {
-          engine = cfg.browser.engine;
-        })
+        asteroid.browser
       ];
 
     # BlueZ dual-mode controller configuration (simultaneous BLE sync and Classic BT profiles)
