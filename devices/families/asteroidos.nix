@@ -69,6 +69,6 @@ in
   # Increase stage-1 failure delay to 60s so errors can be inspected on wrist without immediate reboot
   mobile.boot.stage-1.fail.delay = mkDefault 60;
 
-  # Default to Btrfs root filesystem with transparent Zstandard compression to save eMMC space and reduce wear
-  mobile.generatedFilesystems.rootfs.filesystem = lib.mkOverride 900 "btrfs";
+  # Default to ext4 root filesystem for compatibility across vendor kernels
+  mobile.generatedFilesystems.rootfs.filesystem = mkDefault "ext4";
 }
