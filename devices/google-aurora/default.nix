@@ -54,9 +54,8 @@ in
     manufacturer = "Google";
   };
 
-  # Marked "broken": initial machine configuration ported from AsteroidOS
-  # meta-aurora. Out-of-tree vendor modules remain to be integrated.
-  mobile.device.supportLevel = "broken";
+  # Ported machine configuration from AsteroidOS meta-aurora.
+  mobile.device.supportLevel = "best-effort";
 
   mobile.hardware = {
     # Qualcomm Snapdragon W5 Gen 1 (SW5100 / Monaco), quad-core Cortex-A53.
