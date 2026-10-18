@@ -118,4 +118,18 @@
     rev = "991329e453854593094cea018f6412f7e2e654bd";
     sha256 = "0k40pvvd9nhsj228zydajk97vasfkn3cjvn1xp2j86j7y9ica2pc";
   };
+
+  # Sliding-tile 2048 puzzle game: https://github.com/MagneFire/asteroid-2048
+  twenty48 = mkAsteroidApp {
+    name = "2048";
+    pname = "asteroid-2048";
+    owner = "MagneFire";
+    repo = "asteroid-2048";
+    desc = "Sliding-tile 2048 puzzle game for AsteroidOS smartwatches";
+    rev = "99e7f00228c269069b41c4a27a0a60d2ed2ac7cf";
+    sha256 = "16xzqx0ry4y8hx6gqigafqx6izjahjlz5jc5s12fg0rjk5ylxjx0";
+    patches = [
+      ./twenty48-qt6.patch
+    ];
+  };
 }

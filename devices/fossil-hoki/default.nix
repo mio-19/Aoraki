@@ -94,6 +94,37 @@
     DEVPATH=="/devices/platform/soc/soc:qcom,bg-rsb", ATTR{enable}=="*", MODE="0666"
   '';
 
+  # Persistent hardware partition mounts on Fossil Gen 6 eMMC
+  # Upstream reference: https://github.com/AsteroidOS/meta-smartwatch/blob/master/meta-hoki/recipes-core/base-files/base-files/fstab
+  fileSystems = {
+    "/persist" = {
+      device = "/dev/disk/by-partlabel/persist";
+      fsType = "ext4";
+      options = [
+        "nofail"
+        "errors=continue"
+      ];
+    };
+    "/vendor/firmware_mnt" = {
+      device = "/dev/disk/by-partlabel/modem";
+      fsType = "vfat";
+      options = [
+        "ro"
+        "shortname=lower"
+        "nofail"
+      ];
+    };
+    "/vendor/bt_firmware" = {
+      device = "/dev/disk/by-partlabel/bluetooth";
+      fsType = "vfat";
+      options = [
+        "ro"
+        "shortname=lower"
+        "nofail"
+      ];
+    };
+  };
+
   # Subsystem boots and firmware mount setup
   # GNSS vendor service symlink PR: https://github.com/AsteroidOS/meta-smartwatch/pull/342
   systemd.tmpfiles.rules = [

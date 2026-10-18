@@ -87,41 +87,54 @@ nix-build examples/asteroid --argstr device fossil-hoki -A outputs.default
 
 Once the build finishes, the output artifacts will be linked in `./result`:
 
-- `result/boot.img` – Android boot image containing the Linux kernel and stage-1 initramfs
-- `result/userdata.img` (or `result/rootfs.img`) – Ext4 root filesystem containing the Nix store and system generation
+- `result/boot.img` – Android boot image containing the Linux kernel (with appended device tree blob) and stage-1 initramfs
+- `result/system.img` – Ext4 root filesystem (`LABEL=NIXOS_SYSTEM`) containing the complete Nix store and system generation
+- `result/flash-critical.sh` – Automated helper script that executes the target fastboot commands for critical boot partitions
 
 ### Flashing via Fastboot
 
 1. Put your smartwatch into fastboot mode:
    - Power off the watch completely.
-   - Hold down the power/crown button and middle button until the fastboot bootloader screen appears.
-   - Alternatively, from ADB: `adb reboot bootloader`.
+   - Hold down the power/crown button and bottom button simultaneously until the fastboot bootloader screen appears.
+   - Alternatively, from an active Android/ADB connection: `adb reboot bootloader`.
 
-2. Connect the watch cradle/charging cable to your host PC via USB.
+2. Connect the watch charging puck/cradle to your host PC via USB.
 
 3. Verify connection:
    ```bash
    fastboot devices
    ```
 
-4. Flash the boot and system partitions:
+4. Flash the boot image:
    ```bash
-   # Flash the Linux kernel and initramfs
-   fastboot flash boot result/boot.img
+   # Flash the Linux kernel and initramfs to both A/B slots (for A/B devices like Fossil Gen 6)
+   fastboot flash --slot=all boot result/boot.img
+   
+   # Or simply execute the included helper script:
+   ./result/flash-critical.sh
+   ```
 
-   # Flash the root filesystem image
-   fastboot flash userdata result/userdata.img
+5. Flash the root filesystem image:
+   ```bash
+   # Flash rootfs to the userdata partition (recommended for smartwatches to utilize full eMMC flash capacity)
+   fastboot flash userdata result/system.img
 
-   # Reboot into NixOS
+   # Alternatively, on non-A/B devices or when preserving userdata:
+   # fastboot flash system result/system.img
+   ```
+
+6. Reboot into NixOS:
+   ```bash
    fastboot reboot
    ```
 
 > [!NOTE]
-> For devices utilizing Android Boot Header v4 (e.g. `google-aurora`), flash using `--slot=all`:
+> For devices utilizing Android Boot Header v4 (e.g. `google-aurora`), flash boot components using `--slot=all`:
 > ```bash
 > fastboot flash --slot=all boot result/boot.img
 > fastboot flash --slot=all vendor_kernel_boot result/vendor_kernel_boot.img
 > fastboot flash --slot=all init_boot result/init_boot.img
+> fastboot flash userdata result/system.img
 > ```
 
 ---
@@ -204,6 +217,7 @@ The environment includes a rich catalog of touch-optimized smartwatch applicatio
 - 🎵 **`asteroid-beatfork`**: High-precision metronome and chromatic tuning fork with Tack-inspired tap tempo calculation, accented subdivisions (1/4, 2/4, 3/4, 4/4, 6/8), concentric visual pulse ring, and distinct smartwatch haptics.
 - 🗺️ **`asteroid-map`**: Touch GPS map viewer featuring offline tile cache persistence, compass heading orientation, and circular edge controls.
 - 🎧 **`asteroid-music`**: Media playback remote controller for phone media players via Bluetooth MPRIS, enhanced with standalone YouTube Music streaming directly on the watch.
+- 🎮 **`asteroid-2048`**: Classic sliding-tile puzzle game packaged directly from upstream with Qt 6 touch acceleration.
 - ⏱️ **Core Utilities**: Stopwatch, Countdown Timer, Alarm Clock, Calculator, Weather, Compass, Flashlight, and Heart Rate Monitor.
 
 ---

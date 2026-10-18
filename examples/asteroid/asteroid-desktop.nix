@@ -76,6 +76,7 @@ in
         asteroid.apps.camera
         asteroid.apps.gps-test
         asteroid.apps.telegram
+        asteroid.apps.twenty48
         # Community application suite & unofficial watchfaces
         asteroid.community-apps.unofficial-watchfaces
         asteroid.community-apps.blaster
@@ -104,11 +105,39 @@ in
         })
       ];
 
+    # BlueZ dual-mode controller configuration (simultaneous BLE sync and Classic BT profiles)
+    # Reference: https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/src/main.conf
+    hardware.bluetooth.settings = {
+      General = {
+        ControllerMode = "dual";
+        DiscoverableTimeout = 180;
+      };
+    };
+
     environment.variables = {
       QT_IM_MODULE = "qtvirtualkeyboard";
       QT_VIRTUALKEYBOARD_STYLE = "watch";
       QT_VIRTUALKEYBOARD_LAYOUT_PATH = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/qtvirtualkeyboard/layouts";
       RIME_SHARED_DATA_DIR = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/rime-data";
+    };
+
+    # Wayland compositor and watchface launcher user service (runs under user session)
+    # Upstream reference: https://github.com/AsteroidOS/meta-asteroid/blob/master/recipes-asteroid/asteroid-launcher/asteroid-launcher/asteroid-launcher.service
+    systemd.user.services.asteroid-launcher = {
+      description = "AsteroidOS Wayland Compositor and Launcher";
+      wantedBy = [ "default.target" ];
+      environment = {
+        QT_IM_MODULE = "qtvirtualkeyboard";
+        QT_VIRTUALKEYBOARD_STYLE = "watch";
+        QT_VIRTUALKEYBOARD_LAYOUT_PATH = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/qtvirtualkeyboard/layouts";
+        RIME_SHARED_DATA_DIR = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/rime-data";
+      }
+      // config.environment.variables;
+      serviceConfig = {
+        ExecStart = "${pkgs.asteroid.asteroid-launcher}/bin/asteroid-launcher -plugin evdevtouch --systemd";
+        Restart = "always";
+        RestartSec = "2s";
+      };
     };
 
     # AsteroidOS Bluetooth synchronization daemon service
