@@ -118,6 +118,16 @@ def flash_partition(
   # State kept strictly in-memory
   verified_set = set()
 
+  expected_full_hash = None
+  if verify:
+    print("[*] Computing whole image SHA256 on host...")
+    whole_hasher = hashlib.sha256()
+    with open(image_path, "rb") as f_hash:
+      while chunk_b := f_hash.read(16 * 1024 * 1024):
+        whole_hasher.update(chunk_b)
+    expected_full_hash = whole_hasher.hexdigest()
+    print(f"[i] Whole Image SHA256: {expected_full_hash}")
+
   with open(image_path, "rb") as f_img:
     start_time = time.time()
     for idx in range(num_chunks):
@@ -209,6 +219,56 @@ def flash_partition(
         f"[✓] Successfully flashed and verified all {num_chunks} chunks in"
         f" {total_time:.1f}s!"
     )
+
+    if verify and expected_full_hash:
+      print("\n" + "-" * 64)
+      print(
+          f"[*] Final Verification: Checking whole partition SHA256 ({total_size / (1024 * 1024):.1f} MB)..."
+      )
+      full_verified = False
+      while not full_verified:
+        if total_size % 1048576 == 0:
+          cmd_str = (
+              f"dd if={partition} bs=1048576 count={total_size // 1048576}"
+              " 2>/dev/null | sha256sum"
+          )
+        else:
+          cmd_str = (
+              f"dd if={partition} bs=1048576 2>/dev/null |"
+              f" head -c {total_size} | sha256sum"
+          )
+
+        try:
+          sys.stdout.write("Reading back entire partition from watch eMMC...")
+          sys.stdout.flush()
+          t_vf0 = time.time()
+          v_ret, v_out, v_err = run_adb(
+              adb_prefix, ["shell", "-T", cmd_str], timeout=360
+          )
+          if v_ret != 0:
+            raise RuntimeError(
+                f"Full partition SHA256 readback failed: {v_err.decode('latin1')}"
+            )
+
+          device_full_hash = v_out.decode().split()[0]
+          vf_dt = max(time.time() - t_vf0, 0.001)
+          vf_speed = (total_size / (1024 * 1024)) / vf_dt
+          if device_full_hash != expected_full_hash:
+            print(
+                f"\n[!] FULL PARTITION CHECKSUM MISMATCH! ({vf_speed:.1f} MB/s)"
+            )
+            print(f"    Expected: {expected_full_hash}")
+            print(f"    Got:      {device_full_hash}")
+            raise ValueError("Whole partition SHA256 verification failed!")
+
+          print(f" OK! ({vf_speed:.1f} MB/s)")
+          print(f"[✓] Whole Partition SHA256 Verified: {device_full_hash}")
+          full_verified = True
+        except Exception as ex:
+          sys.stdout.write(f" FAILED: {ex}\n")
+          adb_kill_server(adb_prefix)
+          wait_for_device(adb_prefix)
+      print("-" * 64 + "\n")
 
 
 def main():
