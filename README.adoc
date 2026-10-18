@@ -28,14 +28,26 @@ Unlike generic mobile Linux distributions designed for smartphones, tablets, or 
   ** *`asteroid-btsyncd`*: Bluetooth Low Energy sync daemon compatible with the AsteroidOS Sync companion app (Android/iOS) and Gadgetbridge for phone notifications, time sync, weather, and media control.
   ** *AsteroidOS Core Apps*: Settings, Stopwatch, Timer, Alarm Clock, Calculator, Calendar, Weather, Music remote, Compass, Flashlight.
 
-== Supported Smartwatches
+== Target Smartwatches
 
-The project ports and supports the watch hardware catalog pioneered by link:https://asteroidos.org/watches/[AsteroidOS]:
+The development focuses on two primary wearable platforms:
+
+=== Primary Devices
+
+[cols="2,2,2,2,2,2",options="header"]
+|===
+| Device | Codename / Model | Hardware Status | SoC | Display | Input & Features
+| **Fossil Gen 6** | link:devices/fossil-hoki/README.md[`fossil-hoki`] | **On Hand** (Active Reference) | Snapdragon Wear 4100+ (SDA429W) | 416x416 Round AMOLED | Rotating Crown dial, AOD, LRA Haptics
+| **OPPO Watch (46mm)** | link:devices/oppo-beluga/README.md[`oppo-beluga`] / **OW19W8** | **Target** (Coming Soon) | Snapdragon Wear 3100 (SDA429W) + Apollo 3 | 402x476 3D Curved Squircle AMOLED | Dual Push-Buttons, VOOC Charging, LRA Haptics
+|===
+
+=== Upstream & Community Ports
+
+The architecture additionally retains compatibility with the wider catalog pioneered by link:https://asteroidos.org/watches/[AsteroidOS]:
 
 [cols="2,2,2,3,2",options="header"]
 |===
 | Device | Codename | SoC | Display | Support
-| **Fossil Gen 6** | link:devices/fossil-hoki/README.md[`fossil-hoki`] | Snapdragon Wear 4100+ | 416x416 Round (Crown, AOD) | Primary Reference
 | **Google Pixel Watch 2** | `google-aurora` | Snapdragon W5 Gen 1 | 384x384 Round (Crown, AOD) | Ported
 | **Fossil Gen 5** (Carlyle/Julianna) | `fossil-triggerfish` | Snapdragon Wear 3100 | 416x416 Round (Crown, AOD) | Ported
 | **Fossil Gen 4** (Explorist HR 46mm) | `fossil-firefish` | Snapdragon Wear 2100 | 454x454 Round (Crown) | Ported
@@ -46,7 +58,6 @@ The project ports and supports the watch hardware catalog pioneered by link:http
 | **LG G Watch R** | `lg-lenok` | Snapdragon 400 | 320x320 Round | Ported
 | **ASUS ZenWatch 2** | `asus-sparrow` | Snapdragon 400 | 320x320 Square AMOLED | Ported
 | **Moto 360 2nd Gen** | `motorola-smelt` | Snapdragon 400 | 360x325 Round with Chin | Ported
-| **OPPO Watch 46mm** | `oppo-beluga` | Snapdragon Wear 3100 | 402x476 Curved Squircle | Ported
 | **QEMU / Virtual VM** | `uefi-x86_64` | Virtual x86_64 | Scalable Display | Eval / VM
 |===
 
@@ -54,35 +65,44 @@ The project ports and supports the watch hardware catalog pioneered by link:http
 
 === Evaluating a Watch Configuration
 
-You can evaluate the system derivation for any supported watch:
+You can evaluate the system derivation for either target watch:
 
 [source,bash]
 ----
-# Evaluate Fossil Gen 6 (primary reference)
+# Evaluate Fossil Gen 6 (on hand)
 nix-instantiate --eval -E '(import ./default.nix { device = "fossil-hoki"; }).config.mobile.device.name'
 
-# Evaluate Google Pixel Watch 2
-nix-instantiate --eval -E '(import ./default.nix { device = "google-aurora"; }).config.mobile.device.name'
+# Evaluate OPPO Watch 46mm OW19W8 (target)
+nix-instantiate --eval -E '(import ./default.nix { device = "oppo-beluga"; }).config.mobile.device.name'
 ----
 
-=== Building the AsteroidOS Smartwatch Environment
+=== Building the Smartwatch Environment
 
-To build a full flashable image with the AsteroidOS Wayland desktop environment for your watch (e.g. Fossil Gen 6 `fossil-hoki`):
+To build a full flashable image with the Wayland desktop environment for your watch:
 
+* **For Fossil Gen 6 (`fossil-hoki`)**:
++
 [source,bash]
 ----
 nix-build examples/asteroid --argstr device fossil-hoki -A outputs.default --keep-going
 ----
 
+* **For OPPO Watch 46mm OW19W8 (`oppo-beluga`)**:
++
+[source,bash]
+----
+nix-build examples/asteroid --argstr device oppo-beluga -A outputs.default --keep-going
+----
+
 Once the build finishes, the output artifacts are linked in `./result`:
 
-* `result/boot.img`: Linux 4.14 kernel (with appended `sda429-hoki.dtb`) and stage-1 initramfs.
+* `result/boot.img`: Linux kernel (with appended DTB) and stage-1 initramfs.
 * `result/system.img`: Ext4 root filesystem (`LABEL=NIXOS_SYSTEM`) containing the complete Nix store and system generation.
 * `result/flash-critical.sh`: Automated helper script executing the target fastboot commands for critical boot partitions.
 
 === Flashing via Fastboot
 
-Follow these steps to flash the **Fossil Gen 6** (`fossil-hoki`):
+==== Fossil Gen 6 (`fossil-hoki` — On Hand)
 
 [source,bash]
 ----
@@ -111,15 +131,30 @@ fastboot format cache
 fastboot reboot
 ----
 
-* **Header v4 Devices** (e.g. Google Pixel Watch 2 `google-aurora`):
-  [source,bash]
-  ----
-  fastboot flash --slot=all boot result/boot.img
-  fastboot flash --slot=all vendor_kernel_boot result/vendor_kernel_boot.img
-  fastboot flash --slot=all init_boot result/init_boot.img
-  fastboot flash userdata result/system.img
-  fastboot reboot
-  ----
+TIP: To avoid USB pogo-pin drops during flashing, you can boot TWRP and use `./bin/resilient-flash result/system.img --boot-img result/boot.img --reboot`.
+
+==== OPPO Watch 46mm (Model OW19W8 / `oppo-beluga` — Target)
+
+[source,bash]
+----
+# 1. Put OPPO Watch into fastboot mode:
+# Either from ADB:
+adb reboot bootloader
+# Or power off the watch and hold both the Upper Button and Lower Button simultaneously.
+
+# 2. Verify connection on host PC:
+fastboot devices
+
+# 3. Flash Linux kernel and stage-1 initramfs:
+fastboot flash boot result/boot.img
+
+# 4. Flash root filesystem to userdata partition:
+fastboot flash userdata result/system.img
+
+# 5. Wipe cache and reboot:
+fastboot format cache
+fastboot reboot
+----
 
 == System Updates over USB Gadget / SSH
 

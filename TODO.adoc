@@ -37,3 +37,18 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 ** Configure Pulseaudio / PipeWire integration with Qualcomm Android Audio HAL (`audio.primary.sdm429w.so`) for speaker and microphone support.
 * [ ] *Sensor Hub & Health Monitoring*:
 ** Interrogate sensorhub / IIO devices for accelerometer, gyroscope, step counter, and photoplethysmogram (PPG) heart rate monitor.
+
+== Flashing, Recovery & System Installation
+
+* [ ] *Custom Recovery Image for Resilient Flashing*:
+** Build a custom lightweight Mobile NixOS recovery image (`recovery.img`) tailored for smartwatches that can boot via `fastboot boot recovery.img`.
+** Enable ADB daemon, USB gadget mass storage / raw partition block access, and support for `bin/resilient-flash` directly without relying on third-party TWRP builds.
+** Provide on-watch recovery UI for partition wiping, backup, and resilient flashing progress on circular displays.
+
+== Continuous Integration & Binary Cache
+
+* [ ] *Cachix Binary Cache for GitHub Actions*:
+** Set up dedicated Cachix cache for prebuilt cross-compiled packages and smartwatch images.
+** Integrate `cachix/cachix-action` into `.github/workflows/ci.yml` with auth token secret to automatically upload build outputs.
+** Cache cross-compiled kernels, rootfs closures, and AsteroidOS UI components to avoid long local compilation times.
+

@@ -12,9 +12,32 @@ in
 {
   options.services.asteroid-desktop = {
     enable = mkEnableOption "AsteroidOS smartwatch user environment";
+
+    browser = {
+      enable = lib.mkEnableOption "AsteroidOS smartwatch web browser";
+
+      engine = lib.mkOption {
+        type = lib.types.enum [
+          "ladybird"
+          "servo"
+          "netsurf"
+          "goanna"
+          "webkit"
+        ];
+        default = "ladybird";
+        description = "Rendering engine backend for asteroid-browser built into the watch system.";
+      };
+    };
   };
 
   config = mkIf cfg.enable {
+    # System-wide AsteroidOS browser engine selection configuration
+    environment.etc = lib.mkIf cfg.browser.enable {
+      "asteroid-browser/engine.conf".text = ''
+        ENGINE="${cfg.browser.engine}"
+      '';
+    };
+
     # Watch system beautification and silent boot
     mobile.beautification = {
       silentBoot = mkDefault true;
@@ -28,58 +51,65 @@ in
     };
 
     # System packages for the watch environment
-    environment.systemPackages = with pkgs; [
-      asteroid.qml-asteroid
-      asteroid.asteroid-launcher
-      asteroid.asteroid-btsyncd
-      # Asset suite
-      asteroid.assets.wallpapers
-      asteroid.assets.sounds
-      asteroid.assets.icons
-      asteroid.assets.fonts
-      asteroid.assets.virtualkeyboard
-      asteroid.assets.virtualkeyboard-rime
-      # Complete application suite
-      asteroid.apps.stopwatch
-      asteroid.apps.timer
-      asteroid.apps.alarmclock
-      asteroid.apps.calculator
-      asteroid.apps.settings
-      asteroid.apps.weather
-      asteroid.apps.music
-      asteroid.apps.compass
-      asteroid.apps.flashlight
-      asteroid.apps.calendar
-      asteroid.apps.diamonds
-      asteroid.apps.hrm
-      asteroid.apps.camera
-      asteroid.apps.gps-test
-      asteroid.apps.telegram
-      asteroid.apps.twenty48
-      asteroid.apps.browser
-      asteroid.apps.kiwix
-      # Community application suite & unofficial watchfaces
-      asteroid.community-apps.unofficial-watchfaces
-      asteroid.community-apps.blaster
-      asteroid.community-apps.dodger
-      asteroid.community-apps.health
-      asteroid.community-apps.sensorlogd
-      asteroid.community-apps.map
-      asteroid.community-apps.qmltester
-      asteroid.community-apps.skedaddle
-      asteroid.community-apps.weatherfetch
-      asteroid.community-apps.beatfork
-      asteroid.community-apps.benchymark
-      asteroid.community-apps.docking-bay
-      asteroid.community-apps.heliograph
-      asteroid.community-apps.horizon
-      asteroid.community-apps.meteormatch
-      asteroid.community-apps.pulsar
-      asteroid.community-apps.rag
-      asteroid.community-apps.shopper
-      asteroid.community-apps.toolwatch
-      asteroid.community-apps.touchdown
-    ];
+    environment.systemPackages =
+      with pkgs;
+      [
+        asteroid.qml-asteroid
+        asteroid.asteroid-launcher
+        asteroid.asteroid-btsyncd
+        # Asset suite
+        asteroid.assets.wallpapers
+        asteroid.assets.sounds
+        asteroid.assets.icons
+        asteroid.assets.fonts
+        asteroid.assets.virtualkeyboard
+        asteroid.assets.virtualkeyboard-rime
+        # Complete application suite
+        asteroid.apps.stopwatch
+        asteroid.apps.timer
+        asteroid.apps.alarmclock
+        asteroid.apps.calculator
+        asteroid.apps.settings
+        asteroid.apps.weather
+        asteroid.apps.music
+        asteroid.apps.compass
+        asteroid.apps.flashlight
+        asteroid.apps.calendar
+        asteroid.apps.diamonds
+        asteroid.apps.hrm
+        asteroid.apps.camera
+        asteroid.apps.gps-test
+        asteroid.apps.telegram
+        asteroid.apps.twenty48
+      ]
+      ++ lib.optionals cfg.browser.enable [
+        (asteroid.apps.browser.override {
+          engine = cfg.browser.engine;
+        })
+        asteroid.apps.kiwix
+      ]
+      ++ (with pkgs; [
+        asteroid.community-apps.unofficial-watchfaces
+        asteroid.community-apps.blaster
+        asteroid.community-apps.dodger
+        asteroid.community-apps.health
+        asteroid.community-apps.sensorlogd
+        asteroid.community-apps.map
+        asteroid.community-apps.qmltester
+        asteroid.community-apps.skedaddle
+        asteroid.community-apps.weatherfetch
+        asteroid.community-apps.beatfork
+        asteroid.community-apps.benchymark
+        asteroid.community-apps.docking-bay
+        asteroid.community-apps.heliograph
+        asteroid.community-apps.horizon
+        asteroid.community-apps.meteormatch
+        asteroid.community-apps.pulsar
+        asteroid.community-apps.rag
+        asteroid.community-apps.shopper
+        asteroid.community-apps.toolwatch
+        asteroid.community-apps.touchdown
+      ]);
 
     systemd.tmpfiles.rules = [
       "d /var/lib/kiwix 0775 ceres users -"

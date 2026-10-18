@@ -49,6 +49,8 @@ module Dependencies
   # When any of the dependencies given have been fulfilled, this dependency
   # will be fulfilled.
   class Any < BaseDependency
+    attr_reader :dependencies
+
     def initialize(*dependencies)
       @dependencies = dependencies
     end
@@ -63,6 +65,10 @@ module Dependencies
 
     def name()
       super + "(#{@dependencies.map(&:name).join(", ")})"
+    end
+
+    def pretty_name()
+      "Any of (#{@dependencies.map(&:pretty_name).join(", ")})"
     end
   end
 

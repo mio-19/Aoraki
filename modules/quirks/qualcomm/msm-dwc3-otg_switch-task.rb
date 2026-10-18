@@ -5,6 +5,7 @@ class Tasks::MsmDwc3OtgSwitch < SingletonTask
   end
 
   def run()
-    System.write("/sys/module/dwc3_msm/parameters/otg_switch", "1")
+    path = "/sys/module/dwc3_msm/parameters/otg_switch"
+    System.write(path, "1") if File.exist?(path)
   end
 end

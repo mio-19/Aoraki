@@ -83,20 +83,16 @@ module Tasks
 
         if elapsed > HUNG_BOOT_TIMEOUT
           msg = [
-            "",
             "#{failed_tasks.length} #{if failed_tasks.length == 1 then "task" else "tasks" end} " +
-            "did not run within #{HUNG_BOOT_TIMEOUT} seconds.\n",
-            "#{failed_dependencies.length} #{if failed_dependencies.length == 1 then "dependency" else "dependencies" end} " +
-            "could not resolve:\n",
+            "did not run within #{HUNG_BOOT_TIMEOUT}s:",
             failed_tasks.map do |task|
               [
-                "  - #{task.name}",
-                task.dependencies.map do |dep|
-                  "     - #{dep.pretty_name} [#{if dep.fulfilled? then "ok" else "  " end}]"
+                "- #{task.name}",
+                task.dependencies.reject(&:fulfilled?).map do |dep|
+                  "  * #{dep.pretty_name}"
                 end.join("\n")
               ].join("\n")
-            end.join("\n"),
-            ""
+            end.join("\n")
           ].join("\n")
 
           # Fail with a black backdrop, and force the message to stay up 60s
@@ -164,7 +160,8 @@ class Task
   def depends_on_any_unfulfilled_task?()
     dependencies.reject(&:fulfilled?).any? do |dep|
       dep.is_a?(Dependencies::Task) or
-      dep.is_a?(Dependencies::Target) 
+      dep.is_a?(Dependencies::Target) or
+      (dep.is_a?(Dependencies::Any) && dep.dependencies.any? { |d| (d.is_a?(Dependencies::Task) || d.is_a?(Dependencies::Target)) && !d.fulfilled? })
     end
   end
 

@@ -5,6 +5,7 @@ class Tasks::MsmFbNotify < SingletonTask
   end
 
   def run()
-    System.write("/sys/class/graphics/fb0/blank", "0")
+    path = "/sys/class/graphics/fb0/blank"
+    System.write(path, "0") if File.exist?(path)
   end
 end

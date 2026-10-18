@@ -2,7 +2,7 @@
   lib,
   stdenv,
   makeWrapper,
-  engine ? "netsurf",
+  engine ? "ladybird",
   ladybird ? null,
   netsurf ? null,
   servo ? null,
@@ -22,33 +22,23 @@ assert lib.assertOneOf "engine" engine [
 ];
 
 let
-  selectedEnginePkg =
-    if engine == "ladybird" then
-      ladybird
-    else if engine == "netsurf" then
-      netsurf
-    else if engine == "servo" then
-      servo
-    else if engine == "webkit" then
-      webkitgtk_6_0
-    else if engine == "goanna" then
-      goanna
-    else
-      null;
+  availableEngines = lib.filter (pkg: pkg != null) [
+    ladybird
+    netsurf
+    servo
+    webkitgtk_6_0
+    goanna
+  ];
 
-  extraBinEnv =
-    if engine == "ladybird" && ladybird != null then
-      ''--set-default LADYBIRD_BIN "${ladybird}/bin/Ladybird"''
-    else if engine == "netsurf" && selectedEnginePkg != null then
-      ''--set-default NETSURF_BIN "${selectedEnginePkg}/bin/netsurf-gtk3"''
-    else if engine == "servo" && servo != null then
-      ''--set-default SERVO_BIN "${servo}/bin/servo"''
-    else if engine == "webkit" && webkitgtk_6_0 != null then
-      ''--set-default WEBKIT_BIN "${webkitgtk_6_0}/libexec/webkitgtk-6.0/MiniBrowser"''
-    else if engine == "goanna" && goanna != null then
-      ''--set-default GOANNA_BIN "${goanna}/bin/goanna"''
-    else
-      "";
+  extraBinEnv = lib.concatStringsSep " " (
+    lib.optional (ladybird != null) ''--set-default LADYBIRD_BIN "${ladybird}/bin/Ladybird"''
+    ++ lib.optional (netsurf != null) ''--set-default NETSURF_BIN "${netsurf}/bin/netsurf-gtk3"''
+    ++ lib.optional (servo != null) ''--set-default SERVO_BIN "${servo}/bin/servo"''
+    ++ lib.optional (
+      webkitgtk_6_0 != null
+    ) ''--set-default WEBKIT_BIN "${webkitgtk_6_0}/libexec/webkitgtk-6.0/MiniBrowser"''
+    ++ lib.optional (goanna != null) ''--set-default GOANNA_BIN "${goanna}/bin/goanna"''
+  );
 in
 # AsteroidOS smartwatch browser shell and interface abstraction with pluggable rendering backends
 # Architecture inspired by AsteroidOS application suite: https://github.com/AsteroidOS
@@ -102,8 +92,7 @@ stdenv.mkDerivation rec {
     # Wrap launcher with engine binaries, configured default engine, and virtual keyboard
     wrapProgram $out/bin/asteroid-browser \
       ${
-        lib.optionalString (selectedEnginePkg != null)
-          "--prefix PATH : ${lib.makeBinPath [ selectedEnginePkg ]}"
+        lib.optionalString (availableEngines != [ ]) "--prefix PATH : ${lib.makeBinPath availableEngines}"
       } \
       --set ASTEROID_BROWSER_DEFAULT_ENGINE "${engine}" \
       ${extraBinEnv} \

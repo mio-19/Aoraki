@@ -2,16 +2,27 @@
 class ShadedText
   OFFSET = 2
 
-  def initialize(*args)
+  def initialize(*args, size: nil, line_space: nil)
     @secondary = LVGL::LVLabel.new(*args)
-    style = @secondary.get_style(LVGL::LABEL_STYLE::MAIN).dup
-    @secondary.set_style(LVGL::LABEL_STYLE::MAIN, style)
-    style.text_color = 0xFF000000
+    sec_style = @secondary.get_style(LVGL::LABEL_STYLE::MAIN).dup
+    @secondary.set_style(LVGL::LABEL_STYLE::MAIN, sec_style)
+    sec_style.text_color = 0xFF000000
 
     @main = LVGL::LVLabel.new(*args)
-    style = @main.get_style(LVGL::LABEL_STYLE::MAIN).dup
-    @main.set_style(LVGL::LABEL_STYLE::MAIN, style)
-    style.text_color = 0xFFFFFFFF
+    main_style = @main.get_style(LVGL::LABEL_STYLE::MAIN).dup
+    @main.set_style(LVGL::LABEL_STYLE::MAIN, main_style)
+    main_style.text_color = 0xFFFFFFFF
+
+    if size
+      font = LVGUI::Fonts.primary(size)
+      sec_style.text_font = font
+      main_style.text_font = font
+    end
+
+    if line_space
+      sec_style.text_line_space = line_space
+      main_style.text_line_space = line_space
+    end
 
     # Ensures the position is reset at least once, to sync-up the shade.
     set_pos(0, 0)
