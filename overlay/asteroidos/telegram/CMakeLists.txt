@@ -6,7 +6,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network DBus)
+
+find_package(PkgConfig QUIET)
+if(PKG_CONFIG_FOUND)
+    pkg_check_modules(TDJSON tdjson)
+endif()
 
 include(GNUInstallDirs)
 
@@ -29,7 +34,16 @@ target_link_libraries(asteroid-telegram PRIVATE
     Qt6::Qml
     Qt6::Quick
     Qt6::Network
+    Qt6::DBus
 )
+
+if(TDJSON_FOUND)
+    target_compile_definitions(asteroid-telegram PRIVATE HAVE_TDLIB=1)
+    target_include_directories(asteroid-telegram PRIVATE ${TDJSON_INCLUDE_DIRS})
+    target_link_libraries(asteroid-telegram PRIVATE ${TDJSON_LIBRARIES})
+else()
+    target_compile_definitions(asteroid-telegram PRIVATE HAVE_TDLIB=0)
+endif()
 
 install(TARGETS asteroid-telegram
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}

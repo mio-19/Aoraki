@@ -7,6 +7,7 @@
   qml-asteroid,
   virtualkeyboard ? null,
   qtvirtualkeyboard ? qt6.qtvirtualkeyboard,
+  tdlib ? null,
   buildPackages,
 }:
 
@@ -34,7 +35,8 @@ stdenv.mkDerivation (finalAttrs: {
     qt6.qtbase
     qt6.qtdeclarative
     qml-asteroid
-  ];
+  ]
+  ++ lib.optional (tdlib != null) tdlib;
 
   qtWrapperArgs = [
     "--prefix"

@@ -33,12 +33,16 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
+    bool hasChat(const QString &id) const;
     void addChat(const QString &id, const QString &title, const QString &lastMessage, const QString &time, int unreadCount, const QString &avatarColor);
+    void addOrUpdateChat(const QString &id, const QString &title, const QString &lastMessage, const QString &time, int unreadCount, const QString &avatarColor);
     void updateLastMessage(const QString &chatId, const QString &lastMessage, const QString &time);
     void markAsRead(const QString &chatId);
+    void moveChatToTop(const QString &chatId);
     void clear();
 
     ChatItem getChat(int row) const;
+    QList<ChatItem> allChats() const { return m_chats; }
 
 private:
     QList<ChatItem> m_chats;

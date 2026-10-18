@@ -15,6 +15,16 @@ Item {
             width: parent.width
 
             IconButton {
+                anchors.left: parent.left
+                anchors.leftMargin: DeviceSpecs.hasRoundScreen ? Dims.w(8) : Dims.w(3)
+                anchors.verticalCenter: parent.verticalCenter
+                width: Dims.w(9)
+                height: width
+                iconName: "ios-refresh"
+                onClicked: telegramClient.refresh()
+            }
+
+            IconButton {
                 anchors.right: parent.right
                 anchors.rightMargin: DeviceSpecs.hasRoundScreen ? Dims.w(8) : Dims.w(3)
                 anchors.verticalCenter: parent.verticalCenter

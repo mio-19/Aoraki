@@ -12,6 +12,7 @@ struct MessageItem {
     QString time;
     bool isOutgoing;
     bool isDelivered;
+    QString type; // "text", "voice", "photo", "location"
 };
 
 class MessageModel : public QAbstractListModel
@@ -25,7 +26,8 @@ public:
         TextRole,
         TimeRole,
         IsOutgoingRole,
-        IsDeliveredRole
+        IsDeliveredRole,
+        TypeRole
     };
 
     explicit MessageModel(QObject *parent = nullptr);
@@ -34,8 +36,11 @@ public:
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
 
-    void addMessage(const QString &id, const QString &sender, const QString &text, const QString &time, bool isOutgoing, bool isDelivered = true);
+    void addMessage(const QString &id, const QString &sender, const QString &text, const QString &time, bool isOutgoing, bool isDelivered = true, const QString &type = "text");
+    void updateDelivered(const QString &id, bool isDelivered);
     void clear();
+
+    QList<MessageItem> allMessages() const { return m_messages; }
 
 private:
     QList<MessageItem> m_messages;

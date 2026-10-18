@@ -28,37 +28,28 @@ Item {
         ListView {
             id: replyList
             width: parent.width
-            height: parent.height - header.height
+            height: parent.height - header.height - addRow.height
             clip: true
             boundsBehavior: Flickable.DragOverBounds
 
             header: Item {
                 width: replyList.width
-                height: DeviceSpecs.hasRoundScreen ? Dims.h(4) : Dims.h(1)
+                height: DeviceSpecs.hasRoundScreen ? Dims.h(2) : Dims.h(1)
             }
 
             footer: Item {
                 width: replyList.width
-                height: DeviceSpecs.hasRoundScreen ? Dims.h(10) : Dims.h(3)
+                height: Dims.h(2)
             }
 
-            model: ListModel {
-                ListElement { replyText: "👍 OK" }
-                ListElement { replyText: "❤️ Got it!" }
-                ListElement { replyText: "🏃 On my way!" }
-                ListElement { replyText: "⏰ In 10 minutes" }
-                ListElement { replyText: "❌ Can't talk right now" }
-                ListElement { replyText: "👋 Hi there!" }
-                ListElement { replyText: "☕ Coffee later?" }
-                ListElement { replyText: "🎉 Sounds great!" }
-            }
+            model: telegramClient.quickReplies
 
             delegate: ListItem {
                 width: replyList.width
-                height: Dims.h(13)
+                height: Dims.h(12)
 
                 onClicked: {
-                    telegramClient.sendQuickReply(model.replyText)
+                    telegramClient.sendQuickReply(modelData)
                     layerStack.pop()
                 }
 
@@ -70,9 +61,56 @@ Item {
 
                     Text {
                         anchors.verticalCenter: parent.verticalCenter
-                        text: model.replyText
+                        text: modelData
                         color: "#FFFFFF"
-                        font.pixelSize: Dims.l(3.6)
+                        font.pixelSize: Dims.l(3.4)
+                    }
+                }
+            }
+        }
+
+        // Add custom quick reply row
+        Item {
+            id: addRow
+            width: parent.width
+            height: Dims.h(13)
+
+            Rectangle {
+                anchors.fill: parent
+                color: "#16161A"
+            }
+
+            Row {
+                anchors.fill: parent
+                anchors.leftMargin: DeviceSpecs.hasRoundScreen ? Dims.w(8) : Dims.w(4)
+                anchors.rightMargin: DeviceSpecs.hasRoundScreen ? Dims.w(8) : Dims.w(4)
+                spacing: Dims.w(2)
+
+                TextField {
+                    id: customReplyField
+                    width: parent.width - addBtn.width - Dims.w(3)
+                    height: Dims.h(9)
+                    anchors.verticalCenter: parent.verticalCenter
+                    placeholderText: "New quick reply..."
+                    onAccepted: {
+                        if (customReplyField.text.trim().length > 0) {
+                            telegramClient.addQuickReply(customReplyField.text)
+                            customReplyField.text = ""
+                        }
+                    }
+                }
+
+                IconButton {
+                    id: addBtn
+                    width: Dims.w(9)
+                    height: width
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconName: "ios-add"
+                    onClicked: {
+                        if (customReplyField.text.trim().length > 0) {
+                            telegramClient.addQuickReply(customReplyField.text)
+                            customReplyField.text = ""
+                        }
                     }
                 }
             }

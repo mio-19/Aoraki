@@ -115,7 +115,7 @@ Item {
                         anchors.rightMargin: Dims.w(2.5)
                         anchors.bottom: parent.bottom
                         anchors.bottomMargin: Dims.h(1.0)
-                        text: model.time
+                        text: model.time + (model.isOutgoing ? (model.isDelivered ? " ✓✓" : " ✓") : "")
                         color: model.isOutgoing ? "#BEE3F8" : "#888888"
                         font.pixelSize: Dims.l(2.2)
                     }

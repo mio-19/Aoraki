@@ -48,11 +48,56 @@ QHash<int, QByteArray> ChatModel::roleNames() const
     return roles;
 }
 
+bool ChatModel::hasChat(const QString &id) const
+{
+    for (const auto &chat : m_chats) {
+        if (chat.id == id)
+            return true;
+    }
+    return false;
+}
+
 void ChatModel::addChat(const QString &id, const QString &title, const QString &lastMessage, const QString &time, int unreadCount, const QString &avatarColor)
 {
     beginInsertRows(QModelIndex(), m_chats.size(), m_chats.size());
     m_chats.append({id, title, lastMessage, time, unreadCount, avatarColor});
     endInsertRows();
+}
+
+void ChatModel::addOrUpdateChat(const QString &id, const QString &title, const QString &lastMessage, const QString &time, int unreadCount, const QString &avatarColor)
+{
+    for (int i = 0; i < m_chats.size(); ++i) {
+        if (m_chats[i].id == id) {
+            m_chats[i].title = title;
+            m_chats[i].lastMessage = lastMessage;
+            m_chats[i].time = time;
+            if (unreadCount >= 0)
+                m_chats[i].unreadCount = unreadCount;
+            if (!avatarColor.isEmpty())
+                m_chats[i].avatarColor = avatarColor;
+            emit dataChanged(index(i), index(i), {TitleRole, LastMessageRole, TimeRole, UnreadCountRole, AvatarColorRole});
+            moveChatToTop(id);
+            return;
+        }
+    }
+    beginInsertRows(QModelIndex(), 0, 0);
+    m_chats.prepend({id, title, lastMessage, time, unreadCount, avatarColor});
+    endInsertRows();
+}
+
+void ChatModel::moveChatToTop(const QString &chatId)
+{
+    for (int i = 0; i < m_chats.size(); ++i) {
+        if (m_chats[i].id == chatId) {
+            if (i > 0) {
+                beginMoveRows(QModelIndex(), i, i, QModelIndex(), 0);
+                ChatItem item = m_chats.takeAt(i);
+                m_chats.prepend(item);
+                endMoveRows();
+            }
+            break;
+        }
+    }
 }
 
 void ChatModel::updateLastMessage(const QString &chatId, const QString &lastMessage, const QString &time)
@@ -62,6 +107,7 @@ void ChatModel::updateLastMessage(const QString &chatId, const QString &lastMess
             m_chats[i].lastMessage = lastMessage;
             m_chats[i].time = time;
             emit dataChanged(index(i), index(i), {LastMessageRole, TimeRole});
+            moveChatToTop(chatId);
             break;
         }
     }
