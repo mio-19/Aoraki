@@ -120,6 +120,47 @@ system configuration. It is recommended to copy and edit the configuration
 files from the `examples` directories if you are basing your configuration off
 of an example.
 
+== Usage with Flakes
+
+The project is flake-compatible. Simply import the matching device module:
+
+[source,nix]
+----
+# flake.nix
+{
+  description = "NixOS for Smartwatches system configuration";
+
+  inputs = {
+    nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
+    wearix.url = "github:mio-19/wearix";
+  };
+
+  outputs = { self, nixpkgs, wearix, ... }:
+  {
+    nixosConfigurations.my-watch = nixpkgs.lib.nixosSystem {
+      system = "x86_64-linux"; # Host build architecture (or native)
+      modules = [
+        # Import the module matching your target smartwatch device
+        wearix.nixosModules.fossil-hoki
+        # Or casio-koi, lg-bass, ticwatch-skipjack, etc.
+
+        ./configuration.nix
+      ];
+    };
+  };
+}
+----
+
+Build outputs and partitions can then be built directly:
+
+[source,bash]
+----
+# Build Android fastboot boot.img
+nix build ".#nixosConfigurations.my-watch.config.mobile.outputs.android-bootimg"
+
+# Build complete output set
+nix build ".#nixosConfigurations.my-watch.config.system.build.toplevel"
+----
 
 == Contributing
 

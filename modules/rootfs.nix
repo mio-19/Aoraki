@@ -50,6 +50,8 @@ in
       filesystem = "ext4";
       label = "NIXOS_SYSTEM";
       ext4.partitionID = "44444444-4444-4444-8888-888888888888";
+      btrfs.partitionID = "44444444-4444-4444-8888-888888888888";
+      btrfs.compression = "zstd:3";
 
       populateCommands =
         let
@@ -127,16 +129,28 @@ in
     fileSystems = {
       "/" = lib.mkDefault {
         device = "/dev/disk/by-label/${rootfsLabel}";
-        fsType = "ext4";
+        fsType = config.mobile.generatedFilesystems.rootfs.filesystem;
+        options =
+          if config.mobile.generatedFilesystems.rootfs.filesystem == "btrfs" then
+            [
+              "compress=zstd:3"
+              "noatime"
+              "space_cache=v2"
+            ]
+          else
+            [ "defaults" ];
         autoResize = true;
       };
     };
 
-    # FIXME: Move this in a proper module + task for the filesystem.
-    # This is a "wrong" assumption, that only holds through since we are setting
-    # fileSystems."/".autoResize to true here.
+    # Include appropriate filesystem tools in stage-1 extraUtils
     mobile.boot.stage-1.extraUtils = [
-      { package = pkgs.e2fsprogs; }
+      (lib.mkIf (config.mobile.generatedFilesystems.rootfs.filesystem == "ext4") {
+        package = pkgs.e2fsprogs;
+      })
+      (lib.mkIf (config.mobile.generatedFilesystems.rootfs.filesystem == "btrfs") {
+        package = pkgs.btrfs-progs;
+      })
     ];
   };
 }

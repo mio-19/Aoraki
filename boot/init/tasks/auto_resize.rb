@@ -14,24 +14,33 @@ class Tasks::AutoResize < Task
 
   # Computes whether a filesystem needs to be expanded.
   # This way the long-running tasks happen only once.
-  # TODO: parse more than ext filesystems
   def needs_resize?()
-    # Parse the output of dumpe2fs
-    data = `dumpe2fs -h #{@device.shellescape}`
-      .lines
-      .map(&:strip)
-      .map { |line| line.split(/:\s*/, 2) }
-      .select { |pair| pair.length == 2 }
-      .to_h
+    if @type.match(/^ext[234]$/)
+      # Parse the output of dumpe2fs
+      data = `dumpe2fs -h #{@device.shellescape}`
+        .lines
+        .map(&:strip)
+        .map { |line| line.split(/:\s*/, 2) }
+        .select { |pair| pair.length == 2 }
+        .to_h
 
-    block_size = data["Block size"].to_f
-    block_count = data["Block count"].to_f
+      block_size = data["Block size"].to_f
+      block_count = data["Block count"].to_f
 
-    # In bytes
-    filesystem_size = block_count * block_size
+      # In bytes
+      filesystem_size = block_count * block_size
+    elsif @type == "btrfs"
+      dump = `btrfs inspect-internal dump-super #{@device.shellescape}`
+      total_bytes_line = dump.lines.grep(/total_bytes/).first
+      filesystem_size = total_bytes_line ? total_bytes_line.split(/\s+/)[1].to_f : 0.0
+      block_size = 4096.0
+    else
+      return false
+    end
 
     device_file = File.realpath(@device)
     sys_file = Dir.glob("/sys/block/*/#{device_file.split("/").last}").first
+    return false unless sys_file
 
     # In bytes. From 512 bytes sectors.
     partition_size = 512 * File.read(File.join(sys_file, "size")).to_f
@@ -69,6 +78,15 @@ class Tasks::AutoResize < Task
         end
         Progress.exec_with_message("Resizing #{@device}...") do
           System.run_long_running("resize2fs", "-f", @device)
+        end
+      else
+        log("No need to resize #{@device}...")
+      end
+    elsif @type == "btrfs"
+      if needs_resize?
+        log("Resizing Btrfs #{@device}...")
+        Progress.exec_with_message("Resizing #{@device}...") do
+          System.run_long_running("btrfs", "filesystem", "resize", "--offline", "max", @device)
         end
       else
         log("No need to resize #{@device}...")

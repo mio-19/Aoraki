@@ -38,9 +38,6 @@ lib.mkIf isCross (
             { }
           else
             {
-              # btrfs-progs-armv7l-unknown-linux-gnueabihf-5.17.drv
-              # /nix/store/wnrc4daqbd6v5ifqlxsj75ky8556zy0p-python3-3.9.12/include/python3.9/pyport.h:741:2: error: #error "LONG_BIT definition appears wrong for platform (bad gcc/glibc config?)."
-              btrfs-progs = lib.warn "btrfs-progs neutered due to broken build with cross armv7l" nullPackage;
 
               # systemd BPF framework fails when cross-compiling on 32-bit ARM due to missing linux/types.h in clang target bpf.
               systemd = super.systemd.override { withLibBPF = false; };

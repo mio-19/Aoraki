@@ -29,6 +29,14 @@ in
         Volume ID of the filesystem.
       '';
     };
+    compression = mkOption {
+      type = types.nullOr types.str;
+      default = "zstd:3";
+      example = "zstd:3";
+      description = ''
+        Transparent compression algorithm and level for files populated into the image.
+      '';
+    };
   };
 
   config = mkMerge [
@@ -51,6 +59,7 @@ in
         copyPhase = ''
           mkfs.btrfs \
             -r . \
+            ${optionalString (config.btrfs.compression != null) "--compress ${config.btrfs.compression}"} \
             ${optionalString (partitionID != null) "-U ${partitionID}"} \
             ${optionalString (label != null) "-L ${escapeShellArg label}"} \
             ${optionalString (config.size == null) "--shrink"} \
