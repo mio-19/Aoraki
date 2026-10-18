@@ -144,15 +144,15 @@ in
       };
     };
 
-    # Kiwix offline Wikipedia/ZIM HTTP server user service
-    systemd.user.services.kiwix-serve = {
-      description = "Kiwix Offline Encyclopedia HTTP Server";
-      wantedBy = [ "default.target" ];
-      serviceConfig = {
-        ExecStart = "${pkgs.asteroid.apps.kiwix}/bin/kiwix-watch --daemon-only";
-        Restart = "on-failure";
-        RestartSec = "5s";
-      };
-    };
+    # Kiwix offline Wikipedia/ZIM HTTP server user service (temporarily disabled pending browser packaging)
+    # systemd.user.services.kiwix-serve = {
+    #   description = "Kiwix Offline Encyclopedia HTTP Server";
+    #   wantedBy = [ "default.target" ];
+    #   serviceConfig = {
+    #     ExecStart = "${pkgs.asteroid.apps.kiwix}/bin/kiwix-watch --daemon-only";
+    #     Restart = "on-failure";
+    #     RestartSec = "5s";
+    #   };
+    # };
   };
 }
