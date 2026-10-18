@@ -82,62 +82,18 @@ def adb_kill_server(adb_prefix, reason="reset"):
     print(f"    (kill-server warning: {e})")
 
 
-def wait_for_device(adb_prefix):
-  """Wait for watch to reconnect: probe for 10s -> kill-server -> sleep for 10s."""
+def wait_for_retry(adb_prefix, reason="retry", delay=10):
+  """On failure: kill-server, wait 10s, then attempt writing directly."""
   print(
-      "\n[!] Waiting for device to reconnect (adjust watch on magnetic cradle, or reboot to recovery again)..."
+      "\n[!] Failure detected (adjust watch on magnetic cradle, or reboot to recovery if needed)."
   )
-  adb_kill_server(adb_prefix, reason="entering reconnect wait")
-
-  wait_start_time = time.time()
-  cycle = 0
-
-  while True:
-    cycle += 1
-    total_elapsed = int(time.time() - wait_start_time)
-    print(
-        f"\n[*] [Cycle {cycle}] Probing for device for 10s (total elapsed:"
-        f" {total_elapsed}s)..."
-    )
-
-    probe_start = time.time()
-    # 1. Probe for 10s
-    while time.time() - probe_start < 10.0:
-      elapsed_cycle = int(time.time() - probe_start)
-      total_now = int(time.time() - wait_start_time)
-      sys.stdout.write(
-          f"[*] Probing... ({elapsed_cycle}s / 10s, total elapsed:"
-          f" {total_now}s)\r"
-      )
-      sys.stdout.flush()
-
-      try:
-        code, _, _ = run_adb(adb_prefix, ["wait-for-device"], timeout=2)
-        if code == 0:
-          time.sleep(0.5)
-          code2, out, _ = run_adb(
-              adb_prefix, ["shell", "echo ping"], timeout=2, capture_only=True
-          )
-          if code2 == 0 and b"ping" in out:
-            print(
-                f"\n[+] Device reconnected and responsive after {total_now}s!"
-            )
-            return
-      except Exception:
-        pass
-      time.sleep(0.5)
-
-    # 2. 10s probe window finished without device: kill-server
-    print(f"\n[*] Device not detected in 10s probe window.")
-    adb_kill_server(adb_prefix, reason=f"cycle {cycle} probe timeout")
-
-    # 3. Sleep for 10s
-    print(f"[*] Sleeping for 10s before next probe...")
-    for s in range(10, 0, -1):
-      sys.stdout.write(f"[*] Sleeping... {s}s remaining\r")
-      sys.stdout.flush()
-      time.sleep(1)
-    print("")
+  adb_kill_server(adb_prefix, reason=reason)
+  print(f"[*] Waiting {delay}s before retrying directly (no wait-for-device)...")
+  for s in range(delay, 0, -1):
+    sys.stdout.write(f"[*] Retrying directly in {s}s...\r")
+    sys.stdout.flush()
+    time.sleep(1)
+  print(f"\n[*] Proceeding to attempt write directly...")
 
 
 def flash_partition(
@@ -253,10 +209,11 @@ def flash_partition(
 
         except Exception as ex:
           sys.stdout.write(f" FAILED: {ex}\n")
-          adb_kill_server(
-              adb_prefix, reason=f"chunk {idx + 1} write/verify exception"
+          wait_for_retry(
+              adb_prefix,
+              reason=f"chunk {idx + 1} write/verify exception",
+              delay=10,
           )
-          wait_for_device(adb_prefix)
 
     # Sync device filesystem buffers
     print("[*] Syncing hardware flash buffers...")
@@ -313,10 +270,11 @@ def flash_partition(
           full_verified = True
         except Exception as ex:
           sys.stdout.write(f" FAILED: {ex}\n")
-          adb_kill_server(
-              adb_prefix, reason="whole partition verification exception"
+          wait_for_retry(
+              adb_prefix,
+              reason="whole partition verification exception",
+              delay=10,
           )
-          wait_for_device(adb_prefix)
       print("-" * 64 + "\n")
 
 
