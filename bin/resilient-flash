@@ -102,6 +102,7 @@ def flash_partition(
     adb_prefix,
     chunk_size_mb=16,
     verify=True,
+    chunk_timeout=60,
 ):
   total_size = os.path.getsize(image_path)
   chunk_bytes = chunk_size_mb * 1024 * 1024
@@ -164,7 +165,7 @@ def flash_partition(
               "-T",
               f"dd of={partition} bs=1048576 seek={offset_mb} count={actual_chunk_mb}",
           ]
-          ret, _, err = run_adb(adb_prefix, cmd, input_bytes=data, timeout=35)
+          ret, _, err = run_adb(adb_prefix, cmd, input_bytes=data, timeout=chunk_timeout)
           if ret != 0:
             raise RuntimeError(f"dd write failed: {err.decode('latin1')}")
 
@@ -190,7 +191,10 @@ def flash_partition(
 
             v_cmd = ["shell", "-T", cmd_str]
             v_ret, v_out, v_err = run_adb(
-                adb_prefix, v_cmd, timeout=25, capture_only=True
+                adb_prefix,
+                v_cmd,
+                timeout=max(60, chunk_timeout // 2),
+                capture_only=True,
             )
             if v_ret != 0:
               raise RuntimeError(
@@ -313,6 +317,12 @@ def main():
       help="Disable per-chunk SHA256 checksum verification",
   )
   parser.add_argument(
+      "--timeout",
+      type=int,
+      default=60,
+      help="Timeout in seconds for writing each chunk (default: 60s)",
+  )
+  parser.add_argument(
       "--reboot", action="store_true", help="Reboot watch after successful flash"
   )
   args = parser.parse_args()
@@ -354,6 +364,7 @@ def main():
         adb_prefix,
         chunk_size_mb=args.chunk_size,
         verify=not args.no_verify,
+        chunk_timeout=args.timeout,
     )
 
     # 2. Flash Boot image if provided
@@ -369,6 +380,7 @@ def main():
             adb_prefix,
             chunk_size_mb=8,
             verify=not args.no_verify,
+            chunk_timeout=args.timeout,
         )
 
     # 3. Clean stale Android cache
