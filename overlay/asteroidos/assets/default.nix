@@ -5,7 +5,7 @@
   cmake,
 }:
 
-{
+rec {
   wallpapers = stdenv.mkDerivation {
     pname = "asteroid-wallpapers";
     version = "2.1";
@@ -110,8 +110,8 @@
     };
   };
 
-  virtualkeyboard = stdenv.mkDerivation {
-    pname = "asteroid-virtualkeyboard";
+  virtualkeyboard-style = stdenv.mkDerivation {
+    pname = "asteroid-virtualkeyboard-style";
     version = "1.0";
 
     src = fetchFromGitHub {
@@ -132,4 +132,6 @@
       platforms = platforms.linux;
     };
   };
+
+  virtualkeyboard = virtualkeyboard-style;
 }

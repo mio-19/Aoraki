@@ -5,6 +5,8 @@
   pkg-config,
   qt6,
   qml-asteroid,
+  virtualkeyboard ? null,
+  qtvirtualkeyboard ? qt6.qtvirtualkeyboard,
   buildPackages,
 }:
 
@@ -39,6 +41,34 @@ stdenv.mkDerivation (finalAttrs: {
     "QML2_IMPORT_PATH"
     ":"
     "${qml-asteroid}/lib/qt-6/qml"
+    "--set-default"
+    "QT_IM_MODULE"
+    "qtvirtualkeyboard"
+    "--set-default"
+    "QT_VIRTUALKEYBOARD_STYLE"
+    "watch"
+  ]
+  ++ lib.optionals (qtvirtualkeyboard != null) [
+    "--prefix"
+    "QT_PLUGIN_PATH"
+    ":"
+    "${qtvirtualkeyboard}/lib/qt-6/plugins"
+    "--prefix"
+    "QML2_IMPORT_PATH"
+    ":"
+    "${qtvirtualkeyboard}/lib/qt-6/qml"
+  ]
+  ++ lib.optionals (virtualkeyboard != null) [
+    "--prefix"
+    "QML2_IMPORT_PATH"
+    ":"
+    "${virtualkeyboard}/lib/qt-6/qml"
+    "--set-default"
+    "QT_VIRTUALKEYBOARD_LAYOUT_PATH"
+    "${virtualkeyboard}/share/qtvirtualkeyboard/layouts"
+    "--set-default"
+    "RIME_SHARED_DATA_DIR"
+    "${virtualkeyboard}/share/rime-data"
   ];
 
   meta = with lib; {

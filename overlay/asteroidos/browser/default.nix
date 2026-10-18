@@ -8,7 +8,6 @@
   qt6,
   qml-asteroid,
   virtualkeyboard ? null,
-  virtualkeyboard-rime ? null,
   qtvirtualkeyboard ? qt6.qtvirtualkeyboard,
   buildPackages,
 }:
@@ -70,17 +69,19 @@ stdenv.mkDerivation (finalAttrs: {
     "--prefix"
     "QML2_IMPORT_PATH"
     ":"
-    "${lib.optionalString (virtualkeyboard != null) "${virtualkeyboard}/lib/qml:"}${
-      lib.optionalString (virtualkeyboard-rime != null) "${virtualkeyboard-rime}/lib/qt-6/qml:"
-    }${qtvirtualkeyboard}/lib/qt-6/qml"
+    "${qtvirtualkeyboard}/lib/qt-6/qml"
   ]
-  ++ lib.optionals (virtualkeyboard-rime != null) [
+  ++ lib.optionals (virtualkeyboard != null) [
+    "--prefix"
+    "QML2_IMPORT_PATH"
+    ":"
+    "${virtualkeyboard}/lib/qt-6/qml"
     "--set-default"
     "QT_VIRTUALKEYBOARD_LAYOUT_PATH"
-    "${virtualkeyboard-rime}/share/qtvirtualkeyboard/layouts"
+    "${virtualkeyboard}/share/qtvirtualkeyboard/layouts"
     "--set-default"
     "RIME_SHARED_DATA_DIR"
-    "${virtualkeyboard-rime}/share/rime-data"
+    "${virtualkeyboard}/share/rime-data"
   ];
 
   meta = with lib; {

@@ -7,10 +7,11 @@
   librime,
   rime-data,
   buildPackages,
+  watchStyle ? null,
 }:
 
 stdenv.mkDerivation (finalAttrs: {
-  pname = "asteroid-virtualkeyboard-rime";
+  pname = "asteroid-virtualkeyboard";
   version = "1.0.0";
 
   src = ./.;
@@ -58,11 +59,16 @@ stdenv.mkDerivation (finalAttrs: {
 
     cp -n build-deploy/staging/* $out/share/rime-data/build/ 2>/dev/null || true
     cp -n build-deploy/staging/* $out/share/rime-data/ 2>/dev/null || true
+
+    if [ -n "${toString watchStyle}" ] && [ -d "${watchStyle}/lib/qml/QtQuick/VirtualKeyboard/Styles/watch" ]; then
+      mkdir -p $out/lib/qt-6/qml/QtQuick/VirtualKeyboard/Styles
+      cp -r ${watchStyle}/lib/qml/QtQuick/VirtualKeyboard/Styles/watch $out/lib/qt-6/qml/QtQuick/VirtualKeyboard/Styles/
+    fi
   '';
 
   meta = with lib; {
-    description = "Rime input method engine plugin and common Chinese schemas for smartwatch onscreen keyboard";
-    homepage = "https://rime.im";
+    description = "AsteroidOS on-screen virtual keyboard with watch style, layouts, and integrated RIME input method engine";
+    homepage = "https://asteroidos.org/";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
   };

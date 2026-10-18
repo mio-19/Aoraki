@@ -65,5 +65,5 @@ twenty48 = mkAsteroidApp {
 | **`asteroid-btsyncd`** | `AsteroidOS/asteroid-btsyncd` | BLE sync daemon communicating with AsteroidOS Sync companion app |
 | **`amber-mpris`** | `sailfishos/amber-mpris` | D-Bus MPRIS remote media control bindings |
 | **`mlite`** | `sailfishos/mlite` | Lightweight dconf / GSettings integration for Qt |
-| **`virtualkeyboard-rime`**| Custom overlay | Touch keyboard input method engine with RIME Chinese layout support |
+| **`virtualkeyboard`**| Custom overlay | Touch keyboard input method engine with RIME Chinese layout support and watch style |
 | **`msm-fb-refresher`** | `AsteroidOS/msm-fb-refresher` | Refresh synchronization daemon for Qualcomm MSM display panels |

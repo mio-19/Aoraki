@@ -37,13 +37,14 @@ rec {
 
   browser = callPackage ./browser {
     inherit qml-asteroid;
-    virtualkeyboard = assets.virtualkeyboard;
-    inherit virtualkeyboard-rime;
+    inherit virtualkeyboard;
     qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
   };
 
   telegram = callPackage ./telegram {
     inherit qml-asteroid;
+    inherit virtualkeyboard;
+    qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
   };
 
   kiwix = callPackage ./kiwix {
@@ -61,10 +62,12 @@ rec {
     };
 
   assets = (callPackage ./assets { }) // {
-    inherit virtualkeyboard-rime;
+    inherit virtualkeyboard;
   };
 
-  virtualkeyboard-rime = callPackage ./virtualkeyboard-rime { };
+  virtualkeyboard = callPackage ./virtualkeyboard {
+    watchStyle = (callPackage ./assets { }).virtualkeyboard-style;
+  };
 
   community-apps = callPackage ./community-apps {
     inherit mkAsteroidApp mlite;

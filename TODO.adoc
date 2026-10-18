@@ -6,14 +6,6 @@
 This document tracks upcoming milestones, architectural enhancements, hardware enablement tasks, and community feature requests for running declarative NixOS on wearable hardware.
 
 
-== Smartwatch Web Browsing
-
-* [x] *Unified Smartwatch Browser with QtWebEngine, AsteroidOS UI & Virtual Keyboard*:
-** Evaluated NetSurf, QtWebEngine, Ladybird, Servo, and WebKit for memory, standards, input integration, and performance.
-** Selected QtWebEngine for modern web standards compliance (HTML5, CSS Grid, ES2024 JavaScript) combined with native AsteroidOS Virtual Keyboard (`qtvirtualkeyboard` and RIME).
-** Implemented native AsteroidOS QML touch UI (`asteroid-browser`) with `org.asteroid.controls` (`Application`, `LayerStack`, `PageHeader`, `IconButton`, `TextField`), AMOLED black theme, circular safe margins, and integrated watch portal.
-** Removed legacy multi-engine switching boilerplate across the codebase.
-
 == Display, Compositor & UI Adaptations
 
 * [ ] *Circular AMOLED Visual Optimization*:

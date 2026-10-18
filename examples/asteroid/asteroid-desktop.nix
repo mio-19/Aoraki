@@ -44,8 +44,7 @@ in
         asteroid.assets.sounds
         asteroid.assets.icons
         asteroid.assets.fonts
-        asteroid.assets.virtualkeyboard
-        asteroid.assets.virtualkeyboard-rime
+        asteroid.virtualkeyboard
         # Complete application suite
         asteroid.apps.stopwatch
         asteroid.apps.timer
@@ -107,8 +106,10 @@ in
     environment.variables = {
       QT_IM_MODULE = "qtvirtualkeyboard";
       QT_VIRTUALKEYBOARD_STYLE = "watch";
-      QT_VIRTUALKEYBOARD_LAYOUT_PATH = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/qtvirtualkeyboard/layouts";
-      RIME_SHARED_DATA_DIR = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/rime-data";
+      QT_VIRTUALKEYBOARD_LAYOUT_PATH = "${pkgs.asteroid.virtualkeyboard}/share/qtvirtualkeyboard/layouts";
+      RIME_SHARED_DATA_DIR = "${pkgs.asteroid.virtualkeyboard}/share/rime-data";
+      QML2_IMPORT_PATH = "${pkgs.asteroid.virtualkeyboard}/lib/qt-6/qml:${pkgs.qt6.qtvirtualkeyboard}/lib/qt-6/qml:${pkgs.asteroid.qml-asteroid}/lib/qt-6/qml";
+      QT_PLUGIN_PATH = "${pkgs.qt6.qtvirtualkeyboard}/lib/qt-6/plugins";
     };
 
     # Wayland compositor and watchface launcher user service (runs under user session)
@@ -119,8 +120,8 @@ in
       environment = {
         QT_IM_MODULE = "qtvirtualkeyboard";
         QT_VIRTUALKEYBOARD_STYLE = "watch";
-        QT_VIRTUALKEYBOARD_LAYOUT_PATH = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/qtvirtualkeyboard/layouts";
-        RIME_SHARED_DATA_DIR = "${pkgs.asteroid.assets.virtualkeyboard-rime}/share/rime-data";
+        QT_VIRTUALKEYBOARD_LAYOUT_PATH = "${pkgs.asteroid.virtualkeyboard}/share/qtvirtualkeyboard/layouts";
+        RIME_SHARED_DATA_DIR = "${pkgs.asteroid.virtualkeyboard}/share/rime-data";
       }
       // config.environment.variables;
       serviceConfig = {

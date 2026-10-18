@@ -224,7 +224,7 @@ The environment includes a rich catalog of touch-optimized smartwatch applicatio
 
 * *`asteroid-browser`*: Lightweight web browser with integrated virtual keyboard support and wearable quick-links.
 * *`asteroid-telegram`*: Native smartwatch Telegram client with touch-friendly chat lists, message history, voice reply integration, and quick canned responses.
-* *`asteroid-virtualkeyboard-rime`*: On-screen touch keyboard featuring integrated link:https://rime.im/[RIME] input method engine support and bundled Chinese dictionaries.
+* *`asteroid-virtualkeyboard`*: On-screen touch keyboard featuring watch style, layouts, integrated link:https://rime.im/[RIME] input method engine support, and bundled Chinese dictionaries.
 * *`asteroid-beatfork`*: High-precision metronome and chromatic tuning fork with Tack-inspired tap tempo calculation, accented subdivisions (1/4, 2/4, 3/4, 4/4, 6/8), concentric visual pulse ring, and distinct smartwatch haptics.
 * *`asteroid-map`*: Touch GPS map viewer featuring offline tile cache persistence, compass heading orientation, and circular edge controls.
 * *`asteroid-music`*: Media playback remote controller for phone media players via Bluetooth MPRIS, enhanced with standalone YouTube Music streaming directly on the watch.
