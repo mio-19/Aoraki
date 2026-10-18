@@ -35,8 +35,8 @@ The project ports and supports the watch hardware catalog pioneered by link:http
 [cols="2,2,2,3,1",options="header"]
 |===
 | Device | Codename | SoC | Display | Support
-| **Google Pixel Watch 2** | `google-aurora` | Snapdragon W5 Gen 1 | 384x384 Round (Crown, AOD) | Active
-| **Fossil Gen 6** | `fossil-hoki` | Snapdragon Wear 4100+ | 400x400 Round (Crown, AOD) | Active
+| **Google Pixel Watch 2** | `google-aurora` | Snapdragon W5 Gen 1 | 384x384 Round (Crown, AOD) | Ported
+| **Fossil Gen 6** | `fossil-hoki` | Snapdragon Wear 4100+ | 416x416 Round (Crown, AOD) | Active
 | **Fossil Gen 5** (Carlyle/Julianna) | `fossil-triggerfish` | Snapdragon Wear 3100 | 416x416 Round (Crown, AOD) | Ported
 | **Fossil Gen 4** (Explorist HR 46mm) | `fossil-firefish` | Snapdragon Wear 2100 | 454x454 Round (Crown) | Ported
 | **Mobvoi TicWatch Pro** | `ticwatch-catfish` | Snapdragon Wear 2100 | 400x400 Dual-layer Round | Ported

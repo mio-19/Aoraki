@@ -46,7 +46,7 @@ The following watches are supported across Qualcomm Snapdragon Wear, MediaTek, E
 | **Fossil Gen 6** | `fossil-hoki` | Snapdragon Wear 4100+ | 416×416 Round AMOLED (Crown, AOD) | **Primary Reference** |
 | **Fossil Gen 5** (Carlyle / Julianna) | `fossil-triggerfish` | Snapdragon Wear 3100 | 416×416 Round AMOLED (Crown, AOD) | Supported |
 | **Fossil Gen 4** (Explorist HR) | `fossil-firefish` | Snapdragon Wear 2100 | 454×454 Round AMOLED (Crown) | Supported |
-| **Google Pixel Watch 2** | `google-aurora` | Snapdragon W5 Gen 1 | 384×384 Round AMOLED (Crown, AOD) | Supported |
+| **Google Pixel Watch 2** | `google-aurora` | Snapdragon W5 Gen 1 | 384×384 Round AMOLED (Crown, AOD) | Ported |
 | **Mobvoi TicWatch Pro 3** | `ticwatch-rubyfish` | Snapdragon Wear 4100 | 454×454 Dual-Layer Round | Supported |
 | **Mobvoi TicWatch Pro** | `ticwatch-catfish` | Snapdragon Wear 2100 | 400×400 Dual-Layer Round | Supported |
 | **Huawei Watch 1** | `huawei-sturgeon` | Snapdragon 400 (APQ8026) | 400×400 Sapphire Round | Supported |
