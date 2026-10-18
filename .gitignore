@@ -8,4 +8,5 @@ local.nix
 
 # Misc
 *.swp
+__pycache__/
 devices/*/kernel/config.*.old
