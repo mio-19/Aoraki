@@ -103,6 +103,19 @@ in
       };
     };
 
+    # Ensure graphical compositor on framebuffer is not trampled over by VT console login
+    # Reference: Mobile NixOS examples/hello/configuration.nix
+    systemd.services."getty@tty1" = {
+      enable = false;
+    };
+
+    # Smartwatch stem/power button should be handled by compositor/shell, not logind shutdown
+    services.logind.settings = {
+      Login = {
+        HandlePowerKey = "ignore";
+      };
+    };
+
     environment.variables = {
       QT_IM_MODULE = "qtvirtualkeyboard";
       QT_VIRTUALKEYBOARD_STYLE = "watch";
@@ -110,6 +123,8 @@ in
       RIME_SHARED_DATA_DIR = "${pkgs.asteroid.virtualkeyboard}/share/rime-data";
       QML2_IMPORT_PATH = "${pkgs.asteroid.virtualkeyboard}/lib/qt-6/qml:${pkgs.qt6.qtvirtualkeyboard}/lib/qt-6/qml:${pkgs.asteroid.qml-asteroid}/lib/qt-6/qml";
       QT_PLUGIN_PATH = "${pkgs.qt6.qtvirtualkeyboard}/lib/qt-6/plugins";
+      # Upstream AsteroidOS qt6-hidpi.conf: prevent over-scaling on small round smartwatch screens
+      QT_ENABLE_HIGHDPI_SCALING = "0";
     };
 
     # Wayland compositor and watchface launcher user service (runs under user session)
@@ -122,10 +137,11 @@ in
         QT_VIRTUALKEYBOARD_STYLE = "watch";
         QT_VIRTUALKEYBOARD_LAYOUT_PATH = "${pkgs.asteroid.virtualkeyboard}/share/qtvirtualkeyboard/layouts";
         RIME_SHARED_DATA_DIR = "${pkgs.asteroid.virtualkeyboard}/share/rime-data";
+        QT_QPA_PLATFORM = lib.mkDefault "linuxfb:fb=/dev/fb0";
       }
       // config.environment.variables;
       serviceConfig = {
-        ExecStart = "${pkgs.asteroid.asteroid-launcher}/bin/asteroid-launcher -plugin evdevtouch --systemd";
+        ExecStart = "${pkgs.asteroid.asteroid-launcher}/bin/asteroid-launcher $LIPSTICK_OPTIONS -plugin evdevtouch --systemd";
         Restart = "always";
         RestartSec = "2s";
       };

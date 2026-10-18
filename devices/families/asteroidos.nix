@@ -27,6 +27,49 @@ in
   # growPartition must be disabled to avoid pulling 64-bit qemu-utils into 32-bit ARMv7 targets.
   boot.growPartition = lib.mkForce false;
 
+  # Display quirks for Qualcomm MDSS framebuffer and DSI command-mode panels
+  mobile.quirks.fb-refresher.enable = mkDefault true;
+  mobile.quirks.qualcomm.fb-notify.enable = mkDefault true;
+
+  # Ensure display is unblanked and backlight is active on boot
+  boot.postBootCommands = ''
+    # Unblank display panel
+    if [ -e /sys/class/graphics/fb0/blank ]; then
+      echo 0 > /sys/class/graphics/fb0/blank || true
+    fi
+
+    # Set display backlight brightness (~50%)
+    for bl in /sys/class/backlight/* /sys/class/leds/*backlight; do
+      if [ -e "$bl/max_brightness" ]; then
+        max=$(cat "$bl/max_brightness")
+        echo $(( max / 2 )) > "$bl/brightness" || true
+      elif [ -e "$bl/brightness" ]; then
+        echo 50 > "$bl/brightness" || true
+      fi
+    done
+  '';
+
+  # Post-boot power optimization: re-enable low-power sleep modes once boot completes.
+  # Upstream reference: https://github.com/AsteroidOS/meta-smartwatch/blob/master/meta-hoki/recipes-core/underclock/underclock/underclock
+  systemd.services.watch-post-boot-power = {
+    description = "Smartwatch Post-Boot Low-Power Mode Configuration";
+    wantedBy = [ "multi-user.target" ];
+    after = [ "basic.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStartPre = "${pkgs.coreutils}/bin/sleep 20";
+      ExecStart = pkgs.writeShellScript "watch-post-boot-power" ''
+        # Re-enable low power sleep mode on Qualcomm SoC if available
+        if [ -e /sys/module/lpm_levels/parameters/sleep_disabled ]; then
+          echo 0 > /sys/module/lpm_levels/parameters/sleep_disabled || true
+        fi
+        if [ -e /sys/module/lpm_levels/system/system-pc/idle_enabled ]; then
+          echo 0 > /sys/module/lpm_levels/system/system-pc/idle_enabled || true
+        fi
+      '';
+    };
+  };
+
   # Downstream Android/AsteroidOS vendor kernels use specialized defconfigs (disabling desktop VT, etc.)
   # Reference: https://github.com/AsteroidOS/meta-smartwatch/tree/master/meta-hoki/recipes-kernel/linux
   mobile.boot.stage-1.kernel.useStrictKernelConfig = lib.mkForce false;
