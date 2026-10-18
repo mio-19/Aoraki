@@ -163,12 +163,18 @@ def flash_partition(
             sys.stdout.flush()
 
             # Read back chunk from watch and compute sha256
-            v_cmd = [
-                "shell",
-                "-T",
-                f"dd if={partition} bs=1M skip={offset_mb}"
-                f" count={actual_chunk_mb} status=none | sha256sum",
-            ]
+            if actual_chunk_len == actual_chunk_mb * 1024 * 1024:
+              cmd_str = (
+                  f"dd if={partition} bs=1M skip={offset_mb}"
+                  f" count={actual_chunk_mb} status=none | sha256sum"
+              )
+            else:
+              cmd_str = (
+                  f"dd if={partition} bs=1M skip={offset_mb} status=none |"
+                  f" head -c {actual_chunk_len} | sha256sum"
+              )
+
+            v_cmd = ["shell", "-T", cmd_str]
             v_ret, v_out, v_err = run_adb(adb_prefix, v_cmd, timeout=30)
             if v_ret != 0:
               raise RuntimeError(
@@ -176,18 +182,6 @@ def flash_partition(
               )
 
             watch_hash = v_out.decode().split()[0]
-            # If the last chunk is partial, compare against first actual_chunk_len bytes
-            if actual_chunk_len < actual_chunk_mb * 1024 * 1024:
-              # For partial final block, re-verify exact byte count
-              v_cmd2 = [
-                  "shell",
-                  "-T",
-                  f"head -c {actual_chunk_len} <(dd if={partition} bs=1M"
-                  f" skip={offset_mb} status=none) | sha256sum",
-              ]
-              _, v_out2, _ = run_adb(adb_prefix, v_cmd2, timeout=30)
-              watch_hash = v_out2.decode().split()[0]
-
             if watch_hash != expected_hash:
               print(f" MISMATCH! (Got {watch_hash[:8]} vs {expected_hash[:8]})")
               raise ValueError("Checksum mismatch on device")
