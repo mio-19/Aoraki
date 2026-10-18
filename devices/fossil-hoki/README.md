@@ -95,17 +95,22 @@ An alternative community method is to temporarily boot **TWRP Recovery for Fossi
    ```
 
 3. **Stream the rootfs image directly to the eMMC partition**:
-   You can stream the image directly to the block device without needing intermediate storage space on the watch:
+   Because `/tmp` on the watch is a RAM disk (limited to ~1 GB total memory), do NOT push the image to `/tmp`. Unsparse the image on your host machine and stream it via `adb exec-in` (disables terminal PTY line translation so binary data is not corrupted) using numeric block size:
    ```bash
-   # Convert/stream to the raw userdata partition via ADB:
-   simg2img result/system.img - | adb shell "dd of=/dev/block/bootdevice/by-name/userdata bs=4M"
+   # 1. Unsparse on host machine:
+   simg2img result/system.img /tmp/system_raw.img
+
+   # 2. Stream directly into userdata partition:
+   adb exec-in "dd of=/dev/block/bootdevice/by-name/userdata bs=1048576" < /tmp/system_raw.img
+
+   # 3. Clean up host temporary raw image:
+   rm -f /tmp/system_raw.img
    ```
-   *(Alternatively, if pushing the file first: `adb push result/system.img /tmp/system.simg && adb shell "simg2img /tmp/system.simg /dev/block/bootdevice/by-name/userdata"`)*
 
 4. **Flash kernel and stage-1 initrd to both boot slots**:
    ```bash
-   adb shell "dd of=/dev/block/bootdevice/by-name/boot_a bs=4M" < result/boot.img
-   adb shell "dd of=/dev/block/bootdevice/by-name/boot_b bs=4M" < result/boot.img
+   adb exec-in "dd of=/dev/block/bootdevice/by-name/boot_a bs=1048576" < result/boot.img
+   adb exec-in "dd of=/dev/block/bootdevice/by-name/boot_b bs=1048576" < result/boot.img
    ```
 
 5. **Wipe stale cache and reboot**:
