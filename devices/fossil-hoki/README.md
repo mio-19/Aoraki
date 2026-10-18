@@ -101,10 +101,10 @@ An alternative community method is to temporarily boot **TWRP Recovery for Fossi
    simg2img result/system.img /tmp/system_raw.img
 
    # 2. Stream directly into userdata with live progress and completion verification:
-   dd if=/tmp/system_raw.img bs=1M status=progress | sudo adb shell -T "cat > /dev/block/bootdevice/by-name/userdata && sync && echo '=== SYSTEM FLASH COMPLETED SUCCESSFULLY ==='"
+   dd if=/tmp/system_raw.img bs=1M status=progress | adb shell -T "cat > /dev/block/bootdevice/by-name/userdata && sync && echo '=== SYSTEM FLASH COMPLETED SUCCESSFULLY ==='"
 
    # 3. Verify filesystem integrity on the watch eMMC:
-   sudo adb shell "btrfs check --readonly /dev/block/bootdevice/by-name/userdata"
+   adb shell "btrfs check --readonly /dev/block/bootdevice/by-name/userdata"
 
    # 4. Clean up host temporary raw image:
    rm -f /tmp/system_raw.img
@@ -112,14 +112,14 @@ An alternative community method is to temporarily boot **TWRP Recovery for Fossi
 
 4. **Flash kernel and stage-1 initrd to both boot slots**:
    ```bash
-   dd if=result/boot.img bs=1M status=progress | sudo adb shell -T "cat > /dev/block/bootdevice/by-name/boot_a && sync && echo '=== BOOT_A OK ==='"
-   dd if=result/boot.img bs=1M status=progress | sudo adb shell -T "cat > /dev/block/bootdevice/by-name/boot_b && sync && echo '=== BOOT_B OK ==='"
+   dd if=result/boot.img bs=1M status=progress | adb shell -T "cat > /dev/block/bootdevice/by-name/boot_a && sync && echo '=== BOOT_A OK ==='"
+   dd if=result/boot.img bs=1M status=progress | adb shell -T "cat > /dev/block/bootdevice/by-name/boot_b && sync && echo '=== BOOT_B OK ==='"
    ```
 
 5. **Wipe stale cache and reboot**:
    ```bash
-   sudo adb shell "mke2fs -t ext4 /dev/block/bootdevice/by-name/cache" || sudo adb shell "make_ext4fs /dev/block/bootdevice/by-name/cache"
-   sudo adb reboot
+   adb shell "mke2fs -t ext4 /dev/block/bootdevice/by-name/cache" || adb shell "make_ext4fs /dev/block/bootdevice/by-name/cache"
+   adb reboot
    ```
 
 ---
