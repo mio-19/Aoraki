@@ -28,28 +28,13 @@ module System
   def self.run(*args)
     pretty_command = prettify_command(*args)
     $logger.debug(" $ #{pretty_command}")
-
-    if defined?(Open3) && Open3.respond_to?(:capture3)
-      stdout, stderr, status = Open3.capture3(*args)
-      unless status && status.success?
-        code = status ? status.exitstatus : -1
-        output = [stdout, stderr].map(&:to_s).map(&:strip).reject(&:empty?).join("\n")
-        err_msg = "Command failed... `#{pretty_command}` (#{code})"
-        err_msg += "\n#{output}" unless output.empty?
-        if code == 127
-          raise CommandNotFound.new(err_msg)
-        else
-          raise CommandError.new(err_msg)
-        end
-      end
-    else
-      unless system(*args)
-        status = $?.nil? ? nil : $?.exitstatus
-        if status == 127
-          raise CommandNotFound.new("Command not found... `#{pretty_command}` (#{status})")
-        else
-          raise CommandError.new("Command failed... `#{pretty_command}` (#{status})")
-        end
+    unless system(*args)
+      raise CommandError.new("Could not execute `#{pretty_command}`, status nil") if $?.nil?
+      status = $?.exitstatus
+      if status == 127
+        raise CommandNotFound.new("Command not found... `#{pretty_command}` (#{status})")
+      else
+        raise CommandError.new("Command failed... `#{pretty_command}` (#{status})")
       end
     end
   end
