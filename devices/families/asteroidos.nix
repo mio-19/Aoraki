@@ -45,6 +45,7 @@ in
   boot.bcache.enable = mkDefault false;
   services.logrotate.enable = mkDefault false;
   services.udisks2.enable = mkDefault false;
+  boot.plymouth.enable = lib.mkForce false;
   environment.defaultPackages = mkDefault [ ];
 
   # Flashing method defaults to fastboot, destination to userdata partition

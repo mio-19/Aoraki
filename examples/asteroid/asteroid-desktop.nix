@@ -12,14 +12,6 @@ in
 {
   options.services.asteroid-desktop = {
     enable = mkEnableOption "AsteroidOS smartwatch user environment";
-
-    browser = {
-      enable = lib.mkOption {
-        type = lib.types.bool;
-        default = true;
-        description = "Whether to install the AsteroidOS web browser and Kiwix offline reader suite.";
-      };
-    };
   };
 
   config = mkIf cfg.enable {
@@ -36,62 +28,58 @@ in
     };
 
     # System packages for the watch environment
-    environment.systemPackages =
-      with pkgs;
-      [
-        asteroid.qml-asteroid
-        asteroid.asteroid-launcher
-        asteroid.asteroid-btsyncd
-        # Asset suite
-        asteroid.assets.wallpapers
-        asteroid.assets.sounds
-        asteroid.assets.icons
-        asteroid.assets.fonts
-        asteroid.assets.virtualkeyboard
-        asteroid.assets.virtualkeyboard-rime
-        # Complete application suite
-        asteroid.apps.stopwatch
-        asteroid.apps.timer
-        asteroid.apps.alarmclock
-        asteroid.apps.calculator
-        asteroid.apps.settings
-        asteroid.apps.weather
-        asteroid.apps.music
-        asteroid.apps.compass
-        asteroid.apps.flashlight
-        asteroid.apps.calendar
-        asteroid.apps.diamonds
-        asteroid.apps.hrm
-        asteroid.apps.camera
-        asteroid.apps.gps-test
-        asteroid.apps.telegram
-        asteroid.apps.twenty48
-        # Community application suite & unofficial watchfaces
-        asteroid.community-apps.unofficial-watchfaces
-        asteroid.community-apps.blaster
-        asteroid.community-apps.dodger
-        asteroid.community-apps.health
-        asteroid.community-apps.sensorlogd
-        asteroid.community-apps.map
-        asteroid.community-apps.qmltester
-        asteroid.community-apps.skedaddle
-        asteroid.community-apps.weatherfetch
-        asteroid.community-apps.beatfork
-        asteroid.community-apps.benchymark
-        asteroid.community-apps.docking-bay
-        asteroid.community-apps.heliograph
-        asteroid.community-apps.horizon
-        asteroid.community-apps.meteormatch
-        asteroid.community-apps.pulsar
-        asteroid.community-apps.rag
-        asteroid.community-apps.shopper
-        asteroid.community-apps.toolwatch
-        asteroid.community-apps.touchdown
-      ]
-      ++ lib.optionals cfg.browser.enable [
-        asteroid.browser
-        asteroid.apps.kiwix
-      ];
+    environment.systemPackages = with pkgs; [
+      asteroid.qml-asteroid
+      asteroid.asteroid-launcher
+      asteroid.asteroid-btsyncd
+      # Asset suite
+      asteroid.assets.wallpapers
+      asteroid.assets.sounds
+      asteroid.assets.icons
+      asteroid.assets.fonts
+      asteroid.assets.virtualkeyboard
+      asteroid.assets.virtualkeyboard-rime
+      # Complete application suite
+      asteroid.apps.stopwatch
+      asteroid.apps.timer
+      asteroid.apps.alarmclock
+      asteroid.apps.calculator
+      asteroid.apps.settings
+      asteroid.apps.weather
+      asteroid.apps.music
+      asteroid.apps.compass
+      asteroid.apps.flashlight
+      asteroid.apps.calendar
+      asteroid.apps.diamonds
+      asteroid.apps.hrm
+      asteroid.apps.camera
+      asteroid.apps.gps-test
+      asteroid.apps.telegram
+      asteroid.apps.twenty48
+      asteroid.apps.browser
+      asteroid.apps.kiwix
+      # Community application suite & unofficial watchfaces
+      asteroid.community-apps.unofficial-watchfaces
+      asteroid.community-apps.blaster
+      asteroid.community-apps.dodger
+      asteroid.community-apps.health
+      asteroid.community-apps.sensorlogd
+      asteroid.community-apps.map
+      asteroid.community-apps.qmltester
+      asteroid.community-apps.skedaddle
+      asteroid.community-apps.weatherfetch
+      asteroid.community-apps.beatfork
+      asteroid.community-apps.benchymark
+      asteroid.community-apps.docking-bay
+      asteroid.community-apps.heliograph
+      asteroid.community-apps.horizon
+      asteroid.community-apps.meteormatch
+      asteroid.community-apps.pulsar
+      asteroid.community-apps.rag
+      asteroid.community-apps.shopper
+      asteroid.community-apps.toolwatch
+      asteroid.community-apps.touchdown
+    ];
 
     systemd.tmpfiles.rules = [
       "d /var/lib/kiwix 0775 ceres users -"
@@ -141,6 +129,17 @@ in
       serviceConfig = {
         ExecStart = "${pkgs.asteroid.asteroid-btsyncd}/bin/asteroid-btsyncd";
         Restart = "always";
+        RestartSec = "5s";
+      };
+    };
+
+    # Kiwix offline Wikipedia/ZIM HTTP server user service
+    systemd.user.services.kiwix-serve = {
+      description = "Kiwix Offline Encyclopedia HTTP Server";
+      wantedBy = [ "default.target" ];
+      serviceConfig = {
+        ExecStart = "${pkgs.asteroid.apps.kiwix}/bin/kiwix-watch --daemon-only";
+        Restart = "on-failure";
         RestartSec = "5s";
       };
     };

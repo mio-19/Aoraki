@@ -96,6 +96,14 @@ lib.mkIf isCross (
                 }
               );
 
+              # In cross-compilation, libkiwix installs build-time generator scripts into $out/bin
+              # whose shebangs reference buildPackages python3 (143MB), bloating the target rootfs.
+              libkiwix = super.libkiwix.overrideAttrs (old: {
+                postInstall = (old.postInstall or "") + ''
+                  rm -rf $out/bin
+                '';
+              });
+
               # Fix wuffs host gcc and ar invocation when generating libraries during cross compilation
               wuffs = super.wuffs.overrideAttrs (old: {
                 preInstall = ''

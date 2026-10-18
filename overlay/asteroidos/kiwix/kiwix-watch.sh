@@ -13,13 +13,40 @@ USER_ZIM_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/kiwix"
 
 mkdir -p "$USER_ZIM_DIR" 2>/dev/null || true
 
+DAEMON_MODE=0
+if [ "$1" = "--daemon-only" ]; then
+    DAEMON_MODE=1
+    shift
+fi
+
 # Gather available .zim files
 ZIM_FILES=""
-for f in "$SYSTEM_ZIM_DIR"/*.zim "$USER_ZIM_DIR"/*.zim; do
-    if [ -f "$f" ]; then
-        ZIM_FILES="$ZIM_FILES \"$f\""
+if [ "$#" -gt 0 ]; then
+    for arg in "$@"; do
+        if [ -f "$arg" ]; then
+            ZIM_FILES="$ZIM_FILES \"$arg\""
+        fi
+    done
+fi
+
+if [ -z "$ZIM_FILES" ]; then
+    for f in "$SYSTEM_ZIM_DIR"/*.zim "$USER_ZIM_DIR"/*.zim; do
+        if [ -f "$f" ]; then
+            ZIM_FILES="$ZIM_FILES \"$f\""
+        fi
+    done
+fi
+
+if [ "$DAEMON_MODE" -eq 1 ]; then
+    if [ -n "$ZIM_FILES" ]; then
+        # Run kiwix-serve in foreground for systemd service
+        # shellcheck disable=SC2086
+        exec kiwix-serve --port="$PORT" --address="$ADDR" --nodatealiases $ZIM_FILES
+    else
+        # No ZIM archives currently available; exit cleanly
+        exit 0
     fi
-done
+fi
 
 if [ -z "$ZIM_FILES" ]; then
     # No archives found: display watch-optimized welcome & setup guide
