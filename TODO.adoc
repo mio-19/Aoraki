@@ -7,19 +7,11 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 
 == Storage & Filesystems
 
-* [x] *`btrfs+compress` Root Filesystem / Userdata*:
-** Smartwatches have constrained eMMC storage (typically 4GB–8GB total, with 2GB–4GB allocated to `userdata`).
-** Transparent filesystem compression with Btrfs (`compress=zstd:3`) is implemented and default on wearable targets, reducing rootfs image size by over 58%.
-** Enabled `CONFIG_BTRFS_FS=y`, `CONFIG_BTRFS_FS_POSIX_ACL=y`, `CONFIG_CRYPTO_ZSTD=y`, `CONFIG_ZSTD_COMPRESS=y`, `CONFIG_ZSTD_DECOMPRESS=y`, `CONFIG_XXHASH=y`, and `CONFIG_CRYPTO_XXHASH=y` in wearable defconfigs.
-** Updated stage-1 initrd with `btrfs-progs` and automatic offline expansion (`btrfs filesystem resize --offline max <device>`) in `auto_resize.rb`.
 * [ ] *Direct Sparse Image Output (`img2simg`)*:
 ** Streamline fastboot deployment by outputting native Android sparse filesystem images directly from the Nix build, reducing image transfer times and fastboot chunking overhead.
 
 == Smartwatch Web Browsing
 
-* [ ] *NetSurf Browser Engine Cross-Compilation*:
-** Finalize host tooling pass-through (`BUILD_CC=${buildPackages.stdenv.cc}/bin/gcc`) for `split-messages` in `netsurf-browser`.
-** Provide round-screen CSS injection and touch kinetic scrolling for `netsurf-gtk3`.
 * [ ] *Ladybird 32-bit ARM Port*:
 ** Continue upstreaming/maintaining 32-bit ARM patches for LibGC and Skia.
 ** Investigate WebContent process memory footprint reduction for devices with 512MB–1GB RAM.

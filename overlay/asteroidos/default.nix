@@ -36,11 +36,7 @@ rec {
   };
 
   browser = callPackage ./browser {
-    inherit (pkgs) ladybird;
     netsurf = pkgs.netsurf-browser or null;
-    servo = pkgs.servo or null;
-    webkitgtk_6_0 = pkgs.webkitgtk_6_0 or null;
-    goanna = pkgs.goanna or null;
     virtualkeyboard = assets.virtualkeyboard;
     inherit virtualkeyboard-rime;
     qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;

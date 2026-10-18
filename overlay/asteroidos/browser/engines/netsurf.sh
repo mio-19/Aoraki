@@ -19,8 +19,17 @@ if ! command -v "$NETSURF_EXEC" >/dev/null 2>&1; then
     fi
 fi
 
-# Wayland display environment
+# Wayland display environment and touch scrolling
 export GDK_BACKEND="${GDK_BACKEND:-wayland}"
 export GDK_SCALE="${ASTEROID_BROWSER_SCALE:-1}"
+export GDK_CORE_DEVICE_EVENTS=1
+export GTK_OVERLAY_SCROLLING=1
+
+# Auto-provision round-screen user stylesheet if not customized by user
+CONFIG_DIR="${XDG_CONFIG_HOME:-$HOME/.config}/netsurf"
+mkdir -p "$CONFIG_DIR"
+if [ ! -f "$CONFIG_DIR/user.css" ] && [ -f "${ASTEROID_BROWSER_SHARE:-/usr/share/asteroid-browser}/watch-round.css" ]; then
+    cp "${ASTEROID_BROWSER_SHARE:-/usr/share/asteroid-browser}/watch-round.css" "$CONFIG_DIR/user.css"
+fi
 
 exec "$NETSURF_EXEC" "$TARGET_URL"

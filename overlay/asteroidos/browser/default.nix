@@ -2,7 +2,7 @@
   lib,
   stdenv,
   makeWrapper,
-  engine ? "ladybird",
+  engine ? "netsurf",
   ladybird ? null,
   netsurf ? null,
   servo ? null,
@@ -85,9 +85,10 @@ stdenv.mkDerivation rec {
     install -Dm755 engines/webkit.sh $out/share/asteroid-browser/engines/webkit.sh
     install -Dm755 engines/goanna.sh $out/share/asteroid-browser/engines/goanna.sh
 
-    # Install UI assets (watch portal & circular AMOLED stylesheet)
+    # Install UI assets (watch portal, Qt theme, and NetSurf circular AMOLED stylesheet)
     install -Dm644 portal.html $out/share/asteroid-browser/portal.html
     install -Dm644 watch-theme.qss $out/share/asteroid-browser/watch-theme.qss
+    install -Dm644 watch-round.css $out/share/asteroid-browser/watch-round.css
 
     # Install desktop entries
     install -Dm644 asteroid-browser.desktop $out/share/applications/asteroid-browser.desktop

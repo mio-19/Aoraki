@@ -96,21 +96,83 @@ lib.mkIf isCross (
                 }
               );
 
-              # Fix wuffs host gcc invocation when generating libraries during cross compilation
+              # Fix wuffs host gcc and ar invocation when generating libraries during cross compilation
               wuffs = super.wuffs.overrideAttrs (old: {
                 preInstall = ''
                   mkdir -p bin-compat
                   ln -sf $(type -p ${super.stdenv.cc.targetPrefix}gcc) bin-compat/gcc
+                  ln -sf $(type -p ${super.stdenv.cc.targetPrefix}ar) bin-compat/ar
                   export PATH="$PWD/bin-compat:$PATH"
                 '';
               });
 
-              # NetSurf buildsystem fails to guess BUILD in cross-compilation when host cc is not on PATH.
+              # NetSurf buildsystem fails to guess BUILD in cross-compilation when host cc is not on PATH,
+              # executes hardcoded /bin/which, and lacks default host compiler for helper tools.
               # Upstream repository: https://git.netsurf-browser.org/buildsystem.git/
               netsurf-buildsystem = super.netsurf-buildsystem.overrideAttrs (old: {
                 postPatch = (old.postPatch or "") + ''
                   substituteInPlace makefiles/Makefile.tools \
-                    --replace-fail 'BUILD := $(shell $(BUILD_CC) -dumpmachine)' 'BUILD ?= ${super.stdenv.buildPlatform.config}'
+                    --replace-fail 'BUILD := $(shell $(BUILD_CC) -dumpmachine)' 'BUILD ?= ${super.stdenv.buildPlatform.config}' \
+                    --replace-fail 'BUILD_CC ?= cc' 'BUILD_CC ?= ${super.buildPackages.stdenv.cc}/bin/gcc' \
+                    --replace-fail 'PKGCONFIG ?= PKG_CONFIG_PATH="$(PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)" pkg-config' 'PKGCONFIG ?= PKG_CONFIG_PATH="$(PREFIX)/lib/pkgconfig:$(PKG_CONFIG_PATH)" $(or $(PKG_CONFIG),${super.stdenv.cc.targetPrefix}pkg-config)' \
+                    --replace-warn '/bin/which' 'which'
+                '';
+              });
+
+              libparserutils = super.libparserutils.overrideAttrs (old: {
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                  super.buildPackages.perl
+                  super.buildPackages.which
+                ];
+              });
+
+              libhubbub = super.libhubbub.overrideAttrs (old: {
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                  super.buildPackages.gperf
+                  super.buildPackages.perl
+                  super.buildPackages.which
+                ];
+              });
+
+              libcss = super.libcss.overrideAttrs (old: {
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                  super.buildPackages.perl
+                  super.buildPackages.which
+                ];
+              });
+
+              libdom = super.libdom.overrideAttrs (old: {
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                  super.buildPackages.which
+                ];
+              });
+
+              libsvgtiny = super.libsvgtiny.overrideAttrs (old: {
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                  super.buildPackages.gperf
+                  super.buildPackages.which
+                ];
+              });
+
+              netsurf-browser = super.netsurf-browser.overrideAttrs (old: {
+                nativeBuildInputs = (old.nativeBuildInputs or [ ]) ++ [
+                  super.buildPackages.gperf
+                  super.buildPackages.nsgenbind
+                  super.buildPackages.which
+                  super.buildPackages.pkg-config
+                  super.buildPackages.zlib
+                  super.buildPackages.libpng
+                  super.buildPackages.gdk-pixbuf
+                  super.buildPackages.glib
+                ];
+                preConfigure = (old.preConfigure or "") + ''
+                  cat <<EOF >> Makefile.config
+                  override BUILD_CC := ${super.buildPackages.stdenv.cc}/bin/gcc
+                  override BUILD_CFLAGS := -I${super.buildPackages.zlib.dev}/include -I${super.buildPackages.libpng.dev}/include
+                  override BUILD_LDFLAGS := -L${super.buildPackages.zlib}/lib -L${super.buildPackages.libpng}/lib
+                  override PKG_CONFIG := ${super.stdenv.cc.targetPrefix}pkg-config
+                  EOF
+                  export GDK_PIXBUF_MODULE_FILE="${super.buildPackages.gdk-pixbuf}/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"
                 '';
               });
             }
