@@ -65,43 +65,61 @@ def adb_kill_server(adb_prefix, reason="reset"):
 
 
 def wait_for_device(adb_prefix):
-  """Wait for watch to reconnect, killing adb server every 10s."""
+  """Wait for watch to reconnect: probe for 10s -> kill-server -> sleep for 10s."""
   print(
       "\n[!] Waiting for device to reconnect (adjust watch on magnetic cradle, or reboot to recovery again)..."
   )
   adb_kill_server(adb_prefix, reason="entering reconnect wait")
-  time.sleep(1)
-  last_kill_time = time.time()
+
   wait_start_time = time.time()
+  cycle = 0
 
   while True:
-    now = time.time()
-    if now - last_kill_time >= 10.0:
-      elapsed = int(now - wait_start_time)
-      adb_kill_server(
-          adb_prefix,
-          reason=f"periodic 10s recovery timeout (waited {elapsed}s total)",
+    cycle += 1
+    total_elapsed = int(time.time() - wait_start_time)
+    print(
+        f"\n[*] [Cycle {cycle}] Probing for device for 10s (total elapsed:"
+        f" {total_elapsed}s)..."
+    )
+
+    probe_start = time.time()
+    # 1. Probe for 10s
+    while time.time() - probe_start < 10.0:
+      elapsed_cycle = int(time.time() - probe_start)
+      total_now = int(time.time() - wait_start_time)
+      sys.stdout.write(
+          f"[*] Probing... ({elapsed_cycle}s / 10s, total elapsed:"
+          f" {total_now}s)\r"
       )
-      last_kill_time = time.time()
+      sys.stdout.flush()
+
+      try:
+        code, _, _ = run_adb(adb_prefix, ["wait-for-device"], timeout=2)
+        if code == 0:
+          time.sleep(0.5)
+          code2, out, _ = run_adb(
+              adb_prefix, ["shell", "echo ping"], timeout=2
+          )
+          if code2 == 0 and b"ping" in out:
+            print(
+                f"\n[+] Device reconnected and responsive after {total_now}s!"
+            )
+            return
+      except Exception:
+        pass
+      time.sleep(0.5)
+
+    # 2. 10s probe window finished without device: kill-server
+    print(f"\n[*] Device not detected in 10s probe window.")
+    adb_kill_server(adb_prefix, reason=f"cycle {cycle} probe timeout")
+
+    # 3. Sleep for 10s
+    print(f"[*] Sleeping for 10s before next probe...")
+    for s in range(10, 0, -1):
+      sys.stdout.write(f"[*] Sleeping... {s}s remaining\r")
+      sys.stdout.flush()
       time.sleep(1)
-
-    elapsed = int(time.time() - wait_start_time)
-    sys.stdout.write(f"[*] Probing for device (waited {elapsed}s)...\r")
-    sys.stdout.flush()
-
-    try:
-      code, _, _ = run_adb(adb_prefix, ["wait-for-device"], timeout=3)
-      if code == 0:
-        time.sleep(0.5)
-        code2, out, _ = run_adb(
-            adb_prefix, ["shell", "echo ping"], timeout=3
-        )
-        if code2 == 0 and b"ping" in out:
-          print(f"\n[+] Device reconnected and responsive after {elapsed}s!")
-          return
-    except Exception:
-      pass
-    time.sleep(0.5)
+    print("")
 
 
 def flash_partition(
