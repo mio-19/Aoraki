@@ -32,6 +32,41 @@ class Tasks::UDev < SingletonTask
     rescue System::CommandError => e
       $logger.warn("udevadm settle non-fatal timeout (proceeding): #{e.message}")
     end
+
+    ensure_partition_links
+  end
+
+  def ensure_partition_links()
+    FileUtils.mkdir_p("/dev/disk/by-partlabel")
+    FileUtils.mkdir_p("/dev/disk/by-label")
+
+    if File.exist?("/dev/mmcblk0p50")
+      unless File.exist?("/dev/disk/by-partlabel/userdata")
+        System.symlink("/dev/mmcblk0p50", "/dev/disk/by-partlabel/userdata")
+      end
+      unless File.exist?("/dev/disk/by-label/NIXOS_SYSTEM")
+        System.symlink("/dev/mmcblk0p50", "/dev/disk/by-label/NIXOS_SYSTEM")
+      end
+    end
+
+    Dir.glob("/sys/class/block/*/uevent").each do |uevent|
+      content = File.read(uevent) rescue ""
+      if content.include?("PARTNAME=userdata")
+        devname = content[/DEVNAME=(\S+)/, 1]
+        if devname && File.exist?("/dev/#{devname}")
+          unless File.exist?("/dev/disk/by-partlabel/userdata")
+            System.symlink("/dev/#{devname}", "/dev/disk/by-partlabel/userdata")
+          end
+          unless File.exist?("/dev/disk/by-label/NIXOS_SYSTEM")
+            System.symlink("/dev/#{devname}", "/dev/disk/by-label/NIXOS_SYSTEM")
+          end
+        end
+      end
+    end
+
+    if File.exist?("/dev/disk/by-partlabel/userdata") && !File.exist?("/dev/disk/by-label/NIXOS_SYSTEM")
+      System.symlink("/dev/disk/by-partlabel/userdata", "/dev/disk/by-label/NIXOS_SYSTEM")
+    end
   end
 
   def udevd()

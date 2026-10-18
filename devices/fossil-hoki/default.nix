@@ -78,9 +78,11 @@
 
   mobile.system.type = "android";
 
-  # Ensure stage-1 udev immediately links userdata to /dev/disk/by-label/NIXOS_SYSTEM
+  # Ensure stage-1 udev immediately links userdata to /dev/disk/by-label/NIXOS_SYSTEM and /dev/disk/by-partlabel/userdata
   mobile.boot.stage-1.extraUdevRules = ''
-    ENV{ID_PART_ENTRY_NAME}=="userdata", SYMLINK+="disk/by-label/NIXOS_SYSTEM"
+    KERNEL=="mmcblk0p50", SYMLINK+="disk/by-label/NIXOS_SYSTEM", SYMLINK+="disk/by-partlabel/userdata"
+    ENV{PARTNAME}=="userdata", SYMLINK+="disk/by-label/NIXOS_SYSTEM", SYMLINK+="disk/by-partlabel/userdata"
+    ENV{ID_PART_ENTRY_NAME}=="userdata", SYMLINK+="disk/by-label/NIXOS_SYSTEM", SYMLINK+="disk/by-partlabel/userdata"
   '';
 
   environment.systemPackages = [
