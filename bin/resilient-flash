@@ -27,13 +27,25 @@ def is_sparse(filepath):
     return False
 
 
-def run_adb(adb_prefix, args, input_bytes=None, timeout=30):
+def run_adb(adb_prefix, args, input_bytes=None, timeout=30, capture_only=False):
   cmd = adb_prefix + args
   proc = subprocess.Popen(
       cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
   )
   try:
     stdout, stderr = proc.communicate(input=input_bytes, timeout=timeout)
+    if not capture_only:
+      if stdout:
+        sys.stdout.write(stdout.decode("latin1", errors="replace"))
+        sys.stdout.flush()
+      if stderr:
+        sys.stderr.write(stderr.decode("latin1", errors="replace"))
+        sys.stderr.flush()
+    else:
+      # If capture_only, still pass through stderr if non-zero exit code
+      if proc.returncode != 0 and stderr:
+        sys.stderr.write(stderr.decode("latin1", errors="replace"))
+        sys.stderr.flush()
     return proc.returncode, stdout, stderr
   except subprocess.TimeoutExpired:
     try:
@@ -59,7 +71,13 @@ def adb_kill_server(adb_prefix, reason="reset"):
     proc = subprocess.Popen(
         adb_prefix + ["kill-server"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
     )
-    proc.communicate(timeout=5)
+    stdout, stderr = proc.communicate(timeout=5)
+    if stdout:
+      sys.stdout.write(stdout.decode("latin1", errors="replace"))
+      sys.stdout.flush()
+    if stderr:
+      sys.stderr.write(stderr.decode("latin1", errors="replace"))
+      sys.stderr.flush()
   except Exception as e:
     print(f"    (kill-server warning: {e})")
 
@@ -98,7 +116,7 @@ def wait_for_device(adb_prefix):
         if code == 0:
           time.sleep(0.5)
           code2, out, _ = run_adb(
-              adb_prefix, ["shell", "echo ping"], timeout=2
+              adb_prefix, ["shell", "echo ping"], timeout=2, capture_only=True
           )
           if code2 == 0 and b"ping" in out:
             print(
@@ -215,7 +233,9 @@ def flash_partition(
               )
 
             v_cmd = ["shell", "-T", cmd_str]
-            v_ret, v_out, v_err = run_adb(adb_prefix, v_cmd, timeout=25)
+            v_ret, v_out, v_err = run_adb(
+                adb_prefix, v_cmd, timeout=25, capture_only=True
+            )
             if v_ret != 0:
               raise RuntimeError(
                   f"SHA256 readback failed: {v_err.decode('latin1')}"
@@ -270,7 +290,7 @@ def flash_partition(
           sys.stdout.flush()
           t_vf0 = time.time()
           v_ret, v_out, v_err = run_adb(
-              adb_prefix, ["shell", "-T", cmd_str], timeout=360
+              adb_prefix, ["shell", "-T", cmd_str], timeout=360, capture_only=True
           )
           if v_ret != 0:
             raise RuntimeError(
