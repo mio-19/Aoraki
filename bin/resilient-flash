@@ -314,6 +314,11 @@ def main():
     print(f"Error: '{adb_prefix[-1]}' command not found on host.", file=sys.stderr)
     sys.exit(1)
 
+  # Clean start: kill any stale ADB daemon
+  print("[*] Resetting ADB daemon for a clean start...")
+  adb_kill_server(adb_prefix)
+  time.sleep(1)
+
   # Check sparse vs raw
   raw_path = args.system_image
   temp_raw_created = False
