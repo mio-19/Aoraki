@@ -147,12 +147,12 @@ def flash_partition(
 
         t0 = time.time()
         try:
-          # Write chunk via dd with seek and conv=notrunc
+          # Write chunk via dd with seek and conv=notrunc (bs=1048576 for universal recovery dd support)
           cmd = [
               "shell",
               "-T",
-              f"dd of={partition} bs=1M seek={offset_mb} count={actual_chunk_mb}"
-              " conv=notrunc status=none",
+              f"dd of={partition} bs=1048576 seek={offset_mb} count={actual_chunk_mb}"
+              " conv=notrunc",
           ]
           ret, _, err = run_adb(adb_prefix, cmd, input_bytes=data, timeout=35)
           if ret != 0:
@@ -166,14 +166,15 @@ def flash_partition(
             sys.stdout.flush()
 
             # Read back chunk from watch and compute sha256 via pure POSIX pipeline
+            # Using 2>/dev/null so dd record banners do not pollute the hash stream
             if actual_chunk_len == actual_chunk_mb * 1024 * 1024:
               cmd_str = (
-                  f"dd if={partition} bs=1M skip={offset_mb}"
-                  f" count={actual_chunk_mb} status=none | sha256sum"
+                  f"dd if={partition} bs=1048576 skip={offset_mb}"
+                  f" count={actual_chunk_mb} 2>/dev/null | sha256sum"
               )
             else:
               cmd_str = (
-                  f"dd if={partition} bs=1M skip={offset_mb} status=none |"
+                  f"dd if={partition} bs=1048576 skip={offset_mb} 2>/dev/null |"
                   f" head -c {actual_chunk_len} | sha256sum"
               )
 
