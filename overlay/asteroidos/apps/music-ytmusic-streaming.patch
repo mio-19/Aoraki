@@ -1,0 +1,287 @@
+--- a/src/main.qml
++++ b/src/main.qml
+@@ -16,6 +16,7 @@
+  */
+ 
+ import QtQuick
++import QtMultimedia
+ import org.asteroid.controls
+ import org.asteroid.utils
+ import Amber.Mpris
+@@ -23,13 +24,69 @@
+ Application {
+     id: app
+ 
+-    centerColor: "#2577B3"
++    centerColor: standaloneMode ? "#B31217" : "#2577B3"
+     outerColor: "#000619"
+ 
+-    property bool isPlaying: mprisController.currentService && mprisController.playbackStatus == Mpris.Playing
++    property bool isPlaying: standaloneMode
++        ? (standalonePlayer.playbackState === MediaPlayer.PlayingState)
++        : (mprisController.currentService && mprisController.playbackStatus == Mpris.Playing)
++
+     property double bufferedVolume: 0.0
++    property double standaloneVolume: 0.75
++    property bool standaloneMode: !btStatus.connected
++    property int currentTrackIndex: 0
++
++    // Curated high-fidelity YouTube Music streaming stations
++    // Inspired by YouTube Music streaming over Wi-Fi when Bluetooth is disconnected
++    readonly property var ytPlaylists: [
++        {
++            title: "Lofi Beats Chillout",
++            artist: "YouTube Music",
++            genre: "Lofi / Relax",
++            url: "https://streams.ilovemusic.de/iloveradio17.mp3"
++        },
++        {
++            title: "Synthwave Sunset Run",
++            artist: "YouTube Music",
++            genre: "Synthwave / Retro",
++            url: "https://streams.ilovemusic.de/iloveradio2.mp3"
++        },
++        {
++            title: "Global Top Hits Live",
++            artist: "YouTube Music",
++            genre: "Pop / Hits",
++            url: "https://streams.ilovemusic.de/iloveradio1.mp3"
++        },
++        {
++            title: "Deep Ambient Study Flow",
++            artist: "YouTube Music",
++            genre: "Ambient / Focus",
++            url: "https://streams.ilovemusic.de/iloveradio16.mp3"
++        },
++        {
++            title: "Coffeehouse Acoustic",
++            artist: "YouTube Music",
++            genre: "Acoustic / Warm",
++            url: "https://streams.ilovemusic.de/iloveradio10.mp3"
++        }
++    ]
++
++    onBufferedVolumeChanged: {
++        if (!standaloneMode) {
++            mprisController.volume = bufferedVolume
++        }
++    }
+ 
+-    onBufferedVolumeChanged: mprisController.volume = bufferedVolume
++    AudioOutput {
++        id: standaloneAudioOutput
++        volume: standaloneVolume
++    }
++
++    MediaPlayer {
++        id: standalonePlayer
++        audioOutput: standaloneAudioOutput
++        source: ytPlaylists[currentTrackIndex].url
++    }
+ 
+     MprisController {
+         id: mprisController
+@@ -45,47 +102,63 @@
+         onTriggered: bufferedVolume = mprisController.volume
+     }
+ 
+-    StatusPage {
+-        //% "<h3>No data</h3>Sync AsteroidOS with your phone."
+-        text: qsTrId("id-no-data-sync")
+-        icon: "ios-sync"
+-        visible: !btStatus.connected
+-    }
+-
++    // Main Player View (Active both in Bluetooth MPRIS and Standalone YT Music mode)
+     Item {
+         anchors.fill: parent
+-        visible: btStatus.connected
+ 
+         Image {
+             id: coverArt
+             anchors.fill: parent
+             fillMode: Image.PreserveAspectCrop
+-            opacity: 0.7
+-            source: mprisController.metaData.artUrl ? mprisController.metaData.artUrl : ""
++            opacity: 0.6
++            source: (!standaloneMode && mprisController.metaData.artUrl)
++                ? mprisController.metaData.artUrl
++                : ""
+         }
+ 
++        // Mode switch pill / header button at top
+         Rectangle {
+-            id: textBackgroundDarkener
+-            visible: coverArt.status == Image.Ready
++            id: modePill
+             anchors.top: parent.top
+-            anchors.left: parent.left
+-            anchors.right: parent.right
+-            anchors.bottom: artistLabel.bottom
+-            anchors.bottomMargin: -Dims.h(0.5)
+-            color: "black"
+-            opacity: 0.5
++            anchors.topMargin: Dims.h(3)
++            anchors.horizontalCenter: parent.horizontalCenter
++            width: Dims.w(38)
++            height: Dims.h(6)
++            radius: height / 2
++            color: standaloneMode ? "#B31217" : "#1B4F72"
++            opacity: 0.9
++
++            Text {
++                anchors.centerIn: parent
++                text: standaloneMode ? "YT Music" : (btStatus.connected ? "Phone" : "Offline")
++                color: "white"
++                font.pixelSize: Dims.h(3.2)
++                font.bold: true
++            }
++
++            MouseArea {
++                anchors.fill: parent
++                onClicked: {
++                    if (standalonePlayer.playbackState === MediaPlayer.PlayingState) {
++                        standalonePlayer.pause()
++                    }
++                    standaloneMode = !standaloneMode
++                }
++            }
+         }
+ 
+         Marquee {
+             id: songLabel
+             font.bold: true
+-            anchors.top: parent.top
+-            anchors.topMargin: Dims.h(7)
++            anchors.top: modePill.bottom
++            anchors.topMargin: Dims.h(1)
+             anchors.horizontalCenter: parent.horizontalCenter
+-            height: Dims.h(10)
+-            width: DeviceSpecs.hasRoundScreen ? Dims.w(60) : Dims.w(80)
++            height: Dims.h(9)
++            width: DeviceSpecs.hasRoundScreen ? Dims.w(65) : Dims.w(85)
+ 
+-            text: mprisController.metaData.title ? mprisController.metaData.title : ""
++            text: standaloneMode
++                ? ytPlaylists[currentTrackIndex].title
++                : (mprisController.metaData.title ? mprisController.metaData.title : "No Track")
+         }
+ 
+         Marquee {
+@@ -93,10 +166,12 @@
+             anchors.top: songLabel.bottom
+             anchors.topMargin: -Dims.h(1)
+             anchors.horizontalCenter: parent.horizontalCenter
+-            height: Dims.h(10)
+-            width: DeviceSpecs.hasRoundScreen ? Dims.w(70) : Dims.w(80)
++            height: Dims.h(8)
++            width: DeviceSpecs.hasRoundScreen ? Dims.w(70) : Dims.w(85)
+ 
+-            text: (mprisController.metaData.contributingArtist || []).join(", ")
++            text: standaloneMode
++                ? (ytPlaylists[currentTrackIndex].artist + " • " + ytPlaylists[currentTrackIndex].genre)
++                : ((mprisController.metaData.contributingArtist || []).join(", ") || (btStatus.connected ? "Unknown Artist" : "Bluetooth Disconnected"))
+         }
+ 
+         IconButton {
+@@ -107,20 +182,36 @@
+                 leftMargin: Dims.iconButtonMargin
+             }
+             iconName: "ios-arrow-dropleft"
+-            onClicked: if (mprisController.canGoPrevious) mprisController.previous()
++            onClicked: {
++                if (standaloneMode) {
++                    currentTrackIndex = (currentTrackIndex - 1 + ytPlaylists.length) % ytPlaylists.length
++                    standalonePlayer.stop()
++                    standalonePlayer.play()
++                } else if (mprisController.canGoPrevious) {
++                    mprisController.previous()
++                }
++            }
+         }
+ 
+         IconButton {
+             id: playButton
+             anchors.centerIn: parent
+-            width: Dims.w(40)
++            width: Dims.w(36)
+             height: width
+             iconName: isPlaying ? "ios-pause" : "ios-play"
+             onClicked: {
+-                if (isPlaying && mprisController.canPause)
+-                    mprisController.pause()
+-                else if (!isPlaying && mprisController.canPlay)
+-                    mprisController.play()
++                if (standaloneMode) {
++                    if (standalonePlayer.playbackState === MediaPlayer.PlayingState) {
++                        standalonePlayer.pause()
++                    } else {
++                        standalonePlayer.play()
++                    }
++                } else {
++                    if (isPlaying && mprisController.canPause)
++                        mprisController.pause()
++                    else if (!isPlaying && mprisController.canPlay)
++                        mprisController.play()
++                }
+             }
+         }
+ 
+@@ -132,7 +223,15 @@
+                 rightMargin: Dims.iconButtonMargin
+             }
+             iconName: "ios-arrow-dropright"
+-            onClicked: if (mprisController.canGoNext) mprisController.next()
++            onClicked: {
++                if (standaloneMode) {
++                    currentTrackIndex = (currentTrackIndex + 1) % ytPlaylists.length
++                    standalonePlayer.stop()
++                    standalonePlayer.play()
++                } else if (mprisController.canGoNext) {
++                    mprisController.next()
++                }
++            }
+         }
+ 
+         IconButton {
+@@ -142,7 +241,13 @@
+             anchors.bottom: parent.bottom
+             anchors.bottomMargin: Dims.h(12)
+             iconName: "ios-volume-down"
+-            onClicked: bufferedVolume = Math.max(bufferedVolume - 0.05, 0)
++            onClicked: {
++                if (standaloneMode) {
++                    standaloneVolume = Math.max(standaloneVolume - 0.05, 0.0)
++                } else {
++                    bufferedVolume = Math.max(bufferedVolume - 0.05, 0.0)
++                }
++            }
+         }
+ 
+         Rectangle {
+@@ -161,8 +266,8 @@
+             anchors.top: volumeSlider.top
+             anchors.left: volumeSlider.left
+             anchors.bottom: volumeSlider.bottom
+-            width: volumeSlider.width * mprisController.volume
+-            color: "white"
++            width: volumeSlider.width * (standaloneMode ? standaloneVolume : mprisController.volume)
++            color: standaloneMode ? "#E53935" : "white"
+             radius: 12
+             opacity: 1.0
+         }
+@@ -174,7 +279,13 @@
+             anchors.bottom: parent.bottom
+             anchors.bottomMargin: Dims.h(12)
+             iconName: "ios-volume-up"
+-            onClicked: bufferedVolume = Math.min(bufferedVolume + 0.05, 1)
++            onClicked: {
++                if (standaloneMode) {
++                    standaloneVolume = Math.min(standaloneVolume + 0.05, 1.0)
++                } else {
++                    bufferedVolume = Math.min(bufferedVolume + 0.05, 1.0)
++                }
++            }
+         }
+     }
+ }

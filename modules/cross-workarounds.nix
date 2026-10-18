@@ -84,6 +84,30 @@ lib.mkIf isCross (
                     };
                   });
 
+              # Fix upstream Nixpkgs cross-compilation bug for Qt 6 qtdeclarative:
+              # -DQt6ShaderToolsTools_DIR points to Qt6ShaderTools instead of Qt6ShaderToolsTools,
+              # and missing -DQt6QuickTools_DIR causes qsb and svgtoqml to not be found,
+              # which silently disabled Qt Quick on cross-compiled targets.
+              qt6 = super.qt6.overrideScope (
+                qfinal: qsuper: {
+                  qtdeclarative = qsuper.qtdeclarative.overrideAttrs (old: {
+                    cmakeFlags = (old.cmakeFlags or [ ]) ++ [
+                      "-DQt6ShaderToolsTools_DIR=${final.pkgsBuildBuild.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
+                      "-DQt6QuickTools_DIR=${final.pkgsBuildBuild.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+                    ];
+                  });
+                }
+              );
+
+              # Fix wuffs host gcc invocation when generating libraries during cross compilation
+              wuffs = super.wuffs.overrideAttrs (old: {
+                preInstall = ''
+                  mkdir -p bin-compat
+                  ln -sf $(type -p ${super.stdenv.cc.targetPrefix}gcc) bin-compat/gcc
+                  export PATH="$PWD/bin-compat:$PATH"
+                '';
+              });
+
               # NetSurf buildsystem fails to guess BUILD in cross-compilation when host cc is not on PATH.
               # Upstream repository: https://git.netsurf-browser.org/buildsystem.git/
               netsurf-buildsystem = super.netsurf-buildsystem.overrideAttrs (old: {

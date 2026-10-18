@@ -17,10 +17,18 @@ let
       rev,
       sha256,
       extraBuildInputs ? [ ],
+      patches ? [ ],
+      postPatch ? "",
     }:
     stdenv.mkDerivation {
       pname = "asteroid-${name}";
       version = "nightly";
+      inherit patches;
+
+      postPatch = ''
+        find . -name CMakeLists.txt -exec sed -i 's|/usr/share|share|g' {} +
+      ''
+      + postPatch;
 
       src = fetchFromGitHub {
         owner = "AsteroidOS";
@@ -100,11 +108,18 @@ in
     sha256 = "14f8yv7hh9hzrhs9m40jqxsy2nmz4aggfvb4xygzfxvqihl5pzmf";
   };
 
+  # Media playback controller with standalone YouTube Music streaming over Wi-Fi
   music = mkAsteroidApp {
     name = "music";
-    desc = "Media playback remote controller for phone media players";
+    desc = "Media playback controller with standalone YouTube Music streaming over Wi-Fi";
     rev = "1087453140957314ef7ce20bb79250dd2509dd35";
     sha256 = "03cjxcy47292svjgx62hf5ri99bbcbgxxfmrf6f304gyzsf98dd6";
+    patches = [
+      ./music-ytmusic-streaming.patch
+    ];
+    extraBuildInputs = [
+      qt6.qtmultimedia
+    ];
   };
 
   compass = mkAsteroidApp {
