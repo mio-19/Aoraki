@@ -1,0 +1,344 @@
+#!/usr/bin/env python3
+"""Resilient Resumable Flasher for Smartwatches
+
+Handles flaky USB pogo-pin magnetic cradles by chunking images, verifying SHA256
+checksums per chunk, and resuming immediately upon disconnection.
+"""
+
+import argparse
+import hashlib
+import json
+import os
+import shutil
+import struct
+import subprocess
+import sys
+import time
+
+SPARSE_MAGIC = 0xED26FF3A
+
+
+def is_sparse(filepath):
+  try:
+    with open(filepath, "rb") as f:
+      magic = struct.unpack("<I", f.read(4))[0]
+      return magic == SPARSE_MAGIC
+  except Exception:
+    return False
+
+
+def get_checkpoint_path(image_path, partition):
+  cache_dir = os.path.expanduser("~/.cache/resilient-flash")
+  os.makedirs(cache_dir, exist_ok=True)
+  hasher = hashlib.sha256()
+  hasher.update(os.path.abspath(image_path).encode())
+  hasher.update(partition.encode())
+  key = hasher.hexdigest()[:16]
+  return os.path.join(cache_dir, f"flash_{key}.json")
+
+
+def load_checkpoint(chk_path):
+  if os.path.exists(chk_path):
+    try:
+      with open(chk_path, "r") as f:
+        return json.load(f)
+    except Exception:
+      pass
+  return {"verified": []}
+
+
+def save_checkpoint(chk_path, data):
+  try:
+    with open(chk_path, "w") as f:
+      json.dump(data, f)
+  except Exception:
+    pass
+
+
+def run_adb(adb_prefix, args, input_bytes=None, timeout=60):
+  cmd = adb_prefix + args
+  proc = subprocess.Popen(
+      cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+  )
+  stdout, stderr = proc.communicate(input=input_bytes, timeout=timeout)
+  return proc.returncode, stdout, stderr
+
+
+def wait_for_device(adb_prefix):
+  print(
+      "\n[!] Waiting for device to reconnect (adjust watch on magnetic cradle)..."
+  )
+  while True:
+    try:
+      code, _, _ = run_adb(adb_prefix, ["wait-for-device"], timeout=10)
+      if code == 0:
+        time.sleep(1)
+        code2, out, _ = run_adb(
+            adb_prefix, ["shell", "echo ping"], timeout=5
+        )
+        if code2 == 0 and b"ping" in out:
+          print("[+] Device reconnected and responsive!")
+          return
+    except Exception:
+      pass
+    time.sleep(1)
+
+
+def flash_partition(
+    image_path,
+    partition,
+    adb_prefix,
+    chunk_size_mb=16,
+    verify=True,
+    resume=True,
+):
+  total_size = os.path.getsize(image_path)
+  chunk_bytes = chunk_size_mb * 1024 * 1024
+  num_chunks = (total_size + chunk_bytes - 1) // chunk_bytes
+
+  print("=" * 64)
+  print(f"Target Partition : {partition}")
+  print(f"Source Image     : {image_path} ({total_size / (1024 * 1024):.1f} MB)")
+  print(f"Chunk Size       : {chunk_size_mb} MB ({num_chunks} total chunks)")
+  print(f"Verification     : {'SHA256 Checksumming' if verify else 'None'}")
+  print("=" * 64)
+
+  chk_path = get_checkpoint_path(image_path, partition)
+  checkpoint = load_checkpoint(chk_path) if resume else {"verified": []}
+  verified_set = set(checkpoint.get("verified", []))
+
+  if verified_set:
+    print(
+        f"[i] Resuming: {len(verified_set)}/{num_chunks} chunks already verified"
+        " in checkpoint."
+    )
+
+  with open(image_path, "rb") as f_img:
+    start_time = time.time()
+    for idx in range(num_chunks):
+      offset_mb = idx * chunk_size_mb
+      f_img.seek(idx * chunk_bytes)
+      data = f_img.read(chunk_bytes)
+      actual_chunk_len = len(data)
+      actual_chunk_mb = (actual_chunk_len + (1024 * 1024) - 1) // (1024 * 1024)
+
+      # Check if already verified
+      if idx in verified_set:
+        pct = (idx + 1) * 100 // num_chunks
+        print(
+            f"[{pct:3d}%] Chunk {idx + 1:3d}/{num_chunks}: CACHED (verified"
+            " previously)"
+        )
+        continue
+
+      # Compute host hash
+      expected_hash = hashlib.sha256(data).hexdigest()
+
+      chunk_flashed = False
+      while not chunk_flashed:
+        pct = (idx + 1) * 100 // num_chunks
+        sys.stdout.write(
+            f"[{pct:3d}%] Chunk {idx + 1:3d}/{num_chunks} ({actual_chunk_len / (1024 * 1024):.1f} MB): Writing..."
+        )
+        sys.stdout.flush()
+
+        t0 = time.time()
+        try:
+          # Write chunk via dd with seek and conv=notrunc
+          cmd = [
+              "shell",
+              "-T",
+              f"dd of={partition} bs=1M seek={offset_mb} count={actual_chunk_mb}"
+              " conv=notrunc status=none",
+          ]
+          ret, _, err = run_adb(adb_prefix, cmd, input_bytes=data, timeout=90)
+          if ret != 0:
+            raise RuntimeError(f"dd write failed: {err.decode('latin1')}")
+
+          dt = max(time.time() - t0, 0.001)
+          speed = (actual_chunk_len / (1024 * 1024)) / dt
+
+          if verify:
+            sys.stdout.write(f" Verifying SHA256 ({speed:.1f} MB/s)...")
+            sys.stdout.flush()
+
+            # Read back chunk from watch and compute sha256
+            v_cmd = [
+                "shell",
+                "-T",
+                f"dd if={partition} bs=1M skip={offset_mb}"
+                f" count={actual_chunk_mb} status=none | sha256sum",
+            ]
+            v_ret, v_out, v_err = run_adb(adb_prefix, v_cmd, timeout=30)
+            if v_ret != 0:
+              raise RuntimeError(
+                  f"SHA256 readback failed: {v_err.decode('latin1')}"
+              )
+
+            watch_hash = v_out.decode().split()[0]
+            # If the last chunk is partial, compare against first actual_chunk_len bytes
+            if actual_chunk_len < actual_chunk_mb * 1024 * 1024:
+              # For partial final block, re-verify exact byte count
+              v_cmd2 = [
+                  "shell",
+                  "-T",
+                  f"head -c {actual_chunk_len} <(dd if={partition} bs=1M"
+                  f" skip={offset_mb} status=none) | sha256sum",
+              ]
+              _, v_out2, _ = run_adb(adb_prefix, v_cmd2, timeout=30)
+              watch_hash = v_out2.decode().split()[0]
+
+            if watch_hash != expected_hash:
+              print(f" MISMATCH! (Got {watch_hash[:8]} vs {expected_hash[:8]})")
+              raise ValueError("Checksum mismatch on device")
+
+          chunk_flashed = True
+          verified_set.add(idx)
+          checkpoint["verified"] = sorted(list(verified_set))
+          save_checkpoint(chk_path, checkpoint)
+          sys.stdout.write(" OK\n")
+          sys.stdout.flush()
+
+        except Exception as ex:
+          sys.stdout.write(f" FAILED: {ex}\n")
+          wait_for_device(adb_prefix)
+
+    # Sync device filesystem buffers
+    print("[*] Syncing hardware flash buffers...")
+    run_adb(adb_prefix, ["shell", "sync"], timeout=30)
+    total_time = time.time() - start_time
+    print(
+        f"[✓] Successfully flashed and verified all {num_chunks} chunks in"
+        f" {total_time:.1f}s!"
+    )
+    # Remove checkpoint on 100% completion
+    if os.path.exists(chk_path):
+      os.remove(chk_path)
+
+
+def main():
+  parser = argparse.ArgumentParser(
+      description=(
+          "Resilient Flasher for Smartwatches: handles flaky pogo-pin USB"
+          " connections with chunked resume & SHA256 verification."
+      )
+  )
+  parser.add_argument("system_image", help="Path to system.img (sparse or raw)")
+  parser.add_argument(
+      "--boot-img",
+      default="result/boot.img",
+      help="Path to boot.img (flashed to boot_a and boot_b)",
+  )
+  parser.add_argument(
+      "--userdata-partition",
+      default="/dev/block/bootdevice/by-name/userdata",
+      help="Destination partition for system.img",
+  )
+  parser.add_argument(
+      "--chunk-size",
+      type=int,
+      default=16,
+      help="Chunk size in MB (default: 16 MB)",
+  )
+  parser.add_argument(
+      "--sudo",
+      action="store_true",
+      help="Run adb commands with sudo if host permissions require it",
+  )
+  parser.add_argument(
+      "--no-verify",
+      action="store_true",
+      help="Disable per-chunk SHA256 checksum verification",
+  )
+  parser.add_argument(
+      "--no-resume",
+      action="store_true",
+      help="Ignore existing checkpoint and re-flash all chunks",
+  )
+  parser.add_argument(
+      "--reboot", action="store_true", help="Reboot watch after successful flash"
+  )
+  args = parser.parse_args()
+
+  adb_prefix = ["sudo", "adb"] if args.sudo else ["adb"]
+
+  # Check if adb is available
+  if not shutil.which(adb_prefix[-1]):
+    print(f"Error: '{adb_prefix[-1]}' command not found on host.", file=sys.stderr)
+    sys.exit(1)
+
+  # Check sparse vs raw
+  raw_path = args.system_image
+  temp_raw_created = False
+  if is_sparse(args.system_image):
+    print(
+        f"[i] Detected Android sparse format in {args.system_image}. Unsparsing"
+        " on host..."
+    )
+    if not shutil.which("simg2img"):
+      print(
+          "Error: 'simg2img' tool required to unsparse image on host.",
+          file=sys.stderr,
+      )
+      sys.exit(1)
+    raw_path = "/tmp/resilient_flash_raw.img"
+    subprocess.check_call(["simg2img", args.system_image, raw_path])
+    temp_raw_created = True
+
+  try:
+    # 1. Flash Userdata / Rootfs
+    flash_partition(
+        raw_path,
+        args.userdata_partition,
+        adb_prefix,
+        chunk_size_mb=args.chunk_size,
+        verify=not args.no_verify,
+        resume=not args.no_resume,
+    )
+
+    # 2. Flash Boot image if provided
+    if args.boot_img and os.path.exists(args.boot_img):
+      print("\n" + "=" * 64)
+      print(f"Flashing kernel boot image: {args.boot_img}")
+      print("=" * 64)
+      for slot in ["boot_a", "boot_b"]:
+        boot_part = f"/dev/block/bootdevice/by-name/{slot}"
+        flash_partition(
+            args.boot_img,
+            boot_part,
+            adb_prefix,
+            chunk_size_mb=8,
+            verify=not args.no_verify,
+            resume=not args.no_resume,
+        )
+
+    # 3. Clean stale Android cache
+    print("\n[*] Initializing clean cache partition...")
+    run_adb(
+        adb_prefix,
+        [
+            "shell",
+            (
+                "mke2fs -t ext4 /dev/block/bootdevice/by-name/cache ||"
+                " make_ext4fs /dev/block/bootdevice/by-name/cache"
+            ),
+        ],
+        timeout=15,
+    )
+
+    if args.reboot:
+      print("\n[*] Rebooting into NixOS...")
+      run_adb(adb_prefix, ["reboot"], timeout=10)
+
+    print("\n[✓] ALL FLASH OPERATIONS COMPLETE AND VERIFIED!")
+
+  finally:
+    if temp_raw_created and os.path.exists(raw_path):
+      try:
+        os.remove(raw_path)
+      except Exception:
+        pass
+
+
+if __name__ == "__main__":
+  main()

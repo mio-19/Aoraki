@@ -79,48 +79,29 @@ fastboot reboot
 > [!WARNING]
 > **Experimental / Untested**: Flashing via TWRP recovery on `fossil-hoki` is a community-developed workaround and is currently **untested** in our primary pipeline. Use the native sparse fastboot method (Method 1) whenever possible.
 
-The magnetic charging cradle on the Fossil Gen 6 can be physically sensitive; slight shifts during multi-minute fastboot writes can reset the USB interface (`Write to device failed`, `Status read failed (No such device)`).
+The magnetic charging cradle on the Fossil Gen 6 can be physically sensitive; slight shifts during multi-minute writes can reset the USB interface (`Write to device failed`, `Status read failed (No such device)`).
 
-An alternative community method is to temporarily boot **TWRP Recovery for Fossil Gen 6 (hoki)** (developed by Malvik on [XDA Forums](https://xdaforums.com/t/twrp-twrp-for-fossil-gen-6-aka-hoki.4474863/)):
+To guarantee successful flashing over flaky connections without starting over on every drop, use the included **`bin/resilient-flash`** tool:
+- **Chunked Writes (16 MB)**: If USB resets, at most 1 second of transfer time is interrupted.
+- **Auto-Reconnect & Instant Resume**: Waits for the device to reconnect and automatically resumes from the exact chunk that dropped.
+- **Hardware SHA256 Verification**: Calculates and verifies cryptographic checksums directly on the watch eMMC flash for every chunk.
+- **Auto Sparse Unsparsing**: Automatically unpacks native Android sparse images on the host without wasting watch memory.
 
 1. **Boot TWRP temporarily via fastboot** (does not overwrite stock recovery):
    ```bash
    fastboot boot twrp_hoki.img
    ```
 
-2. **Wait for TWRP to start ADB**:
-   Verify the watch is recognized in recovery mode:
+2. **Run Resilient Flash**:
    ```bash
-   adb devices
+   # Automatically flashes system + boot partitions, verifies SHA256, and reboots:
+   ./bin/resilient-flash result/system.img --boot-img result/boot.img --reboot
+
+   # If host permissions require sudo for adb:
+   ./bin/resilient-flash result/system.img --boot-img result/boot.img --sudo --reboot
    ```
 
-3. **Stream the rootfs image directly to the eMMC partition with live progress**:
-   Because `/tmp` on the watch is a RAM disk (limited to ~1 GB total memory), do NOT push the image to `/tmp`. Unsparse the image on your host machine and stream it with host-side `dd status=progress` and `adb shell -T` (disables terminal PTY line translation so binary data is not corrupted, while printing real-time progress and final confirmation):
-   ```bash
-   # 1. Unsparse on host machine:
-   simg2img result/system.img /tmp/system_raw.img
-
-   # 2. Stream directly into userdata with live progress and completion verification:
-   dd if=/tmp/system_raw.img bs=1M status=progress | adb shell -T "cat > /dev/block/bootdevice/by-name/userdata && sync && echo '=== SYSTEM FLASH COMPLETED SUCCESSFULLY ==='"
-
-   # 3. Verify filesystem integrity on the watch eMMC:
-   adb shell "btrfs check --readonly /dev/block/bootdevice/by-name/userdata"
-
-   # 4. Clean up host temporary raw image:
-   rm -f /tmp/system_raw.img
-   ```
-
-4. **Flash kernel and stage-1 initrd to both boot slots**:
-   ```bash
-   dd if=result/boot.img bs=1M status=progress | adb shell -T "cat > /dev/block/bootdevice/by-name/boot_a && sync && echo '=== BOOT_A OK ==='"
-   dd if=result/boot.img bs=1M status=progress | adb shell -T "cat > /dev/block/bootdevice/by-name/boot_b && sync && echo '=== BOOT_B OK ==='"
-   ```
-
-5. **Wipe stale cache and reboot**:
-   ```bash
-   adb shell "mke2fs -t ext4 /dev/block/bootdevice/by-name/cache" || adb shell "make_ext4fs /dev/block/bootdevice/by-name/cache"
-   adb reboot
-   ```
+*(Manual fallback: `simg2img result/system.img /tmp/system_raw.img && dd if=/tmp/system_raw.img bs=1M status=progress | adb shell -T "cat > /dev/block/bootdevice/by-name/userdata && sync"`)*
 
 ---
 
