@@ -7,11 +7,13 @@
   qml-asteroid,
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "asteroid-telegram";
   version = "1.0.0";
 
   src = ./.;
+
+  strictDeps = true;
 
   nativeBuildInputs = [
     cmake
@@ -36,6 +38,7 @@ stdenv.mkDerivation rec {
     description = "Smartwatch Telegram client for AsteroidOS";
     homepage = "https://asteroidos.org/";
     license = licenses.gpl3Plus;
+    mainProgram = "asteroid-telegram";
     platforms = platforms.linux;
   };
-}
+})

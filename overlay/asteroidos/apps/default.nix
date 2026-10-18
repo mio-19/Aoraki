@@ -1,70 +1,9 @@
 {
   lib,
-  stdenv,
-  fetchFromGitHub,
-  cmake,
-  pkg-config,
   qt6,
-  qml-asteroid,
-  kdePackages,
+  mkAsteroidApp,
 }:
 
-let
-  mkAsteroidApp =
-    {
-      name,
-      desc,
-      rev,
-      sha256,
-      extraBuildInputs ? [ ],
-      patches ? [ ],
-      postPatch ? "",
-    }:
-    stdenv.mkDerivation {
-      pname = "asteroid-${name}";
-      version = "nightly";
-      inherit patches;
-
-      postPatch = ''
-        find . -name CMakeLists.txt -exec sed -i 's|/usr/share|share|g' {} +
-      ''
-      + postPatch;
-
-      src = fetchFromGitHub {
-        owner = "AsteroidOS";
-        repo = "asteroid-${name}";
-        inherit rev sha256;
-      };
-
-      nativeBuildInputs = [
-        cmake
-        kdePackages.extra-cmake-modules
-        pkg-config
-        qt6.qtdeclarative
-        qt6.qttools
-        qt6.wrapQtAppsHook
-      ];
-
-      cmakeFlags = [
-        "-DQT_MAJOR_VERSION=6"
-      ];
-
-      buildInputs = [
-        qt6.qtbase
-        qt6.qtdeclarative
-        qt6.qtsvg
-        qml-asteroid
-      ]
-      ++ extraBuildInputs;
-
-      meta = with lib; {
-        description = desc;
-        homepage = "https://asteroidos.org/";
-        license = licenses.gpl3Plus;
-        platforms = platforms.linux;
-      };
-    };
-in
 {
   stopwatch = mkAsteroidApp {
     name = "stopwatch";

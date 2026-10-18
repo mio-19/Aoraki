@@ -2,76 +2,10 @@
   lib,
   stdenv,
   fetchFromGitHub,
-  cmake,
-  pkg-config,
   qt6,
-  qml-asteroid,
-  kdePackages,
+  mkAsteroidApp,
 }:
 
-let
-  mkAsteroidApp =
-    {
-      name,
-      owner ? "AsteroidOS",
-      repo ? "asteroid-${name}",
-      desc,
-      rev,
-      sha256,
-      extraNativeBuildInputs ? [ ],
-      extraBuildInputs ? [ ],
-      postPatch ? "",
-      patches ? [ ],
-    }:
-    stdenv.mkDerivation {
-      pname = repo;
-      version = "nightly";
-      inherit patches;
-
-      src = fetchFromGitHub {
-        inherit
-          owner
-          repo
-          rev
-          sha256
-          ;
-      };
-
-      nativeBuildInputs = [
-        cmake
-        kdePackages.extra-cmake-modules
-        pkg-config
-        qt6.qtdeclarative
-        qt6.qttools
-        qt6.wrapQtAppsHook
-      ]
-      ++ extraNativeBuildInputs;
-
-      cmakeFlags = [
-        "-DQT_MAJOR_VERSION=6"
-      ];
-
-      buildInputs = [
-        qt6.qtbase
-        qt6.qtdeclarative
-        qt6.qtsvg
-        qml-asteroid
-      ]
-      ++ extraBuildInputs;
-
-      postPatch = ''
-        find . -name CMakeLists.txt -exec sed -i 's|/usr/share|share|g' {} +
-      ''
-      + postPatch;
-
-      meta = with lib; {
-        description = desc;
-        homepage = "https://asteroidos.org/";
-        license = licenses.gpl3Plus;
-        platforms = platforms.linux;
-      };
-    };
-in
 rec {
   unofficial-watchfaces = stdenv.mkDerivation {
     pname = "asteroid-unofficial-watchfaces";

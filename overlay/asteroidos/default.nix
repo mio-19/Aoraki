@@ -1,6 +1,10 @@
 { callPackage, pkgs }:
 
 rec {
+  mkAsteroidApp = callPackage ./lib/mk-asteroid-app.nix {
+    inherit qml-asteroid;
+  };
+
   qml-asteroid = callPackage ./qml-asteroid { };
 
   asteroid-launcher = callPackage ./asteroid-launcher {
@@ -31,7 +35,7 @@ rec {
 
   apps =
     (callPackage ./apps {
-      inherit qml-asteroid;
+      inherit mkAsteroidApp;
     })
     // {
       inherit browser telegram;
@@ -44,7 +48,7 @@ rec {
   virtualkeyboard-rime = callPackage ./virtualkeyboard-rime { };
 
   community-apps = callPackage ./community-apps {
-    inherit qml-asteroid;
+    inherit mkAsteroidApp;
   };
 
   msm-fb-refresher = callPackage ./msm-fb-refresher { };
