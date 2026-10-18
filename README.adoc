@@ -32,11 +32,11 @@ Unlike generic mobile Linux distributions designed for smartphones, tablets, or 
 
 The project ports and supports the watch hardware catalog pioneered by link:https://asteroidos.org/watches/[AsteroidOS]:
 
-[cols="2,2,2,3,1",options="header"]
+[cols="2,2,2,3,2",options="header"]
 |===
 | Device | Codename | SoC | Display | Support
+| **Fossil Gen 6** | link:devices/fossil-hoki/README.md[`fossil-hoki`] | Snapdragon Wear 4100+ | 416x416 Round (Crown, AOD) | Primary Reference
 | **Google Pixel Watch 2** | `google-aurora` | Snapdragon W5 Gen 1 | 384x384 Round (Crown, AOD) | Ported
-| **Fossil Gen 6** | `fossil-hoki` | Snapdragon Wear 4100+ | 416x416 Round (Crown, AOD) | Active
 | **Fossil Gen 5** (Carlyle/Julianna) | `fossil-triggerfish` | Snapdragon Wear 3100 | 416x416 Round (Crown, AOD) | Ported
 | **Fossil Gen 4** (Explorist HR 46mm) | `fossil-firefish` | Snapdragon Wear 2100 | 454x454 Round (Crown) | Ported
 | **Mobvoi TicWatch Pro** | `ticwatch-catfish` | Snapdragon Wear 2100 | 400x400 Dual-layer Round | Ported
@@ -58,37 +58,67 @@ You can evaluate the system derivation for any supported watch:
 
 [source,bash]
 ----
+# Evaluate Fossil Gen 6 (primary reference)
+nix-instantiate --eval -E '(import ./default.nix { device = "fossil-hoki"; }).config.mobile.device.name'
+
 # Evaluate Google Pixel Watch 2
 nix-instantiate --eval -E '(import ./default.nix { device = "google-aurora"; }).config.mobile.device.name'
-
-# Evaluate Fossil Gen 6
-nix-instantiate --eval -E '(import ./default.nix { device = "fossil-hoki"; }).config.mobile.device.name'
 ----
 
 === Building the AsteroidOS Smartwatch Environment
 
-To build a full flashable image with the AsteroidOS Wayland desktop environment for your watch:
+To build a full flashable image with the AsteroidOS Wayland desktop environment for your watch (e.g. Fossil Gen 6 `fossil-hoki`):
 
 [source,bash]
 ----
-nix-build examples/asteroid --argstr device google-aurora -A outputs.default
+nix-build examples/asteroid --argstr device fossil-hoki -A outputs.default --keep-going
 ----
 
-=== Flashing Boot Artifacts
+Once the build finishes, the output artifacts are linked in `./result`:
 
-Fastboot-capable watches produce fastboot-ready boot images:
+* `result/boot.img`: Linux 4.14 kernel (with appended `sda429-hoki.dtb`) and stage-1 initramfs.
+* `result/system.img`: Ext4 root filesystem (`LABEL=NIXOS_SYSTEM`) containing the complete Nix store and system generation.
+* `result/flash-critical.sh`: Automated helper script executing the target fastboot commands for critical boot partitions.
 
-* **Android Header v4** (e.g. Pixel Watch 2):
+=== Flashing via Fastboot
+
+Follow these steps to flash the **Fossil Gen 6** (`fossil-hoki`):
+
+[source,bash]
+----
+# 1. Put Fossil Gen 6 into fastboot mode:
+# Either from an active ADB connection:
+adb reboot bootloader
+# Or power off the watch, place on the charging puck, and hold the crown + bottom buttons simultaneously.
+
+# 2. Verify connection on host PC:
+fastboot devices
+
+# 3. Unlock bootloader (if not already unlocked):
+fastboot flashing unlock
+
+# 4. Flash Linux kernel and stage-1 initramfs to both A/B slots:
+fastboot flash --slot=all boot result/boot.img
+# (Alternatively, run: ./result/flash-critical.sh)
+
+# 5. Flash root filesystem to the userdata partition (recommended to utilize full eMMC capacity):
+fastboot flash userdata result/system.img
+
+# 6. Wipe stale Android cache (recommended when first installing over Wear OS):
+fastboot format cache
+
+# 7. Reboot into NixOS:
+fastboot reboot
+----
+
+* **Header v4 Devices** (e.g. Google Pixel Watch 2 `google-aurora`):
   [source,bash]
   ----
-  fastboot flash --slot=all boot boot.img
-  fastboot flash --slot=all vendor_kernel_boot vendor_kernel_boot.img
-  fastboot flash --slot=all init_boot init_boot.img
-  ----
-* **Standard Android Bootimg** (e.g. Fossil Gen 5/6, Huawei Watch, LG Watch Urbane):
-  [source,bash]
-  ----
-  fastboot flash boot boot.img
+  fastboot flash --slot=all boot result/boot.img
+  fastboot flash --slot=all vendor_kernel_boot result/vendor_kernel_boot.img
+  fastboot flash --slot=all init_boot result/init_boot.img
+  fastboot flash userdata result/system.img
+  fastboot reboot
   ----
 
 == Prior Work and Acknowledgments
