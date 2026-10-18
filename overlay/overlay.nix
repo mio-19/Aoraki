@@ -78,10 +78,26 @@ in
   # Fixes to upstream
   # -----------------
   #
-  # All that follows will have to be cleaned and then upstreamed.
-  #
-
-  # No such fixes as of now, this comment is merely a placeholder to keep the general structure.
+  # Upstream nixpkgs qt6.qtwayland skips QtQuick integration during cross-compilation
+  # because cross Qt6QuickTools and Qt6QmlTools cmake flags are missing.
+  qt6 = super.qt6.overrideScope (
+    qfinal: qsuper: {
+      qtwayland = qsuper.qtwayland.overrideAttrs (
+        old:
+        let
+          isCross = !final.stdenv.buildPlatform.canExecute final.stdenv.hostPlatform;
+        in
+        {
+          cmakeFlags =
+            (old.cmakeFlags or [ ])
+            ++ final.lib.optionals isCross [
+              "-DQt6QuickTools_DIR=${final.buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+              "-DQt6QmlTools_DIR=${final.buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+            ];
+        }
+      );
+    }
+  );
 
   # Things specific to mobile-nixos.
   # Not necessarily internals, but they probably won't go into <nixpkgs>.

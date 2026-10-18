@@ -45,6 +45,24 @@ stdenv.mkDerivation (finalAttrs: {
           --replace-fail '#include <MDeclarativeCache>' '#include <QGuiApplication>
     #include <QQuickView>
     namespace MDeclarativeCache { inline QGuiApplication *qApplication(int &argc, char **argv) { return new QGuiApplication(argc, argv); } inline QQuickView *qQuickView() { return new QQuickView(); } }'
+
+        cat <<'EOF' > cmake/FindMapplauncherd_qt6.cmake
+    set(Mapplauncherd_qt6_FOUND TRUE)
+    if(NOT TARGET Mapplauncherd_qt6::Mapplauncherd_qt6)
+        add_library(Mapplauncherd_qt6::Mapplauncherd_qt6 INTERFACE IMPORTED)
+    endif()
+    EOF
+
+        cat <<'EOF' > cmake/FindTimed.cmake
+    set(Timed_FOUND TRUE)
+    set(Timed_LIBRARIES "timed-qt6")
+    if(NOT TARGET Timed::Timed)
+        add_library(Timed::Timed INTERFACE IMPORTED)
+        set_target_properties(Timed::Timed PROPERTIES
+            INTERFACE_LINK_LIBRARIES "timed-qt6"
+        )
+    endif()
+    EOF
   '';
 
   cmakeFlags = [
@@ -61,8 +79,21 @@ stdenv.mkDerivation (finalAttrs: {
   dontWrapQtApps = true;
 
   postInstall = ''
-    mkdir -p $out/lib/cmake/AsteroidApp6
-    cp -r $out/lib/cmake/asteroidapp6/* $out/lib/cmake/AsteroidApp6/ || true
+        mkdir -p $out/lib/cmake/AsteroidApp6
+        cp -r $out/lib/cmake/asteroidapp6/* $out/lib/cmake/AsteroidApp6/ || true
+
+        mkdir -p $out/include
+        cat <<'EOF' > $out/include/MDeclarativeCache
+    #pragma once
+    #include <QGuiApplication>
+    #include <QQuickView>
+
+    namespace MDeclarativeCache {
+    inline QGuiApplication *qApplication(int &argc, char **argv) { return new QGuiApplication(argc, argv); }
+    inline QQuickView *qQuickView() { return new QQuickView(); }
+    }
+    EOF
+        cp $out/include/MDeclarativeCache $out/include/mdeclarativecache.h
   '';
 
   meta = with lib; {

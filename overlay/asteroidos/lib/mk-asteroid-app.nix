@@ -75,6 +75,7 @@ stdenv.mkDerivation (finalAttrs: {
     "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
     "-DQt6QuickTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
     "-DQt6ShaderToolsTools_DIR=${buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
+    "-DQt6LinguistTools_DIR=${buildPackages.qt6.qttools}/lib/cmake/Qt6LinguistTools"
   ]
   ++ cmakeFlags;
 

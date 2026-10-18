@@ -29,6 +29,8 @@ set(HEADERS
     src/mdesktopentry.h
     src/mpermission.h
     src/mfiledatastore.h
+    src/mdataaccess.h
+    src/mdatastore.h
     src/mlite-global.h
     src/metatypedeclarations.h
     src/logging.h
@@ -72,7 +74,8 @@ list(APPEND SOURCES
     ${CMAKE_CURRENT_BINARY_DIR}/mnotificationmanagerproxy.h
 )
 
-add_library(mlite6 SHARED ${SOURCES})
+add_library(mlite6 SHARED ${SOURCES} ${HEADERS})
+add_compile_definitions(MLITE_LIBRARY)
 
 target_include_directories(mlite6 PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>

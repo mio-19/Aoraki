@@ -6,9 +6,23 @@
   pkg-config,
   qt6,
   qml-asteroid,
+  mlite,
+  mce-dev,
+  mce-qt6,
+  ngf-qt6,
+  usb-moded-qt6,
+  keepalive,
+  timed-qt6,
+  dbus,
+  dbus-glib,
+  systemd,
   kdePackages,
+  buildPackages,
 }:
 
+let
+  isCross = !stdenv.buildPlatform.canExecute stdenv.hostPlatform;
+in
 stdenv.mkDerivation (finalAttrs: {
   pname = "asteroid-launcher";
   version = "nightly";
@@ -40,6 +54,12 @@ stdenv.mkDerivation (finalAttrs: {
 
   cmakeFlags = [
     "-DECM_DIR=${kdePackages.extra-cmake-modules}/share/ECM/cmake"
+  ]
+  ++ lib.optionals isCross [
+    "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+    "-DQt6QuickTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+    "-DQt6ShaderToolsTools_DIR=${buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
+    "-DQt6LinguistTools_DIR=${buildPackages.qt6.qttools}/lib/cmake/Qt6LinguistTools"
   ];
 
   buildInputs = [
@@ -49,6 +69,16 @@ stdenv.mkDerivation (finalAttrs: {
     qt6.qtsensors
     qt6.qtshadertools
     qml-asteroid
+    mlite
+    mce-dev
+    mce-qt6
+    ngf-qt6
+    usb-moded-qt6
+    keepalive
+    timed-qt6
+    dbus
+    dbus-glib
+    systemd
   ];
 
   meta = with lib; {

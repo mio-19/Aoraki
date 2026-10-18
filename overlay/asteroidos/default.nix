@@ -8,11 +8,28 @@ rec {
   qml-asteroid = callPackage ./qml-asteroid { };
 
   asteroid-launcher = callPackage ./asteroid-launcher {
-    inherit qml-asteroid;
+    inherit
+      qml-asteroid
+      mlite
+      mce-dev
+      mce-qt6
+      ngf-qt6
+      usb-moded-qt6
+      keepalive
+      timed-qt6
+      ;
   };
 
   amber-mpris = callPackage ./amber-mpris { };
   mlite = callPackage ./mlite { };
+  mce-dev = callPackage ./mce-dev { };
+  mce-qt6 = callPackage ./mce-qt6 {
+    inherit mce-dev;
+  };
+  ngf-qt6 = callPackage ./ngf-qt6 { };
+  usb-moded-qt6 = callPackage ./usb-moded-qt6 { };
+  keepalive = callPackage ./keepalive { };
+  timed-qt6 = callPackage ./timed-qt6 { };
 
   asteroid-btsyncd = callPackage ./asteroid-btsyncd {
     inherit qml-asteroid amber-mpris mlite;

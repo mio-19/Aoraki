@@ -10,9 +10,13 @@
   amber-mpris,
   mlite,
   kdePackages,
+  buildPackages,
 }:
 
-stdenv.mkDerivation rec {
+let
+  isCross = !stdenv.buildPlatform.canExecute stdenv.hostPlatform;
+in
+stdenv.mkDerivation (finalAttrs: {
   pname = "asteroid-btsyncd";
   version = "nightly";
 
@@ -22,6 +26,8 @@ stdenv.mkDerivation rec {
     rev = "e14fbcd9a157f0988204e874b03f6f800f89d645";
     sha256 = "15vpd3y817gz8j1d7f56k5g1y3747grsjqc5z7b896n7rs2p8ijc";
   };
+
+  strictDeps = true;
 
   # AsteroidOS Bluetooth synchronization daemon
   # Upstream repository: https://github.com/AsteroidOS/asteroid-btsyncd
@@ -35,9 +41,17 @@ stdenv.mkDerivation rec {
     cmake
     kdePackages.extra-cmake-modules
     pkg-config
-    qt6.qtdeclarative
-    qt6.qttools
     qt6.wrapQtAppsHook
+  ];
+
+  cmakeFlags = [
+    "-DECM_DIR=${kdePackages.extra-cmake-modules}/share/ECM/cmake"
+  ]
+  ++ lib.optionals isCross [
+    "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+    "-DQt6QuickTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+    "-DQt6ShaderToolsTools_DIR=${buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
+    "-DQt6LinguistTools_DIR=${buildPackages.qt6.qttools}/lib/cmake/Qt6LinguistTools"
   ];
 
   buildInputs = [
@@ -99,4 +113,4 @@ stdenv.mkDerivation rec {
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
   };
-}
+})
