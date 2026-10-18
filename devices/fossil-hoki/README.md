@@ -82,10 +82,11 @@ fastboot reboot
 The magnetic charging cradle on the Fossil Gen 6 can be physically sensitive; slight shifts during multi-minute writes can reset the USB interface (`Write to device failed`, `Status read failed (No such device)`).
 
 To guarantee successful flashing over flaky connections without starting over on every drop, use the included **`bin/resilient-flash`** tool:
-- **Chunked Writes (16 MB)**: If USB resets, at most 1 second of transfer time is interrupted.
-- **Auto-Reconnect & Instant Resume**: Waits for the device to reconnect and automatically resumes from the exact chunk that dropped.
-- **Hardware SHA256 Verification**: Calculates and verifies cryptographic checksums directly on the watch eMMC flash for every chunk.
-- **Auto Sparse Unsparsing**: Automatically unpacks native Android sparse images on the host without wasting watch memory.
+- **Chunked Writes (Default 16 MB)**: Writes disk images in small blocks via `dd of=<partition> bs=1048576 seek=<offset>` so dropped connections interrupt only seconds of transfer.
+- **In-Memory Resume**: Tracks verified chunks in process memory, eliminating disk cache permission traps when using `sudo adb`.
+- **Hardware Dual-Tier SHA256 Verification**: Calculates and verifies cryptographic checksums directly on the watch eMMC flash for every chunk, followed by an end-to-end full partition verification after buffers are synced.
+- **Auto-Recovery on Drop**: When USB disconnects or times out, immediately resets the ADB daemon (`adb kill-server`), settles for 10s, and retries the interrupted block directly without blocking on hung `wait-for-device` probes.
+- **Auto Sparse Unsparsing**: Automatically unpacks native Android sparse images on the host via `simg2img` without wasting watch memory.
 
 1. **Boot TWRP temporarily via fastboot** (does not overwrite stock recovery):
    ```bash
@@ -99,7 +100,18 @@ To guarantee successful flashing over flaky connections without starting over on
 
    # If host permissions require sudo for adb:
    ./bin/resilient-flash result/system.img --boot-img result/boot.img --sudo --reboot
+
+   # Optional flags:
+   #   --timeout 90        Custom chunk write timeout in seconds (default: 60s)
+   #   --chunk-size 8      Smaller chunk size in MB for extremely flaky connections
+   #   --no-verify         Skip SHA256 readback verification for maximum speed
    ```
+
+#### Technical Notes & Recovery Quirks
+- **Why Fastboot Cannot Resume**: The Fastboot protocol (in LittleKernel bootloader) is stateless and writes directly to an in-memory buffer before flashing. It has no seek or offset parameter. If USB drops, the buffer is purged and the endpoint resets. TWRP boots full Linux userspace with direct `/dev/block/...` access, making seek-based block writes possible.
+- **`conv=notrunc` Disabled in Recovery `dd`**: Android recovery `busybox`/`toybox` often compiles out `conv` support (`dd: conv option disabled`). Because Linux block special devices (`/dev/block/...`) have a fixed hardware geometry and cannot be truncated by the kernel anyway, `conv=notrunc` must be omitted.
+- **Byte Multiples vs. Suffixes**: Minimal recovery `toolbox` does not parse unit suffixes like `1M` or `status=none`. All offsets and block sizes are passed as exact integer bytes (`bs=1048576`), and stderr is routed via standard POSIX `2>/dev/null`.
+- **Avoiding `adb wait-for-device` Hangs**: Dropped packets on Linux ADB USB sockets often leave the host daemon wedged. Bouncing `adb kill-server` and giving a fixed 10-second bus settlement delay before attempting direct writes avoids infinite hangs.
 
 *(Manual fallback: `simg2img result/system.img /tmp/system_raw.img && dd if=/tmp/system_raw.img bs=1M status=progress | adb shell -T "cat > /dev/block/bootdevice/by-name/userdata && sync"`)*
 
