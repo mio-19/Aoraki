@@ -175,7 +175,7 @@ fastboot flash --slot=all boot result/boot.img
 fastboot flash userdata result/system.img
 ----
 
-TIP: Smartwatch charging docks use magnetic pogo pins that may drop data connections during large fastboot writes. If fastboot encounters USB timeouts or drops, you can boot TWRP recovery temporarily (`fastboot boot twrp.img`) and run the included resilient flasher (`./bin/resilient-flash result/system.img --boot-img result/boot.img --reboot`), which splits writes into small resumable blocks, automatically resets the connection on drops, and verifies on-device SHA256 checksums. Note that this TWRP method is a community workaround; see device-specific notes (e.g. `devices/fossil-hoki/README.md`) for detailed steps and recovery quirks.
+TIP: Smartwatch charging docks use magnetic pogo pins that may drop data connections during large fastboot writes. If fastboot encounters USB timeouts or drops, you can boot TWRP recovery temporarily (`fastboot boot twrp.img`) and run the included resilient flasher (`./bin/resilient-flash result --reboot` or `./bin/resilient-flash <device-name> result/boot.img result/system.img --reboot`), which splits writes into small resumable blocks, automatically resets the connection on drops, and verifies on-device SHA256 checksums. Note that this TWRP method is a community workaround; see device-specific notes (e.g. `devices/fossil-hoki/README.md`) for detailed steps and recovery quirks.
 
 == Offline Encyclopedias with Kiwix
 

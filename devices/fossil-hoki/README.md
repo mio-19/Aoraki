@@ -95,16 +95,20 @@ To guarantee successful flashing over flaky connections without starting over on
 
 2. **Run Resilient Flash**:
    ```bash
-   # Automatically flashes system + boot partitions, verifies SHA256, and reboots:
-   ./bin/resilient-flash result/system.img --boot-img result/boot.img --reboot
+   # Flashing by passing output directory directly (auto-detects system.img & boot.img):
+   ./bin/resilient-flash result --reboot
+
+   # Or providing device name and image files in any order:
+   ./bin/resilient-flash fossil-hoki result/boot.img result/system.img --reboot
 
    # If host permissions require sudo for adb:
-   ./bin/resilient-flash result/system.img --boot-img result/boot.img --sudo --reboot
+   ./bin/resilient-flash result --sudo --reboot
 
    # Optional flags:
    #   --timeout 90        Custom chunk write timeout in seconds (default: 60s)
    #   --chunk-size 8      Smaller chunk size in MB for extremely flaky connections
    #   --no-verify         Skip SHA256 readback verification for maximum speed
+   #   --no-boot           Skip flashing boot partition
    ```
 
 #### Technical Notes & Recovery Quirks

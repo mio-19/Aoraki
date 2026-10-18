@@ -131,7 +131,7 @@ fastboot format cache
 fastboot reboot
 ----
 
-TIP: To avoid USB pogo-pin drops during flashing, you can boot TWRP and use `./bin/resilient-flash result/system.img --boot-img result/boot.img --reboot`.
+TIP: To avoid USB pogo-pin drops during flashing, you can boot TWRP and use `./bin/resilient-flash result --reboot` (or pass `./bin/resilient-flash <device-name> result/boot.img result/system.img --reboot`).
 
 ==== OPPO Watch 46mm (Model OW19W8 / `oppo-beluga` — Target)
 
