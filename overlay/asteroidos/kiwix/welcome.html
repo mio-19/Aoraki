@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Kiwix - Offline Reader</title>
+  <style>
+    :root {
+      --bg: #000000;
+      --card-bg: #111a28;
+      --accent: #00e5ff;
+      --accent-glow: rgba(0, 229, 255, 0.3);
+      --text: #f0f4f8;
+      --muted: #8b9bb4;
+      --border: #1e293b;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      width: 100vw;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow-x: hidden;
+      overflow-y: auto;
+      padding: 24px 16px 48px 16px;
+    }
+
+    .badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      color: var(--accent);
+      margin-top: 10px;
+      margin-bottom: 2px;
+    }
+
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 86%;
+      max-width: 320px;
+      padding: 14px 12px;
+      margin-bottom: 12px;
+      box-shadow: 0 0 10px var(--accent-glow);
+    }
+
+    .card h3 {
+      font-size: 12px;
+      color: var(--accent);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card p {
+      font-size: 11px;
+      line-height: 1.4;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .code-block {
+      background: #080d16;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-family: monospace;
+      font-size: 10px;
+      color: #38bdf8;
+      word-break: break-all;
+      user-select: all;
+    }
+
+    .btn-refresh {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 20px;
+      padding: 8px 18px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 4px;
+      text-decoration: none;
+      display: inline-block;
+    }
+
+    .btn-refresh:active {
+      transform: scale(0.96);
+      opacity: 0.9;
+    }
+
+    .footer {
+      font-size: 9px;
+      color: #556980;
+      margin-top: 8px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="badge">Offline Reader</div>
+  <div class="title">Kiwix Encyclopedia</div>
+
+  <div class="card">
+    <h3>&#128218; No ZIM Books Found</h3>
+    <p>To read Wikipedia or Project Gutenberg offline on your watch, copy <code>.zim</code> archives to:</p>
+    <div class="code-block">/var/lib/kiwix/</div>
+    <p style="margin-top: 6px;">or your user storage:</p>
+    <div class="code-block">~/.local/share/kiwix/</div>
+  </div>
+
+  <div class="card">
+    <h3>&#128187; Push via ADB or SCP</h3>
+    <p>From your computer while charging:</p>
+    <div class="code-block">adb push my_wiki.zim /var/lib/kiwix/</div>
+  </div>
+
+  <button class="btn-refresh" onclick="location.reload()">Reload Library</button>
+
+  <div class="footer">Kiwix for NixOS Smartwatches</div>
+</body>
+</html>

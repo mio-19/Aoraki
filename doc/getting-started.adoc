@@ -177,6 +177,10 @@ fastboot flash userdata result/system.img
 
 TIP: Smartwatch charging docks use magnetic pogo pins that may drop data connections during large fastboot writes. If fastboot encounters USB timeouts or drops, you can boot TWRP recovery temporarily (`fastboot boot twrp.img`) and stream the image directly to the eMMC block device via ADB (`simg2img result/system.img - | adb shell "dd of=/dev/block/bootdevice/by-name/userdata bs=4M"`). Note that this TWRP method is currently experimental and untested; see device-specific notes (e.g. `devices/fossil-hoki/README.md`) for detailed steps.
 
+== Offline Encyclopedias with Kiwix
+
+Smartwatch systems include an offline reader based on Kiwix (`asteroid.apps.kiwix`) and NetSurf. Simply drop any `.zim` archive (from https://library.kiwix.org/[library.kiwix.org]) into `/var/lib/kiwix/` or `~/.local/share/kiwix/` on the watch to browse full-text Wikipedia, Wiktionary, or Project Gutenberg without an active internet connection.
+
 == Contributing
 
 This is a big topic, and not something about getting started! Though, quickly

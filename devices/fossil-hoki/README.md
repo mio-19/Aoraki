@@ -27,7 +27,7 @@ The Fossil Gen 6 utilizes Qualcomm A/B partition architecture on its internal eM
 | Partition / Partlabel | Mount Point | Filesystem | Mount Flags | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | `boot_a` / `boot_b` | — | Android Boot v0 | — | Linux 4.14 kernel with appended `sda429-hoki.dtb` + mobile-nixos stage-1 initrd |
-| `userdata` | `/` | ext4 | rw | Target for `system.img` (`LABEL=NIXOS_SYSTEM`). Provides ~4–5 GB space for Nix store. |
+| `userdata` | `/` | Btrfs (zstd:3) | rw | Target for `system.img` (`LABEL=NIXOS_SYSTEM`). Transparently compressed to maximize Nix store space. |
 | `persist` | `/persist` | ext4 | nofail | Optical sensor calibration, board serials, and battery fuel-gauge profiles |
 | `modem` | `/vendor/firmware_mnt` | vfat | ro, nofail | Qualcomm Hexagon DSP firmware and Wi-Fi/GNSS binaries |
 | `bluetooth` | `/vendor/bt_firmware` | vfat | ro, nofail | Broadcom / Qualcomm Bluetooth controller firmware |
@@ -146,3 +146,21 @@ journalctl --user -u asteroid-launcher -f
 # Inspect kernel dmesg:
 dmesg | grep -iE "msm|drm|bluetooth|wlan|touch"
 ```
+
+---
+
+## Kiwix Offline Wikipedia & Reference Reader
+
+The watch environment includes Kiwix (`asteroid.apps.kiwix`) paired with an ultra-lightweight NetSurf browser backend. To load offline encyclopedias or books:
+
+1. Download `.zim` files from [library.kiwix.org](https://library.kiwix.org/) (e.g. *Wikipedia Simple English*, *Wiktionary*, or *Project Gutenberg*).
+2. Transfer the `.zim` file to the watch over USB or SSH:
+   ```bash
+   # Via ADB:
+   adb push wikipedia_en_simple_all_nopic_2024.zim /var/lib/kiwix/
+
+   # Via SSH over USB networking:
+   scp wikipedia_en_simple_all_nopic_2024.zim root@192.168.2.15:/var/lib/kiwix/
+   ```
+3. Open **Kiwix** from the AsteroidOS app drawer or tap **Kiwix (Offline)** on the browser home portal. Articles and full-text search are instantly accessible directly on the wrist.
+

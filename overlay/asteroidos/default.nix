@@ -46,12 +46,18 @@ rec {
     inherit qml-asteroid;
   };
 
+  kiwix = callPackage ./kiwix {
+    kiwix-tools = pkgs.kiwix-tools;
+    inherit browser;
+    inherit (pkgs) procps;
+  };
+
   apps =
     (callPackage ./apps {
       inherit mkAsteroidApp mce-dev ngf-qt6;
     })
     // {
-      inherit browser telegram;
+      inherit browser telegram kiwix;
     };
 
   assets = (callPackage ./assets { }) // {

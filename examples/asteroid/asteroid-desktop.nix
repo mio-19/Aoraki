@@ -16,8 +16,8 @@ in
     browser = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = false;
-        description = "Whether to install the AsteroidOS web browser package (opt-in for wearable devices).";
+        default = true;
+        description = "Whether to install the AsteroidOS web browser and Kiwix offline reader suite.";
       };
     };
   };
@@ -90,7 +90,12 @@ in
       ]
       ++ lib.optionals cfg.browser.enable [
         asteroid.browser
+        asteroid.apps.kiwix
       ];
+
+    systemd.tmpfiles.rules = [
+      "d /var/lib/kiwix 0775 ceres users -"
+    ];
 
     # BlueZ dual-mode controller configuration (simultaneous BLE sync and Classic BT profiles)
     # Reference: https://git.kernel.org/pub/scm/bluetooth/bluez.git/tree/src/main.conf
