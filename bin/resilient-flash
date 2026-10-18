@@ -13,6 +13,7 @@ import shutil
 import struct
 import subprocess
 import sys
+import tempfile
 import time
 
 SPARSE_MAGIC = 0xED26FF3A
@@ -96,6 +97,100 @@ def adb_start_server(adb_prefix):
       pass
     time.sleep(1)
   return False
+
+
+def ensure_device_ready(adb_prefix, max_wait=30):
+  """Verifies smartwatch connection over ADB in recovery mode.
+  Handles 'offline' states with automatic reconnect, detects fastboot mode,
+  and avoids unhandled 30s hangs on commands.
+  """
+  adb_start_server(adb_prefix)
+
+  fastboot_cmd = ["sudo", "fastboot"] if "sudo" in adb_prefix else ["fastboot"]
+  has_fastboot = shutil.which(fastboot_cmd[-1]) is not None
+
+  start_t = time.time()
+  last_offline_reconnect = 0
+
+  while time.time() - start_t < max_wait:
+    # 1. Check ADB devices
+    try:
+      proc = subprocess.Popen(
+          adb_prefix + ["devices"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+      )
+      out, _ = proc.communicate(timeout=3)
+      lines = [
+          line.strip()
+          for line in out.decode("latin1", errors="replace").splitlines()
+          if line.strip()
+          and not line.startswith("List of devices")
+          and not line.startswith("*")
+      ]
+      for line in lines:
+        parts = line.split()
+        if len(parts) >= 2:
+          serial, state = parts[0], parts[1]
+          if state in ("recovery", "device"):
+            print(f"[✓] Smartwatch connected in {state} mode ({serial}).")
+            return True
+          elif state == "offline":
+            if time.time() - last_offline_reconnect > 5:
+              print(f"[*] Device {serial} is offline. Attempting USB reconnect...")
+              try:
+                rec = subprocess.Popen(
+                    adb_prefix + ["reconnect", "offline"],
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
+                )
+                rec.communicate(timeout=3)
+              except Exception:
+                pass
+              last_offline_reconnect = time.time()
+            break
+          elif state == "unauthorized":
+            print(f"[!] Device {serial} is unauthorized. Please accept ADB prompt on watch.")
+    except Exception:
+      pass
+
+    # 2. Check if device is in fastboot mode instead
+    if has_fastboot:
+      try:
+        proc_fb = subprocess.Popen(
+            fastboot_cmd + ["devices"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        fb_out, _ = proc_fb.communicate(timeout=2)
+        fb_lines = [
+            line.strip()
+            for line in fb_out.decode("latin1", errors="replace").splitlines()
+            if line.strip()
+        ]
+        if fb_lines:
+          fb_serial = fb_lines[0].split()[0]
+          print("\n" + "!" * 64)
+          print(f"[!] Smartwatch ({fb_serial}) is in FASTBOOT mode, not Recovery mode!")
+          print("!" * 64)
+          print("    resilient-flash writes raw partitions using ADB in TWRP/recovery.")
+          print("    To boot into TWRP recovery, run:")
+          print("        fastboot boot path/to/twrp.img")
+          print("    Or boot into recovery from the watch bootloader menu.")
+          print("!" * 64 + "\n")
+          raise RuntimeError("Smartwatch is in fastboot mode. Boot into recovery (TWRP) first.")
+      except RuntimeError:
+        raise
+      except Exception:
+        pass
+
+    rem = max(1, int(max_wait - (time.time() - start_t)))
+    sys.stdout.write(f"[*] Waiting for ADB device in recovery mode (check pogo pins)... {rem}s \r")
+    sys.stdout.flush()
+    time.sleep(1.5)
+
+  print("\n[!] Error: Smartwatch not detected over ADB within timeout.", file=sys.stderr)
+  print("    Please check that the watch is securely seated on the charging puck", file=sys.stderr)
+  print("    and booted into TWRP recovery.", file=sys.stderr)
+  raise TimeoutError("No ADB recovery device detected")
 
 
 def wait_for_retry(adb_prefix, reason="retry", delay=10):
@@ -388,9 +483,8 @@ def main():
     print(f"Error: '{adb_prefix[-1]}' command not found on host.", file=sys.stderr)
     sys.exit(1)
 
-  # Clean start: reset ADB daemon
-  adb_kill_server(adb_prefix, reason="program initialization")
-  adb_start_server(adb_prefix)
+  # Ensure ADB server is running and smartwatch is connected in recovery mode
+  ensure_device_ready(adb_prefix, max_wait=30)
 
   # Resolve paths
   system_path = os.path.abspath(args.system_image)
@@ -434,17 +528,24 @@ def main():
           file=sys.stderr,
       )
       sys.exit(1)
-    raw_path = "/tmp/resilient_flash_raw.img"
+    raw_path = os.path.join(
+        tempfile.gettempdir(),
+        f"resilient_flash_raw_{os.getpid()}_{int(time.time())}.img",
+    )
     subprocess.check_call(["simg2img", system_path, raw_path])
     temp_raw_created = True
 
   try:
-    # Unmount target partitions if mounted in recovery
-    run_adb(
-        adb_prefix,
-        ["shell", f"umount {args.userdata_partition} /data /userdata 2>/dev/null || true"],
-        capture_only=True,
-    )
+    # Unmount target partitions if mounted in recovery (safe best-effort)
+    try:
+      run_adb(
+          adb_prefix,
+          ["shell", f"umount {args.userdata_partition} /data /userdata 2>/dev/null || true"],
+          timeout=10,
+          capture_only=True,
+      )
+    except Exception as e:
+      print(f"[*] Note: pre-flash unmount note: {e}")
 
     # 1. Flash Userdata / Rootfs
     flash_partition(
@@ -509,4 +610,14 @@ def main():
 
 
 if __name__ == "__main__":
-  main()
+  try:
+    main()
+  except KeyboardInterrupt:
+    print("\n[!] Flashing aborted by user (Ctrl+C).")
+    sys.exit(130)
+  except (TimeoutError, RuntimeError) as err:
+    print(f"\n[!] Error: {err}", file=sys.stderr)
+    sys.exit(1)
+  except Exception as e:
+    print(f"\n[!] Flash error: {e}", file=sys.stderr)
+    sys.exit(1)

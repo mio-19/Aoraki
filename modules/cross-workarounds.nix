@@ -68,6 +68,7 @@ lib.mkIf isCross (
               ladybird =
                 (super.ladybird.override {
                   skia = final.skia;
+                  angle = final.libglvnd;
                 }).overrideAttrs
                   (old: {
                     patches = (old.patches or [ ]) ++ [
