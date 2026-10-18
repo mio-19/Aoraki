@@ -147,12 +147,11 @@ def flash_partition(
 
         t0 = time.time()
         try:
-          # Write chunk via dd with seek and conv=notrunc (bs=1048576 for universal recovery dd support)
+          # Write chunk via dd with seek (block devices have fixed geometry and cannot be truncated, avoiding disabled conv option)
           cmd = [
               "shell",
               "-T",
-              f"dd of={partition} bs=1048576 seek={offset_mb} count={actual_chunk_mb}"
-              " conv=notrunc",
+              f"dd of={partition} bs=1048576 seek={offset_mb} count={actual_chunk_mb}",
           ]
           ret, _, err = run_adb(adb_prefix, cmd, input_bytes=data, timeout=35)
           if ret != 0:
