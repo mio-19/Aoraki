@@ -9,11 +9,13 @@
   buildPackages,
 }:
 
-stdenv.mkDerivation {
+stdenv.mkDerivation (finalAttrs: {
   pname = "asteroid-virtualkeyboard-rime";
   version = "1.0.0";
 
   src = ./.;
+
+  strictDeps = true;
 
   nativeBuildInputs = [
     cmake
@@ -59,4 +61,4 @@ stdenv.mkDerivation {
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
   };
-}
+})

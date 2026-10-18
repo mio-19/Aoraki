@@ -11,7 +11,7 @@
   buildPackages,
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "amber-mpris";
   version = "nightly";
 
@@ -21,6 +21,8 @@ stdenv.mkDerivation rec {
     rev = "0dc2c15104a13c16f3028cb9e73f1e4dc886f4d0";
     hash = "sha256-kOjzaF6Xu1D06V8Dq9i0mUXwROH0rXTNC2zVnbiYUHI=";
   };
+
+  strictDeps = true;
 
   preConfigure = ''
     cp ${./CMakeLists.txt} CMakeLists.txt
@@ -49,4 +51,4 @@ stdenv.mkDerivation rec {
     license = licenses.lgpl21Only;
     platforms = platforms.linux;
   };
-}
+})

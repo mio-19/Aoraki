@@ -16,8 +16,8 @@ in
     browser = {
       enable = lib.mkOption {
         type = lib.types.bool;
-        default = true;
-        description = "Whether to install the AsteroidOS web browser package.";
+        default = false;
+        description = "Whether to install the AsteroidOS web browser package (opt-in for wearable devices).";
       };
       engine = lib.mkOption {
         type = lib.types.enum [
@@ -27,7 +27,7 @@ in
           "goanna"
           "webkit"
         ];
-        default = "ladybird";
+        default = "netsurf";
         description = "Rendering engine backend for asteroid-browser built into the watch system.";
       };
     };

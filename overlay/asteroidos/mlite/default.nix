@@ -12,7 +12,7 @@
   glib,
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "mlite";
   version = "nightly";
 
@@ -22,6 +22,8 @@ stdenv.mkDerivation rec {
     rev = "42c3b2102dadfc54a2cc7c87c6e4cfb28437c908";
     hash = "sha256-rtWtDJhSUpamqj61aLr2QTopY9QfighPcMlUxdACTlg=";
   };
+
+  strictDeps = true;
 
   preConfigure = ''
     cp ${./CMakeLists.txt} CMakeLists.txt
@@ -47,4 +49,4 @@ stdenv.mkDerivation rec {
     license = licenses.lgpl21Only;
     platforms = platforms.linux;
   };
-}
+})

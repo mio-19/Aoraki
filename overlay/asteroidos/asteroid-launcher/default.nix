@@ -9,7 +9,7 @@
   kdePackages,
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "asteroid-launcher";
   version = "nightly";
 
@@ -19,6 +19,8 @@ stdenv.mkDerivation rec {
     rev = "0ba0eb50a68fc6f1019312d511ec3e2fd1b48f31";
     sha256 = "0lrfk1m4kn9z47v0xr7mhgzi5kyahchf43jml7rzxq20limblrmn";
   };
+
+  strictDeps = true;
 
   # AsteroidOS wayland compositor & shell
   # Upstream repository: https://github.com/AsteroidOS/asteroid-launcher
@@ -53,6 +55,7 @@ stdenv.mkDerivation rec {
     description = "AsteroidOS Wayland compositor and smartwatch home shell";
     homepage = "https://asteroidos.org/";
     license = licenses.gpl3Plus;
+    mainProgram = "asteroid-launcher";
     platforms = platforms.linux;
   };
-}
+})

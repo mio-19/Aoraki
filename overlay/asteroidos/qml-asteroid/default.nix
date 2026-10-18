@@ -9,7 +9,7 @@
   buildPackages,
 }:
 
-stdenv.mkDerivation rec {
+stdenv.mkDerivation (finalAttrs: {
   pname = "qml-asteroid";
   version = "nightly";
 
@@ -19,6 +19,8 @@ stdenv.mkDerivation rec {
     rev = "c1905485d4aa22f964273e93a62ef23c27a7754b";
     sha256 = "14l43mnff8a7v1dw1d066i0nvswxmj1la3k6a0mxkyzxhykw68iq";
   };
+
+  strictDeps = true;
 
   nativeBuildInputs = [
     cmake
@@ -69,4 +71,4 @@ stdenv.mkDerivation rec {
     license = licenses.lgpl3Plus;
     platforms = platforms.linux;
   };
-}
+})
