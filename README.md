@@ -43,7 +43,7 @@ The following watches are supported across Qualcomm Snapdragon Wear, MediaTek, E
 
 | Device | Codename | SoC Platform | Display Type | Status |
 | :--- | :--- | :--- | :--- | :--- |
-| **Fossil Gen 6** | `fossil-hoki` | Snapdragon Wear 4100+ | 416×416 Round AMOLED (Crown, AOD) | **Primary Reference** |
+| **Fossil Gen 6** | [`fossil-hoki`](devices/fossil-hoki/README.md) | Snapdragon Wear 4100+ | 416×416 Round AMOLED (Crown, AOD) | **Primary Reference** |
 | **Fossil Gen 5** (Carlyle / Julianna) | `fossil-triggerfish` | Snapdragon Wear 3100 | 416×416 Round AMOLED (Crown, AOD) | Supported |
 | **Fossil Gen 4** (Explorist HR) | `fossil-firefish` | Snapdragon Wear 2100 | 454×454 Round AMOLED (Crown) | Supported |
 | **Google Pixel Watch 2** | `google-aurora` | Snapdragon W5 Gen 1 | 384×384 Round AMOLED (Crown, AOD) | Ported |
@@ -78,55 +78,48 @@ sudo pacman -S android-tools
 
 ### Building the OS Image
 
-Using our primary reference device, the **Fossil Gen 6** (`fossil-hoki`):
+Using our primary reference device, the **Fossil Gen 6** ([`fossil-hoki`](devices/fossil-hoki/README.md)):
 
 ```bash
-# Build the complete flashable smartwatch image
-nix-build examples/asteroid --argstr device fossil-hoki -A outputs.default
+# Build the complete flashable smartwatch image for Fossil Gen 6
+nix-build examples/asteroid --argstr device fossil-hoki -A outputs.default --keep-going
 ```
 
 Once the build finishes, the output artifacts will be linked in `./result`:
 
-- `result/boot.img` – Android boot image containing the Linux kernel (with appended device tree blob) and stage-1 initramfs
+- `result/boot.img` – Android boot image containing the Linux 4.14 kernel (with appended `sda429-hoki.dtb`) and stage-1 initramfs
 - `result/system.img` – Ext4 root filesystem (`LABEL=NIXOS_SYSTEM`) containing the complete Nix store and system generation
 - `result/flash-critical.sh` – Automated helper script that executes the target fastboot commands for critical boot partitions
 
 ### Flashing via Fastboot
 
-1. Put your smartwatch into fastboot mode:
-   - Power off the watch completely.
-   - Hold down the power/crown button and bottom button simultaneously until the fastboot bootloader screen appears.
-   - Alternatively, from an active Android/ADB connection: `adb reboot bootloader`.
+Follow these steps to flash the **Fossil Gen 6** (`hoki`):
 
-2. Connect the watch charging puck/cradle to your host PC via USB.
+```bash
+# 1. Put Fossil Gen 6 into fastboot mode:
+# Either from an active ADB connection:
+adb reboot bootloader
+# Or power off the watch, place on the charging puck, and hold the crown + bottom buttons simultaneously.
 
-3. Verify connection:
-   ```bash
-   fastboot devices
-   ```
+# 2. Verify connection on host PC:
+fastboot devices
 
-4. Flash the boot image:
-   ```bash
-   # Flash the Linux kernel and initramfs to both A/B slots (for A/B devices like Fossil Gen 6)
-   fastboot flash --slot=all boot result/boot.img
-   
-   # Or simply execute the included helper script:
-   ./result/flash-critical.sh
-   ```
+# 3. Unlock bootloader (if not already unlocked):
+fastboot flashing unlock
 
-5. Flash the root filesystem image:
-   ```bash
-   # Flash rootfs to the userdata partition (recommended for smartwatches to utilize full eMMC flash capacity)
-   fastboot flash userdata result/system.img
+# 4. Flash Linux kernel and stage-1 initramfs to both A/B slots:
+fastboot flash --slot=all boot result/boot.img
+# (Alternatively, run: ./result/flash-critical.sh)
 
-   # Alternatively, on non-A/B devices or when preserving userdata:
-   # fastboot flash system result/system.img
-   ```
+# 5. Flash root filesystem to the userdata partition (recommended to utilize full eMMC capacity):
+fastboot flash userdata result/system.img
 
-6. Reboot into NixOS:
-   ```bash
-   fastboot reboot
-   ```
+# 6. Wipe stale Android cache (recommended when first installing over Wear OS):
+fastboot format cache
+
+# 7. Reboot into NixOS:
+fastboot reboot
+```
 
 > [!NOTE]
 > For devices utilizing Android Boot Header v4 (e.g. `google-aurora`), flash boot components using `--slot=all`:
@@ -190,7 +183,7 @@ Build the new system generation on your powerful host workstation, copy the stor
 
 ```bash
 # 1. Build the updated system closure on host
-nix-build examples/asteroid --argstr device fossil-hoki -A build.toplevel
+nix-build examples/asteroid --argstr device fossil-hoki -A build.toplevel --keep-going
 
 # 2. Copy the store closure to the watch
 nix-copy-closure --to root@192.168.2.15 ./result
