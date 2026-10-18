@@ -94,29 +94,32 @@ An alternative community method is to temporarily boot **TWRP Recovery for Fossi
    adb devices
    ```
 
-3. **Stream the rootfs image directly to the eMMC partition**:
-   Because `/tmp` on the watch is a RAM disk (limited to ~1 GB total memory), do NOT push the image to `/tmp`. Unsparse the image on your host machine and stream it via `adb exec-in` (disables terminal PTY line translation so binary data is not corrupted) using numeric block size:
+3. **Stream the rootfs image directly to the eMMC partition with live progress**:
+   Because `/tmp` on the watch is a RAM disk (limited to ~1 GB total memory), do NOT push the image to `/tmp`. Unsparse the image on your host machine and stream it with host-side `dd status=progress` and `adb shell -T` (disables terminal PTY line translation so binary data is not corrupted, while printing real-time progress and final confirmation):
    ```bash
    # 1. Unsparse on host machine:
    simg2img result/system.img /tmp/system_raw.img
 
-   # 2. Stream directly into userdata partition:
-   adb exec-in "dd of=/dev/block/bootdevice/by-name/userdata bs=1048576" < /tmp/system_raw.img
+   # 2. Stream directly into userdata with live progress and completion verification:
+   dd if=/tmp/system_raw.img bs=1M status=progress | sudo adb shell -T "cat > /dev/block/bootdevice/by-name/userdata && sync && echo '=== SYSTEM FLASH COMPLETED SUCCESSFULLY ==='"
 
-   # 3. Clean up host temporary raw image:
+   # 3. Verify filesystem integrity on the watch eMMC:
+   sudo adb shell "btrfs check --readonly /dev/block/bootdevice/by-name/userdata"
+
+   # 4. Clean up host temporary raw image:
    rm -f /tmp/system_raw.img
    ```
 
 4. **Flash kernel and stage-1 initrd to both boot slots**:
    ```bash
-   adb exec-in "dd of=/dev/block/bootdevice/by-name/boot_a bs=1048576" < result/boot.img
-   adb exec-in "dd of=/dev/block/bootdevice/by-name/boot_b bs=1048576" < result/boot.img
+   dd if=result/boot.img bs=1M status=progress | sudo adb shell -T "cat > /dev/block/bootdevice/by-name/boot_a && sync && echo '=== BOOT_A OK ==='"
+   dd if=result/boot.img bs=1M status=progress | sudo adb shell -T "cat > /dev/block/bootdevice/by-name/boot_b && sync && echo '=== BOOT_B OK ==='"
    ```
 
 5. **Wipe stale cache and reboot**:
    ```bash
-   adb shell "mke2fs -t ext4 /dev/block/bootdevice/by-name/cache" || adb shell "make_ext4fs /dev/block/bootdevice/by-name/cache"
-   adb reboot
+   sudo adb shell "mke2fs -t ext4 /dev/block/bootdevice/by-name/cache" || sudo adb shell "make_ext4fs /dev/block/bootdevice/by-name/cache"
+   sudo adb reboot
    ```
 
 ---

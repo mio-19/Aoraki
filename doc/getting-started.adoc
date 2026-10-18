@@ -175,7 +175,7 @@ fastboot flash --slot=all boot result/boot.img
 fastboot flash userdata result/system.img
 ----
 
-TIP: Smartwatch charging docks use magnetic pogo pins that may drop data connections during large fastboot writes. If fastboot encounters USB timeouts or drops, you can boot TWRP recovery temporarily (`fastboot boot twrp.img`), unsparse the image on your host (`simg2img result/system.img /tmp/system_raw.img`), and stream it directly to the eMMC block device via ADB (`adb exec-in "dd of=/dev/block/bootdevice/by-name/userdata bs=1048576" < /tmp/system_raw.img`). Note that this TWRP method is currently experimental and untested; see device-specific notes (e.g. `devices/fossil-hoki/README.md`) for detailed steps.
+TIP: Smartwatch charging docks use magnetic pogo pins that may drop data connections during large fastboot writes. If fastboot encounters USB timeouts or drops, you can boot TWRP recovery temporarily (`fastboot boot twrp.img`), unsparse the image on your host (`simg2img result/system.img /tmp/system_raw.img`), and stream it with live progress and completion verification (`dd if=/tmp/system_raw.img bs=1M status=progress | sudo adb shell -T "cat > /dev/block/bootdevice/by-name/userdata && sync && echo SUCCESS"`). Note that this TWRP method is currently experimental and untested; see device-specific notes (e.g. `devices/fossil-hoki/README.md`) for detailed steps.
 
 == Offline Encyclopedias with Kiwix
 
