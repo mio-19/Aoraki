@@ -157,8 +157,8 @@ in
     ];
   };
 
-  # Allow passwordless root login for debugging
-  users.users.root.password = mkIf cfg.enable "";
+  # Allow root login with predefined password 'root' for debugging
+  users.users.root.password = mkIf cfg.enable "root";
 
   # Ensure USB gadget NCM Ethernet function is bound in Stage-2
   systemd.services.usb-gadget-network = mkIf cfg.enable {

@@ -80,3 +80,15 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 ** Initialized display unblanking (`echo 0 > /sys/class/graphics/fb0/blank`) and backlight brightness (50%) in `boot.postBootCommands`.
 ** Configured `underclock-hoki` service to restore low-power sleep modes (`sleep_disabled = 0`, `idle_enabled = 0`), switch CPU governor to `ondemand`, and park secondary cores post-boot.
 
+== Closure Hygiene & Image Optimization
+
+* [ ] *Nixpkgs Cross-Compilation Closure Hygiene*:
+** Currently, `modules/clean-closure.py` acts as a post-filter on `closureInfo` to prune buildPlatform host packages (e.g. x86_64 binaries leaking into cross-compiled ARM closures via `qtbase` `qmake` wrappers, CMake config files, `libcamera`, `libdrm-dev`, and `pkg-config`).
+** Replace this ad-hoc post-processing with proper upstream-style Nixpkgs derivations:
+*** Audit why `qtbase` development files (`lib/cmake/Qt6/Qt6Dependencies.cmake`, `bin/qmake`, `bin/target_qt.conf`) end up in `$out` rather than `$dev`, or use `nuke-references` / custom cross overrides on `qtbase` so that host Qt tools do not leak into runtime system closures.
+*** Enforce closure purity using Nixpkgs `disallowedReferences` or `disallowedRequisites` on target system toplevel.
+* [ ] *Rootfs Closure Shrinking & Debuggability*:
+** Investigate opportunities to minimize filesystem closure size on smartwatch eMMC storage (e.g., pruning unnecessary locale data, documentation, unneeded systemd modules, and unused sound/network drivers).
+** Ensure core dumps and diagnostic symbol resolution (`systemd-coredump`, `coredumpctl`) remain fully functional and uncompromised by closure stripping.
+
+

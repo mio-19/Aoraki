@@ -15,6 +15,29 @@ let
   banner = pkgs.writeText "${device_name}-banner" ''
     From a mobile-nixos device ${device_name}
   '';
+  rootHash = "$6$wearroot$RYEJMmyL0CBIaGRy54AUS9B3AWgIjMOeiamag/f.9PQAgfyG8MUsQNJ.pOP77SWdlL9pjf9vZXtc2iQnYRYRm/";
+
+  passwdFile = pkgs.writeText "passwd" ''
+    root:${if cfg.insecureDebug then rootHash else "*"}:0:0:root:/root:/bin/sh
+  '';
+
+  groupFile = pkgs.writeText "group" ''
+    root:x:0:
+  '';
+
+  shadowFile = pkgs.writeText "shadow" ''
+    root:${if cfg.insecureDebug then rootHash else "*"}:19000:0:99999:7:::
+  '';
+
+  shellsFile = pkgs.writeText "shells" ''
+    /bin/sh
+  '';
+
+  nsswitchFile = pkgs.writeText "nsswitch.conf" ''
+    passwd: files
+    group: files
+    shadow: files
+  '';
 in
 {
   options.mobile.boot.stage-1.ssh = {
@@ -30,7 +53,7 @@ in
       type = types.bool;
       default = config.mobile.hardware.watch.debug.enable or false;
       description = ''
-        When enabled, unlocks passwordless root login (root::0:0...) and spawns
+        When enabled, sets predefined root password 'root' and spawns
         an unauthenticated telnetd daemon on 172.16.42.1 for emergency debugging.
       '';
     };
@@ -42,20 +65,6 @@ in
     };
 
     tasks = [
-      # Insecure root password task
-      (pkgs.writeText "insecure-root-password-task.rb" ''
-        class Tasks::InsecureRootPassword < SingletonTask
-          def initialize()
-            add_dependency(:Target, :Environment)
-          end
-          
-          def run()
-            if Configuration["debug"] == true
-              System.run("passwd", "-d", "root") rescue nil
-            end
-          end
-        end
-      '')
       (pkgs.writeText "dropbear-sshd-task.rb" ''
         class Tasks::DropbearSSHD < SingletonTask
           def initialize()
@@ -65,19 +74,15 @@ in
           
           def run()
             FileUtils.mkdir_p("/etc/dropbear")
+            # Ensure /dev/pts is mounted so telnetd and dropbear can allocate pseudo-terminals
+            FileUtils.mkdir_p("/dev/pts")
+            System.run("mount", "-t", "devpts", "devpts", "/dev/pts") rescue nil
+
             is_debug = Configuration["debug"] == true
             if is_debug
-              # Ensure root has an unlocked empty password in /etc/passwd
-              begin
-                if File.exist?("/etc/passwd")
-                  passwd = File.read("/etc/passwd").gsub(/^root:[^:]*:/, "root::")
-                  File.write("/etc/passwd", passwd)
-                end
-              rescue => e
-                $logger.warn("Could not patch /etc/passwd: #{e.message}")
-              end
-              # Spawn dropbear allowing blank passwords (-B)
+              # Spawn dropbear (with predefined password 'root', allowing blank fallback)
               System.spawn("dropbear", "-ERB", "-b", "/etc/banner")
+
               # Spawn telnetd for immediate, unauthenticated emergency shell access
               if System.which("telnetd")
                 System.spawn("telnetd", "-l", "/bin/sh")
@@ -94,6 +99,26 @@ in
       {
         object = banner;
         symlink = "/etc/banner";
+      }
+      {
+        object = passwdFile;
+        symlink = "/etc/passwd";
+      }
+      {
+        object = groupFile;
+        symlink = "/etc/group";
+      }
+      {
+        object = shadowFile;
+        symlink = "/etc/shadow";
+      }
+      {
+        object = shellsFile;
+        symlink = "/etc/shells";
+      }
+      {
+        object = nsswitchFile;
+        symlink = "/etc/nsswitch.conf";
       }
     ];
     extraUtils = [
