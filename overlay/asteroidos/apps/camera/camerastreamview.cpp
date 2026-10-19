@@ -176,6 +176,24 @@ void CameraStreamView::onSocketReadyRead()
 
 void CameraStreamView::parseBuffer()
 {
+    if (m_buffer.size() > 512 * 1024) {
+        int lastSoi = -1;
+        const char *data = m_buffer.constData();
+        int size = m_buffer.size();
+        for (int i = size - 2; i >= 0; --i) {
+            if ((uint8_t)data[i] == 0xFF && (uint8_t)data[i + 1] == 0xD8) {
+                lastSoi = i;
+                break;
+            }
+        }
+        if (lastSoi > 0) {
+            m_buffer = m_buffer.mid(lastSoi);
+        } else {
+            m_buffer.clear();
+            return;
+        }
+    }
+
     while (m_buffer.size() > 4) {
         int soi = -1;
         const char *data = m_buffer.constData();
@@ -262,6 +280,11 @@ void CameraStreamView::onMessageReceived(const QString &appId, const QString &ac
     if (appId != "org.asteroidos.camera") return;
     qDebug() << "CameraStreamView: Received message:" << action << "payload:" << payload;
 
+    if (!m_bleConnected) {
+        m_bleConnected = true;
+        emit bleConnectedChanged();
+    }
+
     if (!payload.isEmpty()) {
         QJsonDocument doc = QJsonDocument::fromJson(payload.toUtf8());
         if (doc.isObject()) {
@@ -295,7 +318,11 @@ void CameraStreamView::paint(QPainter *painter)
         QFont f = painter->font();
         f.setPointSize(11);
         painter->setFont(f);
-        painter->drawText(target, Qt::AlignCenter, "Waiting for camera feed...\nTap below to open phone camera");
+        if (m_bleConnected) {
+            painter->drawText(target, Qt::AlignCenter, "Shutter Ready (BLE)\n\nLive video feed offline.\nConnect Wi-Fi or BT Tethering\nfor viewfinder.");
+        } else {
+            painter->drawText(target, Qt::AlignCenter, "Waiting for camera...\n\nTap top badge\nto launch phone camera.");
+        }
         return;
     }
 

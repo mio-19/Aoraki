@@ -72,6 +72,28 @@ AppBridgeService::AppBridgeService(int index, QDBusConnection bus, QObject *pare
                        QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllSignals | QDBusConnection::ExportAllProperties);
 }
 
+static QString normalizeAppId(const QString &id)
+{
+    if (id == QStringLiteral("cam") || id == QStringLiteral("camera")) {
+        return QStringLiteral("org.asteroidos.camera");
+    }
+    if (id == QStringLiteral("spo2")) {
+        return QStringLiteral("org.asteroidos.spo2");
+    }
+    return id;
+}
+
+static QString compactAppId(const QString &id)
+{
+    if (id == QStringLiteral("org.asteroidos.camera")) {
+        return QStringLiteral("cam");
+    }
+    if (id == QStringLiteral("org.asteroidos.spo2")) {
+        return QStringLiteral("spo2");
+    }
+    return id;
+}
+
 void AppBridgeService::sendMessage(const QString &appId, const QString &action, const QString &payload)
 {
     sendBytes(appId, action, payload.toUtf8());
@@ -79,7 +101,8 @@ void AppBridgeService::sendMessage(const QString &appId, const QString &action, 
 
 void AppBridgeService::sendBytes(const QString &appId, const QString &action, const QByteArray &payload)
 {
-    QByteArray appIdBytes = appId.toUtf8();
+    QString compactId = compactAppId(appId);
+    QByteArray appIdBytes = compactId.toUtf8();
     QByteArray actionBytes = action.toUtf8();
 
     if (appIdBytes.size() > 255 || actionBytes.size() > 255) {
@@ -114,7 +137,8 @@ void AppBridgeService::handleRxPacket(const QByteArray &packet)
     int offset = 1;
     int appIdLen = (uint8_t)packet.at(offset++);
     if (packet.size() < offset + appIdLen + 1) return;
-    QString appId = QString::fromUtf8(packet.mid(offset, appIdLen));
+    QString rawAppId = QString::fromUtf8(packet.mid(offset, appIdLen));
+    QString appId = normalizeAppId(rawAppId);
     offset += appIdLen;
 
     int actionLen = (uint8_t)packet.at(offset++);
@@ -128,3 +152,4 @@ void AppBridgeService::handleRxPacket(const QByteArray &packet)
     qDebug() << "AppBridge: Received message for" << appId << "action:" << action;
     emit messageReceived(appId, action, payload);
 }
+

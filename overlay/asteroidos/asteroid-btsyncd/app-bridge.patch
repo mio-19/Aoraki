@@ -63,3 +63,23 @@ index bed5e28..8f28a72 100644
 +#define APP_BRIDGE_RX_UUID  "0000A002-0000-0000-0000-00A57E401D05"
 +
  #endif // COMMON_H
+diff --git a/src/main.cpp b/src/main.cpp
+index 7a07dc3..cb85501 100644
+--- a/src/main.cpp
++++ b/src/main.cpp
+@@ -44,10 +44,10 @@ int main(int argc, char **argv)
+         fprintf(stderr, "Cannot connect to the D-Bus session bus.\n");
+         return 2;
+     }
+-    /* if (!bus.registerService(SERVICE_NAME)) {
+-        fprintf(stderr, "%s\n",
++    if (!QDBusConnection::systemBus().registerService(SERVICE_NAME)) {
++        fprintf(stderr, "Warning: Failed to register D-Bus service %s: %s\n",
++                SERVICE_NAME,
+                 qPrintable(QDBusConnection::systemBus().lastError().message()));
+-        exit(1);
+-    } */
++    }
+ 
+     Application app;
+

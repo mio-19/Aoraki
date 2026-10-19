@@ -12,16 +12,21 @@ index a9aa7ca..fcb9911 100644
  add_subdirectory(src)
  
 diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index 7d4bdd9..3d5ad7b 100644
+index 7d4bdd9..97a54a9 100644
 --- a/src/CMakeLists.txt
 +++ b/src/CMakeLists.txt
-@@ -1,4 +1,4 @@
+@@ -1,17 +1,21 @@
 -add_library(asteroid-camera main.cpp)
 +add_library(asteroid-camera main.cpp camerastreamview.cpp)
  set_target_properties(asteroid-camera PROPERTIES PREFIX "")
  
  asteroid_app_qml_module(asteroid-camera
-@@ -9,6 +9,9 @@ target_link_libraries(
+-	main.qml
++	URI org.asteroid.camera
++	VERSION 1.0
+ )
+ 
+ target_link_libraries(
  	asteroid-camera
  	PUBLIC
  		Asteroid::AsteroidApp6
@@ -31,6 +36,10 @@ index 7d4bdd9..3d5ad7b 100644
  )
  
  install(
+ 	TARGETS asteroid-camera
+-	DESTINATION ${CMAKE_INSTALL_LIBDIR}
++	DESTINATION ${ASTEROID_APP_INSTALL_PATH}
+ )
 diff --git a/src/main.cpp b/src/main.cpp
 index 6683ae7..2ccf2e8 100644
 --- a/src/main.cpp
@@ -65,10 +74,10 @@ index 6683ae7..2ccf2e8 100644
      return AsteroidApp::main(argc, argv);
  }
 diff --git a/src/main.qml b/src/main.qml
-index 41a2961..a17bffb 100644
+index 41a2961..235abf6 100644
 --- a/src/main.qml
 +++ b/src/main.qml
-@@ -1,38 +1,444 @@
+@@ -1,38 +1,457 @@
  /*
   * Copyright (C) 2019 Florent Revest <revestflo@gmail.com>
 + * Copyright (C) 2026 AsteroidOS
@@ -118,12 +127,24 @@ index 41a2961..a17bffb 100644
 +            if (connected) {
 +                app.statusText = "Live"
 +                app.statusColor = "#4cd964"
++            } else if (bleConnected) {
++                app.statusText = "Shutter Ready (BLE)"
++                app.statusColor = "#007aff"
 +            } else {
 +                app.statusText = "Waiting for Camera"
 +                app.statusColor = "#ff9500"
 +            }
 +        }
 +
++        onBleConnectedChanged: {
++            if (!connected && bleConnected) {
++                app.statusText = "Shutter Ready (BLE)"
++                app.statusColor = "#007aff"
++            }
++        }
+ 
+-    CaptureSession {
+-        videoOutput: output
 +        onCommandReceived: (action, payload) => {
 +            if (action === "photo_captured") {
 +                captureFlash.trigger()
@@ -159,9 +180,7 @@ index 41a2961..a17bffb 100644
 +        color: "white"
 +        opacity: 0.0
 +        z: 90
- 
--    CaptureSession {
--        videoOutput: output
++
 +        function trigger() {
 +            flashAnim.restart()
 +        }
@@ -519,6 +538,9 @@ index 41a2961..a17bffb 100644
 +            if (streamView.connected) {
 +                app.statusText = "Live"
 +                app.statusColor = "#4cd964"
++            } else if (streamView.bleConnected) {
++                app.statusText = "Shutter Ready (BLE)"
++                app.statusColor = "#007aff"
 +            }
 +        }
 +    }

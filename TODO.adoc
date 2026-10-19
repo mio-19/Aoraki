@@ -53,6 +53,11 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 ** Build a custom lightweight Mobile NixOS recovery image (`recovery.img`) tailored for smartwatches that can boot via `fastboot boot recovery.img`.
 ** Enable ADB daemon, USB gadget mass storage / raw partition block access, and support for `bin/resilient-flash` directly without relying on third-party TWRP builds.
 ** Provide on-watch recovery UI for partition wiping, backup, and resilient flashing progress on circular displays.
+* [ ] *Resilient Flash Redesign v2 (Rust Memory Agent)*:
+** Push a custom lightweight, statically compiled Rust binary (e.g. `flash-agent`) directly into TWRP / recovery memory (`/tmp` or `/sbin`).
+** Communicate directly with that binary over a dedicated stream/socket (via `adb forward` TCP port or structured protocol) instead of spawning repeated interactive `adb shell dd` pipe sessions.
+** Improve reliability, block verification, checksum validation, and resume-on-disconnect, working seamlessly across both Linux and macOS host systems.
+** Compile with Rust cross-compilation targeting static musl (`armv7-unknown-linux-musleabihf` / `armv7-linux-androideabi`) to ensure zero dynamic library dependencies in recovery environments.
 
 == Continuous Integration & Binary Cache
 
