@@ -55,7 +55,31 @@ in
 
       populateCommands =
         let
-          closureInfo = pkgs.buildPackages.closureInfo { rootPaths = config.system.build.toplevel; };
+          rawClosureInfo = pkgs.buildPackages.closureInfo { rootPaths = config.system.build.toplevel; };
+          isCross = config.nixpkgs.buildPlatform.system != config.nixpkgs.hostPlatform.system;
+          targetElfMachine =
+            if config.nixpkgs.hostPlatform.isAarch32 then
+              40
+            else if config.nixpkgs.hostPlatform.isAarch64 then
+              183
+            else if config.nixpkgs.hostPlatform.isx86_64 then
+              62
+            else if config.nixpkgs.hostPlatform.isx86_32 then
+              3
+            else
+              0;
+          closureInfo =
+            if isCross && targetElfMachine != 0 then
+              pkgs.buildPackages.runCommand "clean-closure-info"
+                {
+                  nativeBuildInputs = [ pkgs.buildPackages.python3 ];
+                  raw = rawClosureInfo;
+                }
+                ''
+                  python3 ${./clean-closure.py} "$raw" "${toString targetElfMachine}" "$out"
+                ''
+            else
+              rawClosureInfo;
         in
         ''
           mkdir -p ./nix/store
