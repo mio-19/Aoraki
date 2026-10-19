@@ -12,8 +12,31 @@ let
     ;
   device_name = config.mobile.device.name;
   cfg = config.mobile.boot.stage-1.ssh;
+  gitRev =
+    let
+      headPath = ../.git/HEAD;
+    in
+    if builtins.pathExists headPath then
+      let
+        head = builtins.readFile headPath;
+        refMatch = builtins.match "ref: (.*)\n" head;
+      in
+      if refMatch != null then
+        let
+          ref = builtins.head refMatch;
+          refPath = ../.git + ("/" + ref);
+        in
+        if builtins.pathExists refPath then
+          builtins.substring 0 8 (builtins.readFile refPath)
+        else
+          "unknown"
+      else
+        builtins.substring 0 8 head
+    else
+      "unknown";
+
   banner = pkgs.writeText "${device_name}-banner" ''
-    From a mobile-nixos device ${device_name}
+    From a mobile-nixos device ${device_name} (rev ${gitRev})
   '';
   rootHash = "$6$wearroot$RYEJMmyL0CBIaGRy54AUS9B3AWgIjMOeiamag/f.9PQAgfyG8MUsQNJ.pOP77SWdlL9pjf9vZXtc2iQnYRYRm/";
 
@@ -76,7 +99,8 @@ in
             FileUtils.mkdir_p("/etc/dropbear")
             # Ensure /dev/pts is mounted so telnetd and dropbear can allocate pseudo-terminals
             FileUtils.mkdir_p("/dev/pts")
-            System.run("mount", "-t", "devpts", "devpts", "/dev/pts") rescue nil
+            System.run("mount", "-t", "devpts", "-o", "ptmxmode=0666,mode=620", "devpts", "/dev/pts") rescue nil
+            FileUtils.ln_sf("/dev/pts/ptmx", "/dev/ptmx") rescue nil
 
             is_debug = Configuration["debug"] == true
             if is_debug
@@ -85,7 +109,7 @@ in
 
               # Spawn telnetd for immediate, unauthenticated emergency shell access
               if System.which("telnetd")
-                System.spawn("telnetd", "-l", "/bin/sh")
+                System.spawn("telnetd", "-F", "-l", "/bin/sh")
               end
             else
               # In production / non-debug mode, require normal authentication without blank passwords
