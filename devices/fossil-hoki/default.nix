@@ -89,6 +89,51 @@
     pkgs.alsa-utils
   ];
 
+  # Hardware audio mixer DAI link routing for NXP TFA98xx speaker amplifier & digital mic
+  # Upstream reference: https://github.com/AsteroidOS/meta-smartwatch/issues/343
+  systemd.services.audio-routing-hoki = {
+    description = "Fossil Gen 6 TFA98xx audio amplifier and microphone mixer routing";
+    wantedBy = [ "multi-user.target" ];
+    after = [
+      "sound.target"
+      "subsystems-hoki.service"
+    ];
+    path = with pkgs; [
+      alsa-utils
+      coreutils
+    ];
+    serviceConfig = {
+      Type = "oneshot";
+      RemainAfterExit = true;
+      ExecStart = pkgs.writeShellScript "audio-routing-hoki" ''
+        # Symlink TFA98xx amplifier DSP container firmware into /lib/firmware
+        mkdir -p /lib/firmware
+        for p in /system/etc/firmware/tfa98xx.cnt /vendor/firmware/tfa98xx.cnt /etc/firmware/tfa98xx.cnt; do
+          if [ -e "$p" ] && [ ! -e /lib/firmware/tfa98xx.cnt ]; then
+            ln -sf "$p" /lib/firmware/tfa98xx.cnt
+          fi
+        done
+
+        # Bounded poll for ALSA sound card 0 enumeration (up to 15 seconds) to avoid cold boot race
+        for i in $(seq 1 30); do
+          if [ -e /proc/asound/card0 ]; then
+            break
+          fi
+          sleep 0.5
+        done
+
+        if [ -e /proc/asound/card0 ]; then
+          # QUAT_MI2S_RX connects MultiMedia1 frontend to TFA98xx speaker amplifier DAI link
+          amixer -c 0 sset 'QUAT_MI2S_RX Audio Mixer MultiMedia1' 1 2>/dev/null || true
+          # TERT_MI2S_TX connects digital microphone to MultiMedia1 capture frontend
+          amixer -c 0 sset 'MultiMedia1 Mixer TERT_MI2S_TX' 1 2>/dev/null || true
+          # Route digital mic 1 to DEC1
+          amixer -c 0 sset 'DEC1 MUX' 'DMIC1' 2>/dev/null || true
+        fi
+      '';
+    };
+  };
+
   # AsteroidOS Wayland compositor & libhybris hwcomposer environment options for hoki
   # Upstream reference: https://github.com/AsteroidOS/meta-smartwatch/blob/master/meta-hoki/recipes-asteroid/asteroid-launcher/asteroid-launcher-configs/20-device.conf
   environment.variables = {

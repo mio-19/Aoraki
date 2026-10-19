@@ -49,27 +49,6 @@ in
     done
   '';
 
-  # Post-boot power optimization: re-enable low-power sleep modes once boot completes.
-  # Upstream reference: https://github.com/AsteroidOS/meta-smartwatch/blob/master/meta-hoki/recipes-core/underclock/underclock/underclock
-  systemd.services.watch-post-boot-power = {
-    description = "Smartwatch Post-Boot Low-Power Mode Configuration";
-    wantedBy = [ "multi-user.target" ];
-    after = [ "basic.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStartPre = "${pkgs.coreutils}/bin/sleep 20";
-      ExecStart = pkgs.writeShellScript "watch-post-boot-power" ''
-        # Re-enable low power sleep mode on Qualcomm SoC if available
-        if [ -e /sys/module/lpm_levels/parameters/sleep_disabled ]; then
-          echo 0 > /sys/module/lpm_levels/parameters/sleep_disabled || true
-        fi
-        if [ -e /sys/module/lpm_levels/system/system-pc/idle_enabled ]; then
-          echo 0 > /sys/module/lpm_levels/system/system-pc/idle_enabled || true
-        fi
-      '';
-    };
-  };
-
   # Downstream Android/AsteroidOS vendor kernels use specialized defconfigs (disabling desktop VT, etc.)
   # Reference: https://github.com/AsteroidOS/meta-smartwatch/tree/master/meta-hoki/recipes-kernel/linux
   mobile.boot.stage-1.kernel.useStrictKernelConfig = lib.mkForce false;

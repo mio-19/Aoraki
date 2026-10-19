@@ -37,8 +37,8 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 *** Direct watchface configuration and asset transfer from companion app over Bluetooth.
 * [ ] *WLAN & Network Management*:
 ** Automate Qualcomm WCNSS WLAN firmware loading and configuration on device boot.
-* [ ] *Audio Routing & Microphones*:
-** Configure Pulseaudio / PipeWire integration with Qualcomm Android Audio HAL (`audio.primary.sdm429w.so`) for speaker and microphone support.
+* [x] *Audio Routing & Microphones*:
+** Configured hardware audio mixer DAI link routing (`QUAT_MI2S_RX` -> `MultiMedia1` for NXP TFA98xx amplifier, `TERT_MI2S_TX` & `DEC1 MUX` -> `DMIC1` for digital mic) and TFA98xx DSP container firmware symlinking via `audio-routing-hoki` systemd service (addressing AsteroidOS Issue #343 and PR #357).
 * [ ] *Sensor Hub & Health Monitoring*:
 ** Interrogate sensorhub / IIO devices for accelerometer, gyroscope, step counter, and photoplethysmogram (PPG) heart rate monitor.
 
@@ -68,6 +68,5 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 ** Configured `asteroid-launcher` (Lipstick QtWayland compositor) to render on Qualcomm Mobile Display Subsystem (`/dev/fb0`) via `linuxfb:fb=/dev/fb0` with `QT_ENABLE_HIGHDPI_SCALING=0`.
 ** Enabled `mobile.quirks.fb-refresher` (`msm-fb-refresher --loop`) and `qualcomm.fb-notify` for continuous command-mode DSI panel redraws.
 ** Initialized display unblanking (`echo 0 > /sys/class/graphics/fb0/blank`) and backlight brightness (50%) in `boot.postBootCommands`.
-** Isolated the framebuffer from VT text console by disabling `getty@tty1` and configured `services.logind.settings.Login.HandlePowerKey = "ignore"`.
-** Added `watch-post-boot-power` service to restore low-power sleep modes (`sleep_disabled = 0`) post-boot.
+** Configured `underclock-hoki` service to restore low-power sleep modes (`sleep_disabled = 0`, `idle_enabled = 0`), switch CPU governor to `ondemand`, and park secondary cores post-boot.
 
