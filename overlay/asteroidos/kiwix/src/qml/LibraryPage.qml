@@ -82,6 +82,21 @@ Item {
             model: zimManager.archives
             boundsBehavior: Flickable.DragOverBounds
 
+            WheelHandler {
+                target: archivesList
+                orientation: Qt.Vertical
+                acceptedDevices: PointerDevice.AllDevices
+                onWheel: function(event) {
+                    var delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                    if (delta > 0) {
+                        archivesList.contentY = Math.max(archivesList.contentY - Dims.h(8), 0)
+                    } else if (delta < 0) {
+                        var maxY = Math.max(0, archivesList.contentHeight - archivesList.height)
+                        archivesList.contentY = Math.min(archivesList.contentY + Dims.h(8), maxY)
+                    }
+                }
+            }
+
             header: Item {
                 width: archivesList.width
                 height: DeviceSpecs.hasRoundScreen ? Dims.h(4) : Dims.h(1)

@@ -52,10 +52,29 @@ Item {
         ListView {
             id: resultsList
             width: parent.width
-            height: parent.height - searchHeader.height
+            height: parent.height - searchHeader.height - ((typeof inputPanel !== "undefined" && inputPanel.active) ? inputPanel.height : 0)
             clip: true
             model: zimManager.searchResults
             boundsBehavior: Flickable.DragOverBounds
+
+            Behavior on height {
+                NumberAnimation { duration: 180; easing.type: Easing.OutQuad }
+            }
+
+            WheelHandler {
+                target: resultsList
+                orientation: Qt.Vertical
+                acceptedDevices: PointerDevice.AllDevices
+                onWheel: function(event) {
+                    var delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                    if (delta > 0) {
+                        resultsList.contentY = Math.max(resultsList.contentY - Dims.h(8), 0)
+                    } else if (delta < 0) {
+                        var maxY = Math.max(0, resultsList.contentHeight - resultsList.height)
+                        resultsList.contentY = Math.min(resultsList.contentY + Dims.h(8), maxY)
+                    }
+                }
+            }
 
             header: Item {
                 width: resultsList.width

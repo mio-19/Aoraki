@@ -90,6 +90,21 @@ Item {
             contentHeight: articleText.implicitHeight + (DeviceSpecs.hasRoundScreen ? Dims.h(16) : Dims.h(8))
             boundsBehavior: Flickable.DragOverBounds
 
+            WheelHandler {
+                target: flickable
+                orientation: Qt.Vertical
+                acceptedDevices: PointerDevice.AllDevices
+                onWheel: function(event) {
+                    var delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                    if (delta > 0) {
+                        flickable.contentY = Math.max(flickable.contentY - Dims.h(10), 0)
+                    } else if (delta < 0) {
+                        var maxY = Math.max(0, flickable.contentHeight - flickable.height)
+                        flickable.contentY = Math.min(flickable.contentY + Dims.h(10), maxY)
+                    }
+                }
+            }
+
             Text {
                 id: articleText
                 width: flickable.width - (DeviceSpecs.hasRoundScreen ? Dims.w(14) : Dims.w(6))

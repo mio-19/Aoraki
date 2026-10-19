@@ -7,7 +7,15 @@ Item {
     anchors.fill: parent
 
     Column {
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: (typeof inputPanel !== "undefined" && inputPanel.active) ? inputPanel.height : 0
+
+        Behavior on anchors.bottomMargin {
+            NumberAnimation { duration: 180; easing.type: Easing.OutQuad }
+        }
 
         // Top Navigation Bar with safe margins for circular smartwatch displays
         Item {
@@ -89,6 +97,21 @@ Item {
             contentHeight: contentText.paintedHeight + Dims.h(10)
             clip: true
             boundsBehavior: Flickable.DragOverBounds
+
+            WheelHandler {
+                target: scrollArea
+                orientation: Qt.Vertical
+                acceptedDevices: PointerDevice.AllDevices
+                onWheel: function(event) {
+                    var delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                    if (delta > 0) {
+                        scrollArea.contentY = Math.max(scrollArea.contentY - Dims.h(10), 0)
+                    } else if (delta < 0) {
+                        var maxY = Math.max(0, scrollArea.contentHeight - scrollArea.height)
+                        scrollArea.contentY = Math.min(scrollArea.contentY + Dims.h(10), maxY)
+                    }
+                }
+            }
 
             Text {
                 id: contentText

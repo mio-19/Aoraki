@@ -164,10 +164,29 @@ Item {
             id: chatsList
             visible: chatModel.count > 0
             width: parent.width
-            height: parent.height - header.height - searchBar.height
+            height: parent.height - header.height - searchBar.height - ((typeof inputPanel !== "undefined" && inputPanel.active) ? inputPanel.height : 0)
             clip: true
             model: chatModel
             boundsBehavior: Flickable.DragOverBounds
+
+            Behavior on height {
+                NumberAnimation { duration: 180; easing.type: Easing.OutQuad }
+            }
+
+            WheelHandler {
+                target: chatsList
+                orientation: Qt.Vertical
+                acceptedDevices: PointerDevice.AllDevices
+                onWheel: function(event) {
+                    var delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                    if (delta > 0) {
+                        chatsList.contentY = Math.max(chatsList.contentY - Dims.h(8), 0)
+                    } else if (delta < 0) {
+                        var maxY = Math.max(0, chatsList.contentHeight - chatsList.height)
+                        chatsList.contentY = Math.min(chatsList.contentY + Dims.h(8), maxY)
+                    }
+                }
+            }
 
             header: Item {
                 width: chatsList.width

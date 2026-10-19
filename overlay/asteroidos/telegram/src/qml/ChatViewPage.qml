@@ -7,7 +7,15 @@ Item {
     anchors.fill: parent
 
     Column {
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: (typeof inputPanel !== "undefined" && inputPanel.active) ? inputPanel.height : 0
+
+        Behavior on anchors.bottomMargin {
+            NumberAnimation { duration: 180; easing.type: Easing.OutQuad }
+        }
 
         // Page Header with back button
         Item {
@@ -49,6 +57,21 @@ Item {
             model: messageModel
             boundsBehavior: Flickable.DragOverBounds
             spacing: Dims.h(1.2)
+
+            WheelHandler {
+                target: messageList
+                orientation: Qt.Vertical
+                acceptedDevices: PointerDevice.AllDevices
+                onWheel: function(event) {
+                    var delta = event.angleDelta.y !== 0 ? event.angleDelta.y : event.angleDelta.x
+                    if (delta > 0) {
+                        messageList.contentY = Math.max(messageList.contentY - Dims.h(8), 0)
+                    } else if (delta < 0) {
+                        var maxY = Math.max(0, messageList.contentHeight - messageList.height)
+                        messageList.contentY = Math.min(messageList.contentY + Dims.h(8), maxY)
+                    }
+                }
+            }
 
             onCountChanged: {
                 Qt.callLater(function() {
