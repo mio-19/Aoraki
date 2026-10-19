@@ -9,6 +9,7 @@
 
 let
   inherit (lib)
+    concatStringsSep
     mkIf
     mkOption
     optionalString
@@ -17,6 +18,8 @@ let
   inherit (config.mobile._internal) compressLargeArtifacts;
   inherit (pkgs) buildPackages;
   rootfsLabel = config.mobile.generatedFilesystems.rootfs.label;
+  cfgStrip = config.mobile.rootfs.strip;
+  targetStrip = "${pkgs.buildPackages.binutils-unwrapped}/bin/${pkgs.stdenv.targetPlatform.config}-strip";
 in
 {
   options = {
@@ -38,6 +41,60 @@ in
 
             The only reason you would disable this is to build a target system that has no Nix binaries.
           '';
+        };
+        strip = {
+          enable = mkOption {
+            type = types.bool;
+            default = false;
+            description = ''
+              Whether to strip unnecessary static symbols, debug info, static archives (.a),
+              headers (/include), and documentation from the generated rootfs image.
+            '';
+          };
+          stripUnneeded = mkOption {
+            type = types.bool;
+            default = true;
+            description = ''
+              Run target strip with --strip-unneeded on all ELF binaries and shared
+              libraries in the rootfs.
+            '';
+          };
+          removeStaticArchives = mkOption {
+            type = types.bool;
+            default = true;
+            description = ''
+              Remove static library archives (.a) from the rootfs.
+            '';
+          };
+          removeHeaders = mkOption {
+            type = types.bool;
+            default = true;
+            description = ''
+              Remove C/C++ development headers (/include) from the rootfs.
+            '';
+          };
+          removeDocs = mkOption {
+            type = types.bool;
+            default = true;
+            description = ''
+              Remove manual pages and documentation (/share/man, /share/doc, /share/info)
+              from the rootfs.
+            '';
+          };
+          keepLocales = mkOption {
+            type = types.listOf types.str;
+            default = [
+              "en"
+              "en_US"
+              "en_GB"
+              "C"
+              "POSIX"
+            ];
+            description = ''
+              Locale language prefixes to preserve in /share/locale; all other language .mo
+              files will be pruned to save flash storage. Set to [] to keep all locales.
+            '';
+          };
         };
       };
     };
@@ -78,6 +135,47 @@ in
           fi
 
           echo "Done copying system closure..."
+
+          ${optionalString cfgStrip.enable ''
+            echo ":: Stripping and shrinking rootfs image..."
+            chmod -R u+w ./nix/store
+
+            ${optionalString cfgStrip.removeStaticArchives ''
+              echo "   - Removing static archives (.a)..."
+              find ./nix/store -type f -name "*.a" -delete
+            ''}
+
+            ${optionalString cfgStrip.removeHeaders ''
+              echo "   - Removing C/C++ development headers (/include)..."
+              find ./nix/store -type d -name "include" -prune -exec rm -rf {} + 2>/dev/null || true
+            ''}
+
+            ${optionalString cfgStrip.removeDocs ''
+              echo "   - Removing manual pages and documentation..."
+              find ./nix/store \( -path "*/share/man" -o -path "*/share/doc" -o -path "*/share/info" -o -path "*/share/gtk-doc" \) -prune -exec rm -rf {} + 2>/dev/null || true
+            ''}
+
+            ${optionalString (cfgStrip.keepLocales != [ ]) ''
+              echo "   - Pruning non-essential desktop locales (keeping watch translations)..."
+              find ./nix/store -type d -path "*/share/locale/*" -prune | while read -r locdir; do
+                locname="$(basename "$locdir")"
+                keep=0
+                for k in ${concatStringsSep " " cfgStrip.keepLocales}; do
+                  if [[ "$locname" == "$k"* ]]; then keep=1; break; fi
+                done
+                if (( keep == 0 )); then
+                  rm -rf "$locdir"
+                fi
+              done
+            ''}
+
+            ${optionalString cfgStrip.stripUnneeded ''
+              echo "   - Stripping ELF binaries and shared libraries..."
+              find ./nix/store \( -path "*/bin/*" -o -path "*/sbin/*" -o -path "*/lib/*" -o -path "*/libexec/*" \) -type f ! -name "*.ko" -print0 | xargs -0 -P "$(nproc 2>/dev/null || echo 4)" -n 64 ${targetStrip} --strip-unneeded 2>/dev/null || true
+              find ./nix/store -name "*.ko" -print0 | xargs -0 -P "$(nproc 2>/dev/null || echo 4)" -n 64 ${targetStrip} --strip-debug 2>/dev/null || true
+            ''}
+          ''}
+
           cp -v ${closureInfo}/registration ./nix-path-registration
         '';
 

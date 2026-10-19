@@ -79,6 +79,9 @@ in
   boot.plymouth.enable = lib.mkForce false;
   environment.defaultPackages = mkDefault [ ];
 
+  # Enable aggressive rootfs stripping to fit constrained smartwatch storage
+  mobile.rootfs.strip.enable = mkDefault true;
+
   # Flashing method defaults to fastboot, destination to userdata partition
   mobile.system.android.flashingMethod = mkDefault "fastboot";
   mobile.system.android.system_partition_destination = mkDefault "userdata";
