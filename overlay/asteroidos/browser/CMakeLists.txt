@@ -6,12 +6,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick WebEngineQuick)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network)
 
 include(GNUInstallDirs)
 
 set(SOURCES
     src/main.cpp
+    src/webclient.cpp
+    src/webclient.h
     src/resources.qrc
 )
 
@@ -22,7 +24,7 @@ target_link_libraries(asteroid-browser PRIVATE
     Qt6::Gui
     Qt6::Qml
     Qt6::Quick
-    Qt6::WebEngineQuick
+    Qt6::Network
 )
 
 install(TARGETS asteroid-browser

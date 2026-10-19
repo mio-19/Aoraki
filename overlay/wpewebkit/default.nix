@@ -102,7 +102,6 @@ stdenv.mkDerivation (finalAttrs: {
     fontconfig
     freetype
     glib
-    gst_all_1.gst-plugins-bad
     gst_all_1.gst-plugins-base
     gst_all_1.gstreamer
     icu
@@ -146,6 +145,10 @@ stdenv.mkDerivation (finalAttrs: {
     (lib.cmakeBool "ENABLE_INTROSPECTION" false)
     (lib.cmakeBool "ENABLE_MINIBROWSER" true)
     (lib.cmakeBool "ENABLE_SPEECH_SYNTHESIS" false)
+    (lib.cmakeBool "ENABLE_VIDEO" false)
+    (lib.cmakeBool "ENABLE_WEB_AUDIO" false)
+    (lib.cmakeBool "ENABLE_MEDIA_STREAM" false)
+    (lib.cmakeBool "ENABLE_WEB_RTC" false)
     (lib.cmakeBool "ENABLE_WPE_PLATFORM" true)
     (lib.cmakeBool "USE_LIBBACKTRACE" false)
   ];

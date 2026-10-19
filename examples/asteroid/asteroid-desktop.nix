@@ -62,10 +62,8 @@ in
         asteroid.apps.gps-test
         asteroid.apps.telegram
         asteroid.apps.kiwix
-        asteroid.apps.twenty48
-      ]
-      ++ lib.optionals cfg.browser.enable [
         asteroid.apps.browser
+        asteroid.apps.twenty48
       ]
       ++ (with pkgs; [
         asteroid.community-apps.unofficial-watchfaces

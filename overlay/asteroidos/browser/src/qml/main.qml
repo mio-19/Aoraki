@@ -2,7 +2,6 @@ import QtQuick
 import QtQuick.VirtualKeyboard
 import org.asteroid.controls
 import org.asteroid.utils
-import QtWebEngine
 
 Application {
     id: app
@@ -20,7 +19,7 @@ Application {
     }
 
     function openUrl(url) {
-        initialUrl = url
+        webClient.load(url)
         layerStack.push(browserPageComponent)
     }
 

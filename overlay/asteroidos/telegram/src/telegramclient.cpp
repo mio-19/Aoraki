@@ -379,7 +379,7 @@ void TelegramClient::setupDemoData()
     m_chatHistories.clear();
 
     m_chatModel->addChat("asteroid_dev", "AsteroidOS Developers", "New smartwatch release build ready", "11:42", 2, "#00A3E0");
-    m_chatModel->addChat("wearix_chat", "Wearix Watch Community", "Virtual keyboard RIME works nicely!", "10:15", 1, "#7CA600");
+    m_chatModel->addChat("smartwatch_chat", "Smartwatch Community", "Virtual keyboard RIME works nicely!", "10:15", 1, "#7CA600");
     m_chatModel->addChat("saved_messages", "Saved Messages", "Meeting notes: buy watch bands", "Yesterday", 0, "#FF8C00");
     m_chatModel->addChat("alice_w", "Alice", "See you at 3pm for coffee?", "Yesterday", 0, "#9B59B6");
 
@@ -391,7 +391,7 @@ void TelegramClient::setupDemoData()
         {"5", "Sylvie", "New smartwatch release build ready", "11:42", false, true, "text", ""}
     };
 
-    m_chatHistories["wearix_chat"] = {
+    m_chatHistories["smartwatch_chat"] = {
         {"1", "Dev", "Added Pinyin, Double Pinyin, and Wubi to virtual keyboard.", "10:10", false, true, "text", ""},
         {"2", "Asteroid User", "Tested luna_pinyin on 400x400 round display.", "10:12", true, true, "text", ""},
         {"3", "Timo", "Virtual keyboard RIME works nicely!", "10:15", false, true, "text", ""}

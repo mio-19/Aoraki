@@ -1,5 +1,6 @@
-# AsteroidOS smartwatch browser powered by QtWebEngine
-# Architecture inspired by AsteroidOS application suite: https://asteroidos.org/
+# AsteroidOS native smartwatch web browser
+# Lightweight, wearable-optimized web browser with virtual keyboard integration
+# Upstream architecture: https://asteroidos.org/
 {
   lib,
   stdenv,
@@ -38,7 +39,6 @@ stdenv.mkDerivation (finalAttrs: {
   buildInputs = [
     qt6.qtbase
     qt6.qtdeclarative
-    qt6.qtwebengine
     qml-asteroid
   ];
 
@@ -47,10 +47,6 @@ stdenv.mkDerivation (finalAttrs: {
     "QML2_IMPORT_PATH"
     ":"
     "${qml-asteroid}/lib/qt-6/qml"
-    "--prefix"
-    "QML2_IMPORT_PATH"
-    ":"
-    "${qt6.qtwebengine}/lib/qt-6/qml"
     "--set-default"
     "QT_IM_MODULE"
     "qtvirtualkeyboard"
@@ -85,7 +81,7 @@ stdenv.mkDerivation (finalAttrs: {
   ];
 
   meta = with lib; {
-    description = "Smartwatch web browser interface for AsteroidOS powered by QtWebEngine with virtual keyboard integration";
+    description = "Lightweight smartwatch web browser for AsteroidOS with virtual keyboard integration";
     homepage = "https://asteroidos.org/";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;

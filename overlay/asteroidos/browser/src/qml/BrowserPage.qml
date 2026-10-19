@@ -1,13 +1,10 @@
 import QtQuick
 import org.asteroid.controls
 import org.asteroid.utils
-import QtWebEngine
 
 Item {
     id: browserPage
     anchors.fill: parent
-
-    property string currentTargetUrl: (initialUrl && initialUrl.length > 0) ? initialUrl : "file://" + browserShareDir + "/portal.html"
 
     Column {
         anchors.fill: parent
@@ -31,8 +28,8 @@ Item {
                     anchors.verticalCenter: parent.verticalCenter
                     iconName: "ios-arrow-back"
                     onClicked: {
-                        if (webView.canGoBack) {
-                            webView.goBack()
+                        if (webClient.canGoBack) {
+                            webClient.goBack()
                         } else {
                             layerStack.pop()
                         }
@@ -45,20 +42,14 @@ Item {
                     height: Dims.h(10)
                     anchors.verticalCenter: parent.verticalCenter
                     placeholderText: "Search or URL..."
-                    text: webView.url.toString()
+                    text: webClient.url.toString()
                     font.pixelSize: Dims.l(3.2)
                     inputMethodHints: Qt.ImhUrlCharactersOnly | Qt.ImhNoAutoUppercase
 
                     onAccepted: {
                         var input = text.trim()
                         if (input.length === 0) return
-                        if (input.indexOf("://") !== -1 || input.indexOf("about:") === 0) {
-                            webView.url = input
-                        } else if (input.indexOf(".") !== -1 && input.indexOf(" ") === -1) {
-                            webView.url = "https://" + input
-                        } else {
-                            webView.url = "https://html.duckduckgo.com/html/?q=" + encodeURIComponent(input)
-                        }
+                        webClient.load(input)
                         focus = false
                     }
                 }
@@ -68,12 +59,12 @@ Item {
                     width: Dims.w(9)
                     height: width
                     anchors.verticalCenter: parent.verticalCenter
-                    iconName: webView.loading ? "ios-close" : "ios-refresh"
+                    iconName: webClient.loading ? "ios-close" : "ios-refresh"
                     onClicked: {
-                        if (webView.loading) {
-                            webView.stop()
+                        if (webClient.loading) {
+                            webClient.stop()
                         } else {
-                            webView.reload()
+                            webClient.reload()
                         }
                     }
                 }
@@ -83,26 +74,36 @@ Item {
         // Progress indicator
         Rectangle {
             id: progressBar
-            width: parent.width * (webView.loadProgress / 100.0)
+            width: parent.width * (webClient.loadProgress / 100.0)
             height: Dims.h(0.8)
             color: "#00E5FF"
-            visible: webView.loading
+            visible: webClient.loading
         }
 
-        // WebEngine View with JavaScript and modern web capabilities
-        WebEngineView {
-            id: webView
+        // Native Flickable web content view
+        Flickable {
+            id: scrollArea
             width: parent.width
             height: parent.height - headerArea.height - (progressBar.visible ? progressBar.height : 0)
-            url: browserPage.currentTargetUrl
+            contentWidth: width
+            contentHeight: contentText.paintedHeight + Dims.h(10)
+            clip: true
+            boundsBehavior: Flickable.DragOverBounds
 
-            settings.javascriptEnabled: true
-            settings.autoLoadImages: true
-            settings.localContentCanAccessRemoteUrls: true
-            settings.localContentCanAccessFileUrls: true
-            settings.scrollAnimatorEnabled: true
+            Text {
+                id: contentText
+                width: scrollArea.width - (DeviceSpecs.hasRoundScreen ? Dims.w(14) : Dims.w(6))
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: webClient.html
+                textFormat: Text.RichText
+                wrapMode: Text.Wrap
+                color: "#FFFFFF"
+                font.pixelSize: Dims.l(3.4)
 
-            zoomFactor: 0.85
+                onLinkActivated: function(link) {
+                    webClient.load(link)
+                }
+            }
         }
     }
 }
