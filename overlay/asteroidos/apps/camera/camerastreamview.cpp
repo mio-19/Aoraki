@@ -261,6 +261,28 @@ void CameraStreamView::loadFrameBytes(const QByteArray &bytes)
 
 void CameraStreamView::sendCommand(const QString &action, const QString &payload)
 {
+    // If the live HTTP MJPEG stream is connected, dispatch directly to camera server over network
+    if (m_connected && m_socket && m_socket->state() == QAbstractSocket::ConnectedState) {
+        QUrl url(m_streamUrl.isEmpty() ? "http://192.168.44.1:8089/stream.mjpg" : m_streamUrl);
+        QTcpSocket *cmdSocket = new QTcpSocket(this);
+        connect(cmdSocket, &QTcpSocket::connected, [cmdSocket, url, action]() {
+            QByteArray req;
+            req.append("GET /control?action=" + action.toUtf8() + " HTTP/1.1\r\n");
+            req.append("Host: " + url.host().toUtf8() + "\r\n");
+            req.append("Connection: close\r\n\r\n");
+            cmdSocket->write(req);
+        });
+        connect(cmdSocket, &QTcpSocket::readyRead, [cmdSocket]() {
+            cmdSocket->close();
+            cmdSocket->deleteLater();
+        });
+        connect(cmdSocket, &QAbstractSocket::errorOccurred, [cmdSocket](QAbstractSocket::SocketError) {
+            cmdSocket->deleteLater();
+        });
+        cmdSocket->connectToHost(url.host(), url.port(8089));
+        qDebug() << "CameraStreamView: Dispatched direct network control:" << action;
+    }
+
     QDBusInterface appBridge(
         "org.asteroidos.btsyncd",
         "/org/asteroidos/btsyncd/appbridge",

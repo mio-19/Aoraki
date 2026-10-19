@@ -229,8 +229,22 @@ The environment includes a rich catalog of touch-optimized smartwatch applicatio
 * *`asteroid-beatfork`*: High-precision metronome and chromatic tuning fork with Tack-inspired tap tempo calculation, accented subdivisions (1/4, 2/4, 3/4, 4/4, 6/8), concentric visual pulse ring, and distinct smartwatch haptics.
 * *`asteroid-map`*: Touch GPS map viewer featuring offline tile cache persistence, compass heading orientation, and circular edge controls.
 * *`asteroid-music`*: Media playback remote controller for phone media players via Bluetooth MPRIS, enhanced with standalone YouTube Music streaming directly on the watch.
+* *`asteroid-camera`*: Smartwatch camera viewfinder and remote shutter companion app supporting low-latency live preview video streaming (MJPEG over local network / Wi-Fi / Bluetooth reverse-tethering), rotating crown zoom controls, shutter capture, and peer-to-peer control sync.
 * *`asteroid-2048`*: Classic sliding-tile puzzle game packaged directly from upstream with Qt 6 touch acceleration.
 * *Core Utilities*: Stopwatch, Countdown Timer, Alarm Clock, Calculator, Weather, Compass, Flashlight, and Heart Rate Monitor.
+
+== Phone Companion Ecosystem & Camera Remote
+
+The smartwatch environment pairs with Android devices via Bluetooth Low Energy (BLE) and local networking, integrating with open-source phone companion applications:
+
+* *GrapheneOS Camera Companion*: Live video viewfinder streaming and remote shutter controls for GrapheneOS Camera.
+  ** Source & Patches: link:https://github.com/mio-19/repo/tree/main/app/apks/grapheneos-camera[GrapheneOS Camera Patches in Companion Repo]
+  ** Features: Low-latency MJPEG preview streaming server (`PreviewStreamServer.kt`), direct HTTP control endpoints (`/control?action=capture|zoom`), and remote wake-up via AppBridge intent broadcast.
+* *Gadgetbridge*: Universal Bluetooth Low Energy companion managing notifications, alarms, music control, and generic AppBridge data transport.
+  ** Source & Patches: link:https://github.com/mio-19/repo/tree/main/app/apks/gadgetbridge[Gadgetbridge Patches in Companion Repo]
+  ** Features: Generic `AppBridge` BLE transport protocol, MTU 512 negotiation, find-my-phone alert integration.
+* *AsteroidOS Sync*: Upstream AsteroidOS Android synchronization client.
+  ** Source & Patches: link:https://github.com/mio-19/repo/tree/main/app/apks/asteroidos-sync[AsteroidOS Sync Patches in Companion Repo]
 
 == Prior Work and Acknowledgments
 
