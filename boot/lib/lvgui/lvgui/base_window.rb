@@ -27,8 +27,12 @@ module LVGUI
       @toolbar = Toolbar.new(@screen)
       @container = Page.new(@screen)
 
+      is_round = (Configuration["screen"] && Configuration["screen"]["shape"] == "round") ||
+                 (@screen.get_width() == @screen.get_height() && @screen.get_width() < 500)
+      horizontal_inset = is_round ? (@screen.get_width() * 0.1464).to_i : 0
+
       [@toolbar, @container, @status_bar].each do |el|
-        el.set_width(LVGUI.pixel_scale(720))
+        el.set_width([LVGUI.pixel_scale(720), @screen.get_width() - (horizontal_inset * 2)].min)
         el.set_x((@screen.get_width() - el.get_width()) / 2) # center
       end
 

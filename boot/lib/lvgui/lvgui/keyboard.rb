@@ -19,9 +19,16 @@ class LVGUI::Keyboard < LVGUI::Widget
     get_style(LVGL::KB_STYLE::BG).dup.tap do |style|
       set_style(LVGL::KB_STYLE::BG, style)
       padding = 4
+      scr = LVGL::LVDisplay.get_scr_act()
+      if scr && scr.get_width() < 500 && (Configuration["screen"] && Configuration["screen"]["shape"] == "round")
+        h_pad = (scr.get_width() * 0.12).to_i
+        style.body_padding_left = h_pad
+        style.body_padding_right = h_pad
+      else
+        style.body_padding_left = padding
+        style.body_padding_right = padding
+      end
       style.body_padding_top = padding
-      style.body_padding_left = padding
-      style.body_padding_right = padding
       style.body_padding_bottom = padding
       style.body_padding_inner = padding
     end

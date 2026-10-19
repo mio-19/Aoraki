@@ -33,6 +33,10 @@ class Tasks::Splash < SingletonTask
   def quit(reason, sticky: nil)
     return if @pid.nil?
 
+    if sticky.nil?
+      sticky = Configuration["splash"] && Configuration["splash"]["sticky"]
+    end
+
     count = 0
     # Ensures the progress is shown
     Progress.update({progress: 100, label: reason})

@@ -73,6 +73,14 @@ in
         Recommended for smartwatches where a full QWERTY layout is too dense for finger input.
       '';
     };
+    sticky = mkOption {
+      type = types.bool;
+      default = config.mobile.hardware.watch.enable or false;
+      description = ''
+        Whether to keep the splash screen visible on the framebuffer across switch_root into stage-2.
+        Recommended for smartwatches to prevent screen flashing black before the compositor paints.
+      '';
+    };
     logo = mkOption {
       type = with types; either package path;
       internal = true;
@@ -140,6 +148,14 @@ in
             foreground = mkDefault "0xFFFFFFFF";
             useBGRT = mkDefault true;
             pin_pad = cfg.pinPad;
+            sticky = cfg.sticky;
+          };
+          screen = {
+            shape = config.mobile.hardware.screen.shape;
+            width = config.mobile.hardware.screen.width;
+            height = config.mobile.hardware.screen.height;
+            radius = config.mobile.hardware.screen.radius;
+            chinHeight = config.mobile.hardware.screen.chinHeight;
           };
         }
       ];

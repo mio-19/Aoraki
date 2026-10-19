@@ -14,6 +14,13 @@ module Hal
       :KEY_LEFTSHIFT,
       :KEY_RIGHTSHIFT,
       :KEY_ESC,
+      # Keys used for "smartwatch" use-cases
+      :KEY_POWER,
+      :KEY_HOMEPAGE,
+      :KEY_SEARCH,
+      :KEY_MENU,
+      :KEY_BACK,
+      :BTN_TRIGGER_HAPPY,
     ]
 
     def firmware_wants_recovery?()
