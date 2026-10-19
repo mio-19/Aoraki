@@ -245,6 +245,7 @@ The smartwatch environment pairs with Android devices via Bluetooth Low Energy (
   ** Features: Generic `AppBridge` BLE transport protocol, MTU 512 negotiation, find-my-phone alert integration.
 * *AsteroidOS Sync*: Upstream AsteroidOS Android synchronization client.
   ** Source & Patches: link:https://github.com/mio-19/repo/tree/main/app/apks/asteroidos-sync[AsteroidOS Sync Patches in Companion Repo]
+  ** Features: Generic `AppBridge` BLE transport protocol, MTU 512 negotiation, find-my-phone alert integration.
 
 == Prior Work and Acknowledgments
 
