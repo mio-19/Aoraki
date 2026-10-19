@@ -44,16 +44,12 @@ TelegramClient::TelegramClient(QObject *parent)
     : QObject(parent)
     , m_chatModel(new ChatModel(this))
     , m_messageModel(new MessageModel(this))
-    , m_accountName("Asteroid User")
+    , m_accountName("Telegram User")
     , m_isLoggedIn(false)
-    , m_connectionStatus("Ready")
+    , m_connectionStatus("Connecting...")
     , m_hapticsEnabled(true)
     , m_notificationsEnabled(true)
     , m_loginState("READY")
-    , m_backendType("Demo")
-    , m_lastBotUpdateId(0)
-    , m_network(new QNetworkAccessManager(this))
-    , m_pollTimer(new QTimer(this))
     , m_settings("AsteroidOS", "asteroid-telegram")
     , m_hasTdlib(false)
     , m_tdlibClientId(0)
@@ -63,13 +59,8 @@ TelegramClient::TelegramClient(QObject *parent)
     , m_receiveFn(nullptr)
     , m_executeFn(nullptr)
 {
-    connect(m_pollTimer, &QTimer::timeout, this, &TelegramClient::onPollTimeout);
-
     initTdlib();
     loadSettings();
-    if (!m_isLoggedIn) {
-        setupDemoData();
-    }
 }
 
 TelegramClient::~TelegramClient()
@@ -113,9 +104,10 @@ void TelegramClient::initTdlib()
         getOption["@type"] = "getOption";
         getOption["name"] = "version";
         sendTdlibRequest(getOption);
-        qInfo() << "Initialized official TDLib MTProto client subsystem";
+        qInfo() << "Initialized official TDLib MTProto user client subsystem";
     } else {
-        qInfo() << "TDLib tdjson not present, running HTTP Bot API & local cache mode";
+        m_connectionStatus = "TDLib Unavailable";
+        qWarning() << "TDLib tdjson library could not be loaded";
     }
 }
 
@@ -153,8 +145,19 @@ void TelegramClient::handleTdlibResponse(const QString &jsonStr)
             name += " " + user["last_name"].toString();
         }
         m_tdlibUserNames[uid] = name;
-        if (obj["is_current_user"].toBool() || (m_isLoggedIn && m_accountName.isEmpty())) {
+        if (obj["is_current_user"].toBool() || (m_isLoggedIn && m_accountName == "Telegram User")) {
             m_accountName = name;
+            saveSettings();
+            emit accountNameChanged();
+        }
+    } else if (type == "user") {
+        QString name = obj["first_name"].toString();
+        if (obj.contains("last_name") && !obj["last_name"].toString().isEmpty()) {
+            name += " " + obj["last_name"].toString();
+        }
+        if (!name.isEmpty()) {
+            m_accountName = name;
+            saveSettings();
             emit accountNameChanged();
         }
     } else if (type == "error") {
@@ -215,12 +218,10 @@ void TelegramClient::processTdlibAuthUpdate(const QJsonObject &authState)
     } else if (stateType == "authorizationStateReady") {
         m_isLoggedIn = true;
         m_loginState = "LOGGED_IN";
-        m_backendType = "TDLib MTProto";
         m_connectionStatus = "Connected";
         saveSettings();
         emit isLoggedInChanged();
         emit loginStateChanged();
-        emit backendTypeChanged();
         emit connectionStatusChanged();
 
         // Load chats
@@ -236,7 +237,9 @@ void TelegramClient::processTdlibAuthUpdate(const QJsonObject &authState)
     } else if (stateType == "authorizationStateClosed") {
         m_isLoggedIn = false;
         m_loginState = "READY";
-        m_connectionStatus = "Offline";
+        m_connectionStatus = "Not Logged In";
+        m_chatModel->clear();
+        m_messageModel->clear();
         emit isLoggedInChanged();
         emit loginStateChanged();
         emit connectionStatusChanged();
@@ -373,50 +376,11 @@ void TelegramClient::processTdlibNewMessage(const QJsonObject &messageObj)
     }
 }
 
-void TelegramClient::setupDemoData()
-{
-    m_chatModel->clear();
-    m_chatHistories.clear();
-
-    m_chatModel->addChat("asteroid_dev", "AsteroidOS Developers", "New smartwatch release build ready", "11:42", 2, "#00A3E0");
-    m_chatModel->addChat("smartwatch_chat", "Smartwatch Community", "Virtual keyboard RIME works nicely!", "10:15", 1, "#7CA600");
-    m_chatModel->addChat("saved_messages", "Saved Messages", "Meeting notes: buy watch bands", "Yesterday", 0, "#FF8C00");
-    m_chatModel->addChat("alice_w", "Alice", "See you at 3pm for coffee?", "Yesterday", 0, "#9B59B6");
-
-    m_chatHistories["asteroid_dev"] = {
-        {"1", "Sylvie", "Has anyone tested the latest power profiles?", "11:30", false, true, "text", ""},
-        {"2", "Florent", "Yes, battery life improved by 18% in ambient mode.", "11:35", false, true, "text", ""},
-        {"3", "Asteroid User", "Awesome! Testing on Fossil Carlyle now.", "11:40", true, true, "text", ""},
-        {"4", "Sylvie", "Audio status report", "11:41", false, true, "voice", "0:24"},
-        {"5", "Sylvie", "New smartwatch release build ready", "11:42", false, true, "text", ""}
-    };
-
-    m_chatHistories["smartwatch_chat"] = {
-        {"1", "Dev", "Added Pinyin, Double Pinyin, and Wubi to virtual keyboard.", "10:10", false, true, "text", ""},
-        {"2", "Asteroid User", "Tested luna_pinyin on 400x400 round display.", "10:12", true, true, "text", ""},
-        {"3", "Timo", "Virtual keyboard RIME works nicely!", "10:15", false, true, "text", ""}
-    };
-
-    m_chatHistories["saved_messages"] = {
-        {"1", "Saved Messages", "Meeting notes: buy watch bands", "Yesterday", true, true, "text", ""}
-    };
-
-    m_chatHistories["alice_w"] = {
-        {"1", "Alice", "Hey, are you free this afternoon?", "Yesterday", false, true, "text", ""},
-        {"2", "Alice", "Photo preview of the cafe", "Yesterday", false, true, "photo", "Photo"},
-        {"3", "Alice", "See you at 3pm for coffee?", "Yesterday", false, true, "text", ""}
-    };
-
-    selectChat("asteroid_dev", "AsteroidOS Developers");
-}
-
 void TelegramClient::loadSettings()
 {
-    m_botToken = m_settings.value("botToken").toString();
-    m_accountName = m_settings.value("accountName", "Asteroid User").toString();
+    m_accountName = m_settings.value("accountName", "Telegram User").toString();
     m_hapticsEnabled = m_settings.value("hapticsEnabled", true).toBool();
     m_notificationsEnabled = m_settings.value("notificationsEnabled", true).toBool();
-    m_backendType = m_settings.value("backendType", "Demo").toString();
 
     m_quickReplies = m_settings.value("quickReplies", QStringList{
         "👍 OK",
@@ -431,30 +395,19 @@ void TelegramClient::loadSettings()
         "🙏 Thanks!"
     }).toStringList();
 
-    if (!m_botToken.isEmpty()) {
-        m_isLoggedIn = true;
-        m_backendType = "Bot API";
-        m_connectionStatus = "Connected";
-        m_pollTimer->start(4000);
-        fetchBotUpdates();
-    }
-
     emit isLoggedInChanged();
     emit connectionStatusChanged();
     emit accountNameChanged();
     emit hapticsEnabledChanged();
     emit notificationsEnabledChanged();
-    emit backendTypeChanged();
     emit quickRepliesChanged();
 }
 
 void TelegramClient::saveSettings()
 {
-    m_settings.setValue("botToken", m_botToken);
     m_settings.setValue("accountName", m_accountName);
     m_settings.setValue("hapticsEnabled", m_hapticsEnabled);
     m_settings.setValue("notificationsEnabled", m_notificationsEnabled);
-    m_settings.setValue("backendType", m_backendType);
     m_settings.setValue("quickReplies", m_quickReplies);
 }
 
@@ -561,7 +514,7 @@ void TelegramClient::sendMessage(const QString &text)
 
     appendLocalMessage(trimmed, m_accountName, true, "text");
 
-    if (m_hasTdlib && m_backendType == "TDLib MTProto") {
+    if (m_hasTdlib && m_isLoggedIn) {
         QJsonObject req;
         req["@type"] = "sendMessage";
         req["chat_id"] = m_currentChatId.toLongLong();
@@ -573,8 +526,6 @@ void TelegramClient::sendMessage(const QString &text)
         content["text"] = formattedText;
         req["input_message_content"] = content;
         sendTdlibRequest(req);
-    } else if (!m_botToken.isEmpty() && !m_currentChatId.startsWith("asteroid_") && !m_currentChatId.startsWith("wearix_")) {
-        sendBotMessage(m_currentChatId, trimmed);
     }
 }
 
@@ -626,16 +577,8 @@ void TelegramClient::sendPhoneNumber(const QString &phoneNumber)
         req["phone_number"] = trimmed;
         sendTdlibRequest(req);
     } else {
-        // Fallback simulated phone connection
-        m_accountName = trimmed;
-        m_isLoggedIn = true;
-        m_backendType = "Local";
-        m_connectionStatus = "Connected (Phone)";
-        saveSettings();
-        emit isLoggedInChanged();
-        emit accountNameChanged();
-        emit connectionStatusChanged();
-        emit backendTypeChanged();
+        m_errorMessage = "TDLib not loaded";
+        emit errorMessageChanged();
     }
 }
 
@@ -668,178 +611,35 @@ void TelegramClient::sendPassword(const QString &password)
     sendTdlibRequest(req);
 }
 
-void TelegramClient::loginWithToken(const QString &token)
-{
-    QString trimmed = token.trimmed();
-    if (trimmed.isEmpty())
-        return;
-
-    m_connectionStatus = "Connecting...";
-    emit connectionStatusChanged();
-
-    QUrl url(QString("https://api.telegram.org/bot%1/getMe").arg(trimmed));
-    QNetworkRequest request(url);
-    QNetworkReply *reply = m_network->get(request);
-
-    connect(reply, &QNetworkReply::finished, this, [this, reply, trimmed]() {
-        reply->deleteLater();
-        if (reply->error() == QNetworkReply::NoError) {
-            QByteArray data = reply->readAll();
-            QJsonDocument doc = QJsonDocument::fromJson(data);
-            if (doc.isObject() && doc.object()["ok"].toBool()) {
-                QJsonObject user = doc.object()["result"].toObject();
-                m_accountName = user["first_name"].toString();
-                m_botToken = trimmed;
-                m_isLoggedIn = true;
-                m_backendType = "Bot API";
-                m_connectionStatus = "Connected";
-                saveSettings();
-                emit isLoggedInChanged();
-                emit accountNameChanged();
-                emit connectionStatusChanged();
-                emit backendTypeChanged();
-                m_pollTimer->start(4000);
-                fetchBotUpdates();
-                return;
-            }
-        }
-        m_connectionStatus = "Login Failed";
-        m_errorMessage = "Invalid Bot Token or Connection Error";
-        emit errorMessageChanged();
-        emit connectionStatusChanged();
-    });
-}
-
 void TelegramClient::logout()
 {
-    if (m_hasTdlib && m_backendType == "TDLib MTProto") {
+    if (m_hasTdlib) {
         QJsonObject req;
         req["@type"] = "logOut";
         sendTdlibRequest(req);
     }
 
     m_isLoggedIn = false;
-    m_botToken.clear();
-    m_accountName = "Asteroid User";
-    m_connectionStatus = "Ready";
+    m_accountName = "Telegram User";
+    m_connectionStatus = "Not Logged In";
     m_loginState = "READY";
-    m_backendType = "Demo";
-    m_pollTimer->stop();
+    clearHistory();
     saveSettings();
-    setupDemoData();
 
     emit isLoggedInChanged();
     emit loginStateChanged();
     emit accountNameChanged();
     emit connectionStatusChanged();
-    emit backendTypeChanged();
 }
 
 void TelegramClient::refresh()
 {
-    if (m_isLoggedIn) {
-        if (m_backendType == "TDLib MTProto") {
-            QJsonObject loadChats;
-            loadChats["@type"] = "loadChats";
-            loadChats["limit"] = 30;
-            sendTdlibRequest(loadChats);
-        } else {
-            fetchBotUpdates();
-        }
+    if (m_isLoggedIn && m_hasTdlib) {
+        QJsonObject loadChats;
+        loadChats["@type"] = "loadChats";
+        loadChats["limit"] = 30;
+        sendTdlibRequest(loadChats);
     }
-}
-
-void TelegramClient::onPollTimeout()
-{
-    if (m_isLoggedIn && !m_botToken.isEmpty()) {
-        fetchBotUpdates();
-    }
-}
-
-void TelegramClient::fetchBotUpdates()
-{
-    if (m_botToken.isEmpty())
-        return;
-
-    QUrl url(QString("https://api.telegram.org/bot%1/getUpdates").arg(m_botToken));
-    QUrlQuery query;
-    if (m_lastBotUpdateId > 0) {
-        query.addQueryItem("offset", QString::number(m_lastBotUpdateId + 1));
-    }
-    query.addQueryItem("timeout", "5");
-    url.setQuery(query);
-
-    QNetworkRequest request(url);
-    QNetworkReply *reply = m_network->get(request);
-    connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-        handleBotNetworkReply(reply);
-    });
-}
-
-void TelegramClient::handleBotNetworkReply(QNetworkReply *reply)
-{
-    reply->deleteLater();
-    if (reply->error() != QNetworkReply::NoError) {
-        return;
-    }
-
-    QByteArray data = reply->readAll();
-    QJsonDocument doc = QJsonDocument::fromJson(data);
-    if (!doc.isObject() || !doc.object()["ok"].toBool()) {
-        return;
-    }
-
-    QJsonArray updates = doc.object()["result"].toArray();
-    for (const auto &val : updates) {
-        QJsonObject update = val.toObject();
-        qint64 updateId = update["update_id"].toInteger();
-        if (updateId > m_lastBotUpdateId) {
-            m_lastBotUpdateId = updateId;
-        }
-
-        if (update.contains("message")) {
-            QJsonObject msg = update["message"].toObject();
-            QString text = msg["text"].toString();
-            QJsonObject chat = msg["chat"].toObject();
-            QString chatId = QString::number(chat["id"].toInteger());
-            QString chatTitle = chat.contains("title") ? chat["title"].toString() : chat["first_name"].toString();
-            QJsonObject from = msg["from"].toObject();
-            QString sender = from["first_name"].toString();
-            QString timeStr = QTime::currentTime().toString("hh:mm");
-            QString msgId = QString::number(msg["message_id"].toInteger());
-
-            uint hash = qHash(chatId);
-            QStringList colors = {"#00A3E0", "#7CA600", "#FF8C00", "#9B59B6", "#E74C3C", "#1ABC9C", "#34495E"};
-            QString avatarColor = colors.at(hash % colors.size());
-
-            m_chatModel->addOrUpdateChat(chatId, chatTitle, text, timeStr, 1, avatarColor);
-
-            MessageItem item{msgId, sender, text, timeStr, false, true, "text"};
-            m_chatHistories[chatId].append(item);
-
-            if (m_currentChatId == chatId) {
-                m_messageModel->addMessage(item.id, item.senderName, item.text, item.time, false, true, "text");
-                emit messagesChanged();
-            }
-
-            triggerHaptics();
-            showNotification(chatTitle, text);
-            emit messageReceived(chatTitle, text);
-        }
-    }
-}
-
-void TelegramClient::sendBotMessage(const QString &chatId, const QString &text)
-{
-    QUrl url(QString("https://api.telegram.org/bot%1/sendMessage").arg(m_botToken));
-    QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-    QJsonObject json;
-    json["chat_id"] = chatId;
-    json["text"] = text;
-
-    m_network->post(request, QJsonDocument(json).toJson());
 }
 
 void TelegramClient::addQuickReply(const QString &text)

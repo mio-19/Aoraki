@@ -2,9 +2,6 @@
 #define TELEGRAMCLIENT_H
 
 #include <QObject>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QTimer>
 #include <QSettings>
 #include <QThread>
 #include <QJsonObject>
@@ -62,7 +59,7 @@ class TelegramClient : public QObject
     Q_PROPERTY(QString loginState READ loginState NOTIFY loginStateChanged)
     Q_PROPERTY(QString qrCodeLink READ qrCodeLink NOTIFY qrCodeLinkChanged)
     Q_PROPERTY(QString errorMessage READ errorMessage NOTIFY errorMessageChanged)
-    Q_PROPERTY(QString backendType READ backendType NOTIFY backendTypeChanged)
+    Q_PROPERTY(QString backendType READ backendType CONSTANT)
     Q_PROPERTY(QStringList quickReplies READ quickReplies NOTIFY quickRepliesChanged)
     Q_PROPERTY(bool hasTdlib READ hasTdlib CONSTANT)
 
@@ -84,7 +81,7 @@ public:
     QString loginState() const { return m_loginState; }
     QString qrCodeLink() const { return m_qrCodeLink; }
     QString errorMessage() const { return m_errorMessage; }
-    QString backendType() const { return m_backendType; }
+    QString backendType() const { return QStringLiteral("TDLib MTProto"); }
     QStringList quickReplies() const { return m_quickReplies; }
     bool hasTdlib() const { return m_hasTdlib; }
 
@@ -95,7 +92,6 @@ public:
     Q_INVOKABLE void sendPhoneNumber(const QString &phoneNumber);
     Q_INVOKABLE void sendAuthCode(const QString &code);
     Q_INVOKABLE void sendPassword(const QString &password);
-    Q_INVOKABLE void loginWithToken(const QString &token);
     Q_INVOKABLE void logout();
     Q_INVOKABLE void refresh();
     Q_INVOKABLE void searchChats(const QString &query);
@@ -116,17 +112,13 @@ signals:
     void loginStateChanged();
     void qrCodeLinkChanged();
     void errorMessageChanged();
-    void backendTypeChanged();
     void quickRepliesChanged();
     void messageReceived(const QString &chatTitle, const QString &text);
 
 private slots:
-    void onPollTimeout();
-    void handleBotNetworkReply(QNetworkReply *reply);
     void handleTdlibResponse(const QString &jsonStr);
 
 private:
-    void setupDemoData();
     void loadSettings();
     void saveSettings();
     void appendLocalMessage(const QString &text, const QString &senderName = QString(), bool isOutgoing = true, const QString &type = "text", const QString &extraInfo = QString());
@@ -141,10 +133,6 @@ private:
     void processTdlibNewMessage(const QJsonObject &messageObj);
     void processTdlibChatLastMessage(const QJsonObject &updateObj);
 
-    // Bot API subsystem
-    void fetchBotUpdates();
-    void sendBotMessage(const QString &chatId, const QString &text);
-
     ChatModel *m_chatModel;
     MessageModel *m_messageModel;
     QMap<QString, QList<MessageItem>> m_chatHistories;
@@ -152,7 +140,6 @@ private:
     QString m_currentChatId;
     QString m_currentChatTitle;
     QString m_accountName;
-    QString m_botToken;
     bool m_isLoggedIn;
     QString m_connectionStatus;
     bool m_hapticsEnabled;
@@ -160,12 +147,8 @@ private:
     QString m_loginState;
     QString m_qrCodeLink;
     QString m_errorMessage;
-    QString m_backendType;
     QStringList m_quickReplies;
-    qint64 m_lastBotUpdateId;
 
-    QNetworkAccessManager *m_network;
-    QTimer *m_pollTimer;
     QSettings m_settings;
 
     // TDLib variables

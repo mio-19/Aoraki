@@ -6,7 +6,7 @@ Item {
     id: loginPage
     anchors.fill: parent
 
-    property int authMode: 0 // 0: Phone, 1: QR Code, 2: Bot Token
+    property int authMode: 0 // 0: Phone, 1: QR Code Link
 
     Connections {
         target: telegramClient
@@ -46,19 +46,19 @@ Item {
             Row {
                 visible: telegramClient.loginState === "READY" || telegramClient.loginState === "WAIT_PHONE"
                 anchors.horizontalCenter: parent.horizontalCenter
-                spacing: Dims.w(2)
+                spacing: Dims.w(3)
 
                 Rectangle {
-                    width: Dims.w(24)
+                    width: Dims.w(36)
                     height: Dims.h(8)
                     radius: Dims.w(2)
                     color: loginPage.authMode === 0 ? "#0088CC" : "#26262B"
 
                     Text {
                         anchors.centerIn: parent
-                        text: "Phone"
+                        text: "Phone Number"
                         color: "#FFFFFF"
-                        font.pixelSize: Dims.l(2.6)
+                        font.pixelSize: Dims.l(2.8)
                         font.bold: loginPage.authMode === 0
                     }
 
@@ -69,7 +69,7 @@ Item {
                 }
 
                 Rectangle {
-                    width: Dims.w(24)
+                    width: Dims.w(36)
                     height: Dims.h(8)
                     radius: Dims.w(2)
                     color: loginPage.authMode === 1 ? "#0088CC" : "#26262B"
@@ -78,7 +78,7 @@ Item {
                         anchors.centerIn: parent
                         text: "QR Link"
                         color: "#FFFFFF"
-                        font.pixelSize: Dims.l(2.6)
+                        font.pixelSize: Dims.l(2.8)
                         font.bold: loginPage.authMode === 1
                     }
 
@@ -88,26 +88,6 @@ Item {
                             loginPage.authMode = 1
                             telegramClient.requestQrCodeLogin()
                         }
-                    }
-                }
-
-                Rectangle {
-                    width: Dims.w(24)
-                    height: Dims.h(8)
-                    radius: Dims.w(2)
-                    color: loginPage.authMode === 2 ? "#0088CC" : "#26262B"
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: "Bot Token"
-                        color: "#FFFFFF"
-                        font.pixelSize: Dims.l(2.6)
-                        font.bold: loginPage.authMode === 2
-                    }
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: loginPage.authMode = 2
                     }
                 }
             }
@@ -318,59 +298,6 @@ Item {
                         Text {
                             anchors.centerIn: parent
                             text: "Next"
-                            color: "#FFFFFF"
-                            font.pixelSize: Dims.l(3.4)
-                            font.bold: true
-                        }
-                    }
-                }
-            }
-
-            // State: Bot token login form
-            Column {
-                visible: (telegramClient.loginState === "READY" || telegramClient.loginState === "WAIT_PHONE") && loginPage.authMode === 2
-                width: parent.width
-                spacing: Dims.h(1.5)
-
-                Text {
-                    width: parent.width - (DeviceSpecs.hasRoundScreen ? Dims.w(16) : Dims.w(8))
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: "Enter Telegram Bot Token from @BotFather:"
-                    color: "#AAAAAA"
-                    font.pixelSize: Dims.l(2.8)
-                    wrapMode: Text.Wrap
-                    horizontalAlignment: Text.AlignHCenter
-                }
-
-                TextField {
-                    id: tokenField
-                    width: parent.width - (DeviceSpecs.hasRoundScreen ? Dims.w(16) : Dims.w(8))
-                    height: Dims.h(10)
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    placeholderText: "123456:ABC-DEF..."
-                    onAccepted: {
-                        if (tokenField.text.length > 0)
-                            telegramClient.loginWithToken(tokenField.text)
-                    }
-                }
-
-                ListItem {
-                    width: parent.width - (DeviceSpecs.hasRoundScreen ? Dims.w(16) : Dims.w(8))
-                    height: Dims.h(11)
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    onClicked: {
-                        if (tokenField.text.length > 0)
-                            telegramClient.loginWithToken(tokenField.text)
-                    }
-
-                    Rectangle {
-                        anchors.fill: parent
-                        radius: Dims.w(3)
-                        color: "#0088CC"
-
-                        Text {
-                            anchors.centerIn: parent
-                            text: "Connect Bot"
                             color: "#FFFFFF"
                             font.pixelSize: Dims.l(3.4)
                             font.bold: true

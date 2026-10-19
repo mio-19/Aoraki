@@ -90,8 +90,79 @@ Item {
             }
         }
 
+        Item {
+            id: emptyState
+            visible: chatModel.count === 0
+            width: parent.width
+            height: parent.height - header.height - searchBar.height
+
+            Column {
+                anchors.centerIn: parent
+                width: parent.width - (DeviceSpecs.hasRoundScreen ? Dims.w(16) : Dims.w(8))
+                spacing: Dims.h(1.8)
+
+                Rectangle {
+                    width: Dims.w(14)
+                    height: width
+                    radius: width / 2
+                    color: "#0088CC"
+                    anchors.horizontalCenter: parent.horizontalCenter
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: "✈"
+                        color: "#FFFFFF"
+                        font.pixelSize: Dims.l(5.5)
+                    }
+                }
+
+                Text {
+                    text: telegramClient.isLoggedIn ? "No Conversations" : "Not Logged In"
+                    color: "#FFFFFF"
+                    font.pixelSize: Dims.l(3.4)
+                    font.bold: true
+                    horizontalAlignment: Text.AlignHCenter
+                    anchors.horizontalCenter: parent.horizontalCenter
+                }
+
+                Text {
+                    text: telegramClient.isLoggedIn
+                          ? "Incoming messages and synchronized chats will appear here."
+                          : "Log in with your phone number or QR link to start messaging."
+                    color: "#888888"
+                    font.pixelSize: Dims.l(2.6)
+                    wrapMode: Text.Wrap
+                    horizontalAlignment: Text.AlignHCenter
+                    width: parent.width
+                }
+
+                ListItem {
+                    visible: !telegramClient.isLoggedIn
+                    width: parent.width
+                    height: Dims.h(10)
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    onClicked: layerStack.push(loginPageComponent)
+
+                    Rectangle {
+                        anchors.fill: parent
+                        radius: Dims.w(3)
+                        color: "#0088CC"
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "Log In"
+                            color: "#FFFFFF"
+                            font.pixelSize: Dims.l(3.2)
+                            font.bold: true
+                        }
+                    }
+                }
+            }
+        }
+
         ListView {
             id: chatsList
+            visible: chatModel.count > 0
             width: parent.width
             height: parent.height - header.height - searchBar.height
             clip: true
