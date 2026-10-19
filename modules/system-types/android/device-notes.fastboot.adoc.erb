@@ -33,9 +33,12 @@ The boot images can be installed using the following command, assuming the
 
  $ result/flash-critical.sh
 
-If you have a system image (`system.img`) built, you can use `fastboot` to
-flash it to the device. Note that it might be too big to fit over the `system`
-partition. In such case, it can be flashed on the `userdata` partition.
+Alternatively, to flash all partitions at once (both boot and system image):
+
+ $ result/flash-all.sh
+
+If you have a system image (`system.img`) built and wish to flash it manually,
+you can use `fastboot` to flash it to the device (typically on `userdata`):
 
  $ fastboot flash userdata system.img
 

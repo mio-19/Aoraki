@@ -66,12 +66,16 @@ in
     nixos.enable = mkDefault false;
   };
 
-  # Disable heavy desktop/server utilities not used on smartwatches
+  # Disable heavy desktop/server utilities and editors not used on smartwatches
+  programs.nano.enable = mkDefault false;
   programs.command-not-found.enable = mkDefault false;
   services.lvm.enable = mkDefault false;
   boot.bcache.enable = mkDefault false;
+  boot.enableContainers = mkDefault false;
   services.logrotate.enable = mkDefault false;
   services.udisks2.enable = mkDefault false;
+  services.kmscon.enable = mkDefault false;
+  services.resolved.enable = mkDefault false;
   boot.plymouth.enable = lib.mkForce false;
   environment.defaultPackages = mkDefault [ ];
 

@@ -292,9 +292,6 @@ rec {
     desc = "Fast-paced space arcade memory and reflex matching game for smartwatches";
     rev = "3a597047d1e4021d8eddf715e4c6e110c04080d1";
     sha256 = "043jmqf4hb4fci13ikn88r32cr0r280jy16kaik43k7cnnacbgzv";
-    extraBuildInputs = [
-      qt6.qtmultimedia
-    ];
   };
 
   # Stroboscope and visual flasher: https://github.com/moWerk/asteroid-pulsar
@@ -351,9 +348,6 @@ rec {
     desc = "Mechanical watch accuracy checker and timegrapher tool for smartwatches";
     rev = "07b6675ae6e4734fee7971d4f4a22a9637f5f1a9";
     sha256 = "0jd3nj6pi9by5i8rpalsmpj63yiqjqqri6fz5v45lhis4add0p0v";
-    extraBuildInputs = [
-      qt6.qtmultimedia
-    ];
   };
 
   # Lunar lander retro thruster game: https://github.com/moWerk/asteroid-touchdown

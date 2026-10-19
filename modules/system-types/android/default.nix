@@ -104,6 +104,38 @@ let
         echo "The system image needs to be flashed manually to the ${config.mobile.system.android.system_partition_destination} partition."
         EOF
         chmod +x $out/flash-critical.sh
+
+        cat > $out/flash-all.sh <<'EOF'
+        #!/usr/bin/env bash
+        dir="$(cd "$(dirname "''${BASH_SOURCE[0]}")"; echo "$PWD")"
+        PS4=" $ "
+        echo "Flashing boot, ${optionalString has_recovery_partition "recovery, "}and system/userdata partitions..."
+        (
+        set -x
+        ${
+          if flashingMethod == "fastboot" then
+            ''
+              fastboot flash ${optionalString ab_partitions "--slot=all"} boot "$dir"/boot.img
+              ${optionalString has_recovery_partition ''
+                fastboot flash ${optionalString ab_partitions "--slot=all"} recovery "$dir"/recovery.img
+              ''}
+              fastboot flash ${optionalString ab_partitions "--slot=all"} ${config.mobile.system.android.system_partition_destination} "$dir"/system.img
+            ''
+          else if flashingMethod == "odin" then
+            ''
+              heimdall flash \
+                --BOOT "$dir"/boot.img ${optionalString has_recovery_partition ''
+                  --RECOVERY "$dir"/recovery.img
+                ''} \
+                --USERDATA "$dir"/system.img
+            ''
+          else
+            builtins.throw "No flashing method for ${flashingMethod}"
+        })
+        echo ""
+        echo "Full flashing completed."
+        EOF
+        chmod +x $out/flash-all.sh
       '';
 
   mkBootimgOption =
