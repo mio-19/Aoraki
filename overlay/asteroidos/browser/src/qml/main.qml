@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.VirtualKeyboard
 import org.asteroid.controls
 import org.asteroid.utils
 import QtWebEngine
@@ -21,5 +22,20 @@ Application {
     function openUrl(url) {
         initialUrl = url
         layerStack.push(browserPageComponent)
+    }
+
+    InputPanel {
+        id: inputPanel
+        z: 999
+        x: 0
+        y: active ? parent.height - height : parent.height
+        width: parent.width
+
+        Behavior on y {
+            NumberAnimation {
+                duration: 200
+                easing.type: Easing.OutQuad
+            }
+        }
     }
 }

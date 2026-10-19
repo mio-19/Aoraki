@@ -41,6 +41,10 @@ rec {
     qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
   };
 
+  wpewebkit-qt = callPackage ./wpewebkit-qt {
+    inherit (pkgs) wpewebkit;
+  };
+
   telegram = callPackage ./telegram {
     inherit qml-asteroid;
     inherit virtualkeyboard;

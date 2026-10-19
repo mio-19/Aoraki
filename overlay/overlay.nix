@@ -53,6 +53,8 @@ in
   pd-mapper = callPackage ./qrtr/pd-mapper.nix { };
   rmtfs = callPackage ./qrtr/rmtfs.nix { };
 
+  wpewebkit = callPackage ./wpewebkit { };
+
   #
   # Hacks
   # -----
