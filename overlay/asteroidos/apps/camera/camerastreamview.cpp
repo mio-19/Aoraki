@@ -292,8 +292,18 @@ void CameraStreamView::onMessageReceived(const QString &appId, const QString &ac
             int port = obj.value("port").toInt(8089);
             QJsonArray ips = obj.value("ips").toArray();
             if (!ips.isEmpty()) {
-                QString ip = ips.first().toString();
-                QString newUrl = QString("http://%1:%2/stream.mjpg").arg(ip).arg(port);
+                QString chosenIp;
+                for (const QJsonValue &val : ips) {
+                    QString candidate = val.toString();
+                    if (candidate.startsWith("192.168.") || candidate.startsWith("172.") || candidate.startsWith("10.")) {
+                        chosenIp = candidate;
+                        break;
+                    }
+                }
+                if (chosenIp.isEmpty()) {
+                    chosenIp = ips.first().toString();
+                }
+                QString newUrl = QString("http://%1:%2/stream.mjpg").arg(chosenIp).arg(port);
                 if (m_streamUrl != newUrl) {
                     setStreamUrl(newUrl);
                 }

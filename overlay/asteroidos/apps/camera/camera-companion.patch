@@ -74,10 +74,10 @@ index 6683ae7..2ccf2e8 100644
      return AsteroidApp::main(argc, argv);
  }
 diff --git a/src/main.qml b/src/main.qml
-index 41a2961..235abf6 100644
+index 41a2961..9ec60da 100644
 --- a/src/main.qml
 +++ b/src/main.qml
-@@ -1,38 +1,457 @@
+@@ -1,38 +1,463 @@
  /*
   * Copyright (C) 2019 Florent Revest <revestflo@gmail.com>
 + * Copyright (C) 2026 AsteroidOS
@@ -195,12 +195,18 @@ index 41a2961..235abf6 100644
  
 -    VideoOutput {
 -        id: output
-+    // Rotary Crown & Mouse Wheel Support for smooth Zoom
++    // Rotary Crown & Mouse Wheel Support for smooth Zoom with rate limiting
 +    MouseArea {
          anchors.fill: parent
 +        z: 10
 +        acceptedButtons: Qt.NoButton
++        property real lastWheelTime: 0
++
 +        onWheel: (wheel) => {
++            var now = Date.now()
++            if (now - lastWheelTime < 80) return
++            lastWheelTime = now
++
 +            if (wheel.angleDelta.y > 0) {
 +                streamView.sendCommand("zoom_in")
 +                streamView.vibrate(20)
