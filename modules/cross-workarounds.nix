@@ -29,6 +29,9 @@ lib.mkIf isCross (
 
     # 32 bit ARM
     (lib.mkIf config.nixpkgs.hostPlatform.isAarch32 {
+      # qemu-utils is 64-bit only in Nixpkgs; disable growPartition on 32-bit ARM
+      boot.growPartition = lib.mkForce false;
+
       nixpkgs.overlays = [
         (
           final: super:

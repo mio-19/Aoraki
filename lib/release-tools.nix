@@ -66,6 +66,9 @@ else
               imports = [
                 config
                 {
+                  mobile.device.name = name;
+                  mobile.device.identity.name = name;
+                  mobile.device.identity.manufacturer = "Generic";
                   mobile.system.type = "none";
                   mobile.hardware.soc =
                     {

@@ -252,10 +252,12 @@ in
                     modDirVersion = "99";
                     configfile = pkgs.emptyFile;
                     target = "zImage";
+                    buildDTBs = false;
                   };
                   version = "99";
                 } "mkdir $out; touch $out/no-kernel"
               ) { };
+              buildDTBs = false;
               configfile = self.kernel.configfile;
               target = self.kernel.target;
               kernelOlder = self.kernel.kernelOlder;

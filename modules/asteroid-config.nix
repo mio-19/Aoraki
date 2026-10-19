@@ -9,7 +9,11 @@ let
   inherit (lib) mkDefault mkIf;
   screenCfg = config.mobile.hardware.screen;
   watchCfg = config.mobile.hardware.watch;
-  devName = config.mobile.device.name;
+  devName =
+    if config.mobile ? device && config.mobile.device ? name then
+      config.mobile.device.name
+    else
+      "generic";
 
   # Generates standard /etc/asteroid/machine.conf expected by AsteroidOS launcher,
   # qml-asteroid, and applications.
