@@ -222,7 +222,8 @@ ssh root@192.168.2.15 "nix-env -p /nix/var/nix/profiles/system --set \$(readlink
 
 The environment includes a rich catalog of touch-optimized smartwatch applications:
 
-* *`asteroid-browser`*: Lightweight web browser with integrated virtual keyboard support and wearable quick-links.
+* *`asteroid-browser`*: Native smartwatch web browser powered by the WebKit rendering engine (WebKit 2.54.1), featuring AMOLED dark styling, hardware rotary crown scrolling, touch swipe navigation, and modern web rendering.
+* *`asteroid-kiwix`*: Offline reference and encyclopedia reader powered by native C++ `libzim` with zero daemons, instant full-text search, sub-18 MB RAM footprint, and rotary crown scrolling.
 * *`asteroid-telegram`*: Native smartwatch Telegram client with touch-friendly chat lists, message history, voice reply integration, and quick canned responses.
 * *`asteroid-virtualkeyboard`*: On-screen touch keyboard featuring watch style, layouts, integrated link:https://rime.im/[RIME] input method engine support, and bundled Chinese dictionaries.
 * *`asteroid-beatfork`*: High-precision metronome and chromatic tuning fork with Tack-inspired tap tempo calculation, accented subdivisions (1/4, 2/4, 3/4, 4/4, 6/8), concentric visual pulse ring, and distinct smartwatch haptics.
