@@ -53,8 +53,6 @@ in
   pd-mapper = callPackage ./qrtr/pd-mapper.nix { };
   rmtfs = callPackage ./qrtr/rmtfs.nix { };
 
-  lk2ndMsm8953 = callPackage ./lk2nd/msm8953.nix { };
-
   #
   # Hacks
   # -----
@@ -180,8 +178,6 @@ in
 
     cross-canary-test = callPackage ./mobile-nixos/cross-canary/test.nix { };
     cross-canary-test-static = final.pkgsStatic.callPackage ./mobile-nixos/cross-canary/test.nix { };
-
-    pine64-alsa-ucm = callPackage ./mobile-nixos/pine64-alsa-ucm { };
   };
 
   image-builder = callPackage ./image-builder { };

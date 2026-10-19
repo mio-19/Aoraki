@@ -22,21 +22,31 @@ class Tasks::UDev < SingletonTask
 
   def run()
     udevd
-    # TODO: Upstream Android kernels have synthetic sysfs nodes (e.g. android_usb) that reject
-    # synthetic uevents with EINVAL. Long-term fix is upstreaming filtering in mobile-nixos udev task.
+
+    # Immediately ensure partition links from devtmpfs
+    ensure_partition_links
+
+    # Subsystem-filtered trigger: avoids synthetic Android nodes (e.g. android_usb) that reject uevents with EINVAL
     begin
-      udevadm("trigger", "--action=add")
+      udevadm("trigger", "--action=add", "--subsystem-match=block", "--subsystem-match=input", "--subsystem-match=graphics")
     rescue System::CommandError => e
       $logger.warn("udevadm trigger non-fatal warning (proceeding): #{e.message}")
     end
-    # TODO: Android synthetic devices may never settle, causing settle timeout.
-    begin
-      udevadm("settle", "--timeout=10")
-    rescue System::CommandError => e
-      $logger.warn("udevadm settle non-fatal timeout (proceeding): #{e.message}")
-    end
 
-    ensure_partition_links
+    # Fast settle on watches: don't block for 10s if partition is already available
+    if File.exist?("/dev/disk/by-label/NIXOS_SYSTEM")
+      begin
+        udevadm("settle", "--timeout=1")
+      rescue System::CommandError
+      end
+    else
+      begin
+        udevadm("settle", "--timeout=5")
+      rescue System::CommandError => e
+        $logger.warn("udevadm settle non-fatal timeout (proceeding): #{e.message}")
+      end
+      ensure_partition_links
+    end
   end
 
   # TODO: Temporary workaround until udev rules reliably parse GPT/Android partition tables on 4.14 downstream kernels.

@@ -250,12 +250,21 @@ in
                     kernelOlder = lib.versionOlder baseVersion;
                     kernelAtLeast = lib.versionAtLeast baseVersion;
                     modDirVersion = "99";
+                    configfile = pkgs.emptyFile;
+                    target = "zImage";
                   };
                   version = "99";
                 } "mkdir $out; touch $out/no-kernel"
               ) { };
+              configfile = self.kernel.configfile;
+              target = self.kernel.target;
               kernelOlder = self.kernel.kernelOlder;
               kernelAtLeast = self.kernel.kernelAtLeast;
+              cpupower = pkgs.runCommand "null-cpupower" { } ''
+                mkdir -p $out/bin
+                touch $out/bin/cpupower
+                chmod +x $out/bin/cpupower
+              '';
               # Fake having `extend` available... probably dumb... but is it more
               # dumb than faking a kernelPackages package set for eval??
               extend = _: self;

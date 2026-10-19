@@ -1,18 +1,7 @@
 = Getting Started
 include::_support/common.inc[]
 
-== Using the guided installer
-
-For a limited set of devices, there is a guided installer that can be used
-to do your first-time install.
-
-The device page for the supported devices will describe the requirements
-for the installer.
-
-* <<devices/pine64-pinephone.adoc#,Pine64 PinePhone>>
-
-
-== Other options
+== Prerequisites
 
 This guide assumes the user knows how to prepare their device for development
 use. These instructions are device-dependent, but not specific to Mobile NixOS.

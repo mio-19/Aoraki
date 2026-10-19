@@ -3,18 +3,7 @@ module Hal
     extend self
 
     KEYS = [
-      # Keys used for "mobile" use-cases
-      :KEY_VOLUMEUP,
-      :KEY_VOLUMEDOWN,
-      :KEY_UP,
-      :KEY_DOWN,
-      # Keys used for "computer" use-cases
-      :KEY_LEFTCTRL,
-      :KEY_RIGHTCTRL,
-      :KEY_LEFTSHIFT,
-      :KEY_RIGHTSHIFT,
-      :KEY_ESC,
-      # Keys used for "smartwatch" use-cases
+      # Smartwatch hardware buttons
       :KEY_POWER,
       :KEY_HOMEPAGE,
       :KEY_SEARCH,
@@ -45,7 +34,18 @@ module Hal
 
     # Is the normal boot flow interrupted by a key input?
     def boot_interrupted?()
-      Evdev.keys_held(KEYS)
+      return true if Evdev.keys_held(KEYS)
+
+      # On smartwatches, check over a 1-second window to detect a middle button press
+      # matching AsteroidOS init.machine.sh waitmidbutton behavior
+      if Configuration["watch"] || (Configuration["screen"] && Configuration["screen"]["shape"] == "round")
+        10.times do
+          sleep(0.1)
+          return true if Evdev.keys_held(KEYS)
+        end
+      end
+
+      false
     end
 
     def wants_recovery?

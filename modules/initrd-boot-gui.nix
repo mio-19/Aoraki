@@ -157,6 +157,7 @@ in
             radius = config.mobile.hardware.screen.radius;
             chinHeight = config.mobile.hardware.screen.chinHeight;
           };
+          watch = config.mobile.hardware.watch.enable or false;
         }
       ];
     })

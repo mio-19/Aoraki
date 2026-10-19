@@ -8,7 +8,7 @@ import ../../lib/eval-with-configuration.nix (
     additionalHelpInstructions = { device }: ''
       The build output to choose depends on the target.
 
-      Pinephone, other u-boot, and depthcharge devices: 
+      Smartwatch devices:
 
         $ nix-build examples/target-disk-mode --argstr device ${device} -A outputs.default
 

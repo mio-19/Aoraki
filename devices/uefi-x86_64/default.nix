@@ -16,8 +16,9 @@
   mobile.hardware = {
     soc = "generic-x86_64";
     screen = {
-      width = 720;
-      height = 1280;
+      shape = "round";
+      width = 416;
+      height = 416;
     };
     ram = 1024 * 2;
   };

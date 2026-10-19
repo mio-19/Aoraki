@@ -53,7 +53,9 @@ in
       "vm.dirty_expire_centisecs" = mkDefault 3000;
     };
 
-    # Power savings: enable CPU frequency governor powersave / schedutil
-    powerManagement.cpuFreqGovernor = mkDefault "schedutil";
+    # Power savings: enable CPU frequency governor powersave / schedutil when cpupower is available
+    powerManagement.cpuFreqGovernor = mkIf (config.boot.kernelPackages ? cpupower) (
+      mkDefault "schedutil"
+    );
   };
 }

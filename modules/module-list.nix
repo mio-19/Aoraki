@@ -16,13 +16,11 @@
   ./hardware-eink.nix
   ./generated-disk-images.nix
   ./generated-filesystems.nix
-  ./hardware-allwinner.nix
   ./hardware-exynos.nix
   ./hardware-generic.nix
   ./hardware-mediatek.nix
   ./hardware-qualcomm.nix
   ./hardware-ram.nix
-  ./hardware-rockchip.nix
   ./hardware-screen.nix
   ./hardware-soc.nix
   ./hardware-watch.nix

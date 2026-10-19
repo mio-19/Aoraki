@@ -18,7 +18,7 @@ in
         Enable this on a device which requires the framebuffer
         to be notified for some components to work right.
 
-        With some Samsung phones it is required or else the
+        With some Samsung smartwatches it is required or else the
         display will not be updating.
 
         Prefer patching the kernel to enable the framebuffer when

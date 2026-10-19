@@ -10,8 +10,9 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 
 * [x] *Stage-1 AsteroidOS Parity & Seamless Handover*:
 ** Implemented `sticky` splash handover (`mobile.boot.stage-1.gui.sticky`) so the boot logo remains visibly drawn on `/dev/fb0` across `switch_root` without screen blackout.
-** Added physical smartwatch button interception (`KEY_POWER` / stem button `0x74`, `KEY_BACK`, `BTN_TRIGGER_HAPPY`) to `Hal::Recovery::KEYS` to invoke the Generation Selection & Recovery menu on power-on.
-** Clamped LVGUI window base elements to screen width to prevent viewport overflow on narrow smartwatch displays.
+** Added physical smartwatch button interception (`KEY_POWER` / stem button `0x74`, `KEY_BACK`, `BTN_TRIGGER_HAPPY`) to `Hal::Recovery::KEYS` with a 1-second polling window (`waitmidbutton` parity) to invoke the Generation Selection & Recovery menu.
+** Optimized Stage-1 udev with subsystem-filtered triggers (`block`, `input`, `graphics`) and fast settle, bypassing synthetic Android sysfs delays.
+** Clamped LVGUI window base elements to screen width with dynamic circular safe-insets ($14.64\%$) to prevent viewport overflow on narrow smartwatch displays.
 * [ ] *Circular AMOLED Visual Optimization*:
 ** Ensure all stage-1 LVGL applets (`boot-splash`, `boot-error`, `boot-selection`) adapt gracefully to circular viewports with circular-safe margins and centered layouts.
 ** Add burn-in protection shifts and low-power Ambient / Always-On-Display (AOD) watchfaces.

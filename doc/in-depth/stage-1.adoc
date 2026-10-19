@@ -7,9 +7,9 @@ This is what is also referred as `initrd`, or `initramfs`. `stage-1` refers to
 the fact that this is the first part of the system that gets run once the kernel
 has been started.
 
-== About "sad phone" screens
+== About recovery and error screens
 
-It may happen that you have a "sad phone" screen when booting.
+It may happen that you encounter an error screen when booting.
 
 This means that a fatal error has happened.
 
@@ -22,7 +22,7 @@ error has been codified as a background color.
  * Red (`0xFF0000`) means that executing (`exec`) and switching to the found generation's init failed.
  * Brown (`0x95681C`) means an uncontrolled abort happened.
 
-It may happen that the boot seemingly or actually hangs before a "sad phone"
+It may happen that the boot seemingly or actually hangs before an error
 screen appears. In those instances, it means something else earlier kept the
 early init scripts to continue. In the future, better logging and status
 reporting will be added to keep track of early failures.

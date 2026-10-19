@@ -47,7 +47,7 @@ class UI
     title_width = get_pane_width()
     title_x = (@screen.get_width() - title_width) / 2
     @title_bar.set_width(title_width)
-    @title_bar.set_height(round_screen? ? 10 * unit : 16 * unit)
+    @title_bar.set_height(round_screen? ? 10 * unit : 12 * unit)
     @title_bar.set_pos(title_x, top_offset)
 
     @title_bar.get_style(LVGL::CONT_STYLE::MAIN).dup.tap do |style|
@@ -59,7 +59,6 @@ class UI
       style.body_opa = (255 * 0.30).to_i
     end
 
-    add_sad_phone unless round_screen?
     add_title
   end
 
@@ -110,26 +109,13 @@ class UI
 
   # Title elements
 
-  def add_sad_phone()
-    @sad_phone = LVGL::LVImage.new(@screen)
-    @sad_phone.set_src("#{LVGL::Hacks.get_asset_path("sad.svg")}?height=#{@title_bar.get_height - 2 * padding}")
-    @sad_phone.set_pos(2 * padding, padding)
-  end
-
   def add_title()
-    code_size = round_screen? ? 13 : nil
+    code_size = round_screen? ? 13 : 14
     @title = new_text($code, parent: @title_bar, size: code_size)
-    if round_screen?
-      @title.set_align(LVGL::LABEL_ALIGN::CENTER)
-      @title.set_x(@title_bar.get_width / 2 - @title.get_width / 2)
-      @title.set_y(@title_bar.get_height / 2 - @title.get_height / 2)
-      @title.set_width(@title_bar.get_width() - 2 * padding)
-    else
-      @title.set_align(LVGL::LABEL_ALIGN::LEFT)
-      @title.set_x(@sad_phone.get_x() * 2 + @sad_phone.get_width())
-      @title.set_y(@title_bar.get_height / 2 - @title.get_height / 2)
-      @title.set_width(@title_bar.get_width() - @title.get_x())
-    end
+    @title.set_align(LVGL::LABEL_ALIGN::CENTER)
+    @title.set_x(@title_bar.get_width / 2 - @title.get_width / 2)
+    @title.set_y(@title_bar.get_height / 2 - @title.get_height / 2)
+    @title.set_width(@title_bar.get_width() - 2 * padding)
   end
 
   # Messages pane elements

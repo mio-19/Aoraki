@@ -29,6 +29,7 @@ in
 
   # Display quirks for Qualcomm MDSS framebuffer and DSI command-mode panels
   mobile.quirks.fb-refresher.enable = mkDefault true;
+  mobile.quirks.fb-refresher.stage-1.enable = mkDefault true;
   mobile.quirks.qualcomm.fb-notify.enable = mkDefault true;
 
   # Ensure display is unblanked and backlight is active on boot

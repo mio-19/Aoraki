@@ -208,21 +208,6 @@ let
       };
     };
 
-  evalInstaller =
-    {
-      device,
-      buildPlatform,
-    }:
-    let
-      eval = evalWithConfiguration {
-        imports = [
-          ./examples/installer/configuration.nix
-        ];
-        nixpkgs.buildPlatform = buildPlatform;
-      } device;
-    in
-    eval // { inherit (eval.config.mobile) outputs; };
-
   doc = import ./doc {
     inherit pkgs;
   };
@@ -261,47 +246,19 @@ rec {
           targetSystem = "armv7l-linux";
         }).outputs.toplevel;
     };
-    phosh = {
-      x86_64-linux.toplevel =
+    asteroid = {
+      armv7l-linux.toplevel =
         (evalExample {
-          example = ./examples/phosh;
-          system = "x86_64-linux";
+          example = ./examples/asteroid;
+          system = "armv7l-linux";
         }).outputs.toplevel;
-      aarch64-linux.toplevel =
+      cross-x86-armv7l.toplevel =
         (evalExample {
-          example = ./examples/phosh;
-          system = "aarch64-linux";
-        }).outputs.toplevel;
-      cross-x86-aarch64.toplevel =
-        (evalExample {
-          example = ./examples/phosh;
+          example = ./examples/asteroid;
           system = "x86_64-linux";
-          targetSystem = "aarch64-linux";
+          targetSystem = "armv7l-linux";
         }).outputs.toplevel;
     };
-  };
-
-  installer = {
-    lenovo-krane =
-      (evalInstaller {
-        device = "lenovo-krane";
-        buildPlatform = "aarch64-linux";
-      }).outputs.default;
-    lenovo-wormdingler =
-      (evalInstaller {
-        device = "lenovo-wormdingler";
-        buildPlatform = "aarch64-linux";
-      }).outputs.default;
-    pine64-pinephone =
-      (evalInstaller {
-        device = "pine64-pinephone";
-        buildPlatform = "aarch64-linux";
-      }).outputs.default;
-    pine64-pinephonepro =
-      (evalInstaller {
-        device = "pine64-pinephonepro";
-        buildPlatform = "aarch64-linux";
-      }).outputs.default;
   };
 
   # Overlays build native, and cross, according to shouldEvalOn
@@ -323,71 +280,40 @@ rec {
     }
   );
 
-  cross-compiled = {
-    installer = {
-      lenovo-krane =
-        (evalInstaller {
-          device = "lenovo-krane";
-          buildPlatform = "x86_64-linux";
-        }).outputs.default;
-      lenovo-wormdingler =
-        (evalInstaller {
-          device = "lenovo-wormdingler";
-          buildPlatform = "x86_64-linux";
-        }).outputs.default;
-      pine64-pinephone =
-        (evalInstaller {
-          device = "pine64-pinephone";
-          buildPlatform = "x86_64-linux";
-        }).outputs.default;
-      pine64-pinephonepro =
-        (evalInstaller {
-          device = "pine64-pinephonepro";
-          buildPlatform = "aarch64-linux";
-        }).outputs.default;
-    };
-  };
-
   tested =
     let
       hasSystem = name: lib.lists.any (el: el == name) systems;
 
       constituents =
-        cross-canaries.aarch64-linux.constituents
+        cross-canaries.armv7l-linux.constituents
         ++ lib.optionals (hasSystem "x86_64-linux") [
-          device.uefi-x86_64.x86_64-linux # UEFI system
+          device.uefi-x86_64.x86_64-linux # UEFI watch simulator
 
-          # Cross builds
-          device.asus-z00t.x86_64-linux # Android
-          device.asus-dumo.x86_64-linux # Depthcharge
+          # Smartwatch cross builds
+          device.fossil-hoki.x86_64-linux
 
           # Example systems
           examples.hello.x86_64-linux.toplevel
-          examples.hello.cross-x86-aarch64.toplevel
-          examples.phosh.x86_64-linux.toplevel
+          examples.asteroid.cross-x86-armv7l.toplevel
 
           # Flashable zip binaries are universal for a platform.
-          overlay.x86_64-linux.aarch64-linux-cross.mobile-nixos.android-flashable-zip-binaries
+          overlay.x86_64-linux.armv7l-linux-cross.mobile-nixos.android-flashable-zip-binaries
         ]
-        ++ lib.optionals (hasSystem "aarch64-linux") [
-          device.asus-z00t.aarch64-linux # Android
-          device.asus-dumo.aarch64-linux # Depthcharge
+        ++ lib.optionals (hasSystem "armv7l-linux") [
+          device.fossil-hoki.armv7l-linux
 
           # Example systems
-          examples.hello.aarch64-linux.toplevel
-          examples.phosh.aarch64-linux.toplevel
-
-          installer.pine64-pinephone
+          examples.asteroid.armv7l-linux.toplevel
 
           # Flashable zip binaries are universal for a platform.
-          overlay.aarch64-linux.aarch64-linux.mobile-nixos.android-flashable-zip-binaries
+          overlay.armv7l-linux.armv7l-linux.mobile-nixos.android-flashable-zip-binaries
         ];
     in
     releaseTools.aggregate {
       name = "mobile-nixos-tested";
       inherit constituents;
       meta = {
-        description = "Representative subset of devices that have to succeed.";
+        description = "Representative subset of smartwatch devices that have to succeed.";
       };
     };
 
@@ -400,14 +326,12 @@ rec {
         tested.constituents
         ++ cross-canaries.armv7l-linux.constituents
         ++ lib.optionals (hasSystem "x86_64-linux") [
-          device.asus-flo.x86_64-linux
+          device.fossil-hoki.x86_64-linux
           overlay.x86_64-linux.armv7l-linux-cross.mobile-nixos.android-flashable-zip-binaries
           examples.hello.cross-x86-armv7l.toplevel
         ]
-        ++ lib.optionals (hasSystem "aarch64-linux") [
-        ]
         ++ lib.optionals (hasSystem "armv7l-linux") [
-          device.asus-flo.armv7l-linux
+          device.fossil-hoki.armv7l-linux
           overlay.armv7l-linux.armv7l-linux.mobile-nixos.android-flashable-zip-binaries
         ];
     in

@@ -21,10 +21,10 @@ This will have different implications depending on the device.
 
 ### U-Boot based systems
 
-(E.g. `pine64-pinephone`)
+(E.g. `uefi-x86_64`)
 
 ```
- $ nix-build examples/target-disk-mode/ --argstr device pine64-pinephone -A outputs.default
+ $ nix-build examples/target-disk-mode/ --argstr device uefi-x86_64 -A outputs.default
  $ file -L result
 result: DOS/MBR boot sector; partition 1 : ID=0xee, start-CHS (0x0,0,2), end-CHS (0x3ff,255,63), startsector 1, 319555 sectors, extended partition table (last)
 ```

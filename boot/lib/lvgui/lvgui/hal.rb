@@ -1,7 +1,7 @@
 # Some hardware abstraction, specific to a particular use-case,
 # but still must be generic enough.
 #
-# All of this must be implemented with the goal to produce a phone-oriented
+# All of this must be implemented with the goal to produce a smartwatch-oriented
 # GUI toolkit.
 module LVGUI::HAL
   # Provide battery information
