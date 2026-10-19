@@ -116,7 +116,26 @@ in
       );
       qtwayland = addCrossQuickTools qsuper.qtwayland;
       qtvirtualkeyboard = addCrossQuickTools qsuper.qtvirtualkeyboard;
-      qtmultimedia = addCrossQuickTools qsuper.qtmultimedia;
+      qtmultimedia = (addCrossQuickTools qsuper.qtmultimedia).overrideAttrs (old: {
+        buildInputs = final.lib.filter (
+          p:
+          !(final.lib.elem (p.pname or "") [
+            "gst-plugins-bad"
+            "gst-libav"
+          ])
+        ) old.buildInputs;
+        propagatedBuildInputs = final.lib.filter (
+          p:
+          !(final.lib.elem (p.pname or "") [
+            "gst-plugins-bad"
+            "gst-libav"
+            "gst-plugins-good"
+            "gst-plugins-base"
+            "gstreamer"
+            "qtquick3d"
+          ])
+        ) old.propagatedBuildInputs;
+      });
       qtpositioning = addCrossQuickTools qsuper.qtpositioning;
       qtsensors = addCrossQuickTools qsuper.qtsensors;
       qtconnectivity = addCrossQuickTools qsuper.qtconnectivity;

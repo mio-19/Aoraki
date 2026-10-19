@@ -78,6 +78,12 @@ in
   services.resolved.enable = mkDefault false;
   boot.plymouth.enable = lib.mkForce false;
   environment.defaultPackages = mkDefault [ ];
+  # Disable unnecessary stub-ld and desktop XDG components not used on smartwatches
+  environment.stub-ld.enable = mkDefault false;
+  xdg.icons.enable = mkDefault false;
+  xdg.mime.enable = mkDefault false;
+  xdg.sounds.enable = mkDefault false;
+  xdg.autostart.enable = mkDefault false;
 
   # Flashing method defaults to fastboot, destination to userdata partition
   mobile.system.android.flashingMethod = mkDefault "fastboot";
