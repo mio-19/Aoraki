@@ -445,6 +445,17 @@ class Tasks::SwitchRoot < SingletonTask
       System.run("mount", "--move", mount_point, new_location)
     end
 
+    # TODO: systemd 261 mounts cgroup2 with "nsdelegate,memory_recursiveprot",
+    # which vendor 4.14 kernels reject and then freeze. Pre-mount cgroup2 with
+    # the newest options the kernel accepts so systemd's mount_setup() sees an
+    # existing mount and skips its own. Remove once systemd handles this.
+    cgroup2_path = File.join(SYSTEM_MOUNT_POINT, "sys/fs/cgroup")
+    begin
+      System.run("mount", "-t", "cgroup2", "-o", "nsdelegate,memory_recursiveprot", "cgroup2", cgroup2_path)
+    rescue System::CommandError
+      System.run("mount", "-t", "cgroup2", "cgroup2", cgroup2_path)
+    end
+
     switch_root = System.which("switch_root")
     System.exec({}, switch_root, SYSTEM_MOUNT_POINT, init)
   end
