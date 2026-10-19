@@ -14,7 +14,11 @@ in
     enable = mkEnableOption "AsteroidOS smartwatch user environment";
 
     browser = {
-      enable = lib.mkEnableOption "AsteroidOS smartwatch web browser";
+      enable = lib.mkOption {
+        type = lib.types.bool;
+        default = true;
+        description = "Whether to include the AsteroidOS smartwatch web browser by default.";
+      };
     };
   };
 
@@ -62,8 +66,10 @@ in
         asteroid.apps.gps-test
         asteroid.apps.telegram
         asteroid.apps.kiwix
-        asteroid.apps.browser
         asteroid.apps.twenty48
+      ]
+      ++ lib.optionals cfg.browser.enable [
+        asteroid.apps.browser
       ]
       ++ (with pkgs; [
         asteroid.community-apps.unofficial-watchfaces
