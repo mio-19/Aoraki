@@ -61,6 +61,19 @@ let
     group: files
     shadow: files
   '';
+  inherit (config.mobile.outputs) extraUtils;
+
+  profileFile = pkgs.writeText "profile" ''
+    export PATH="${extraUtils}/bin:/bin:/sbin:$PATH"
+    export LD_LIBRARY_PATH="${extraUtils}/lib:$LD_LIBRARY_PATH"
+    alias ll='ls -la'
+  '';
+
+  continueBootScript = pkgs.writeScript "continue-boot" ''
+    #!/bin/sh
+    echo "Resuming boot to Stage-2..."
+    touch /run/continue-boot
+  '';
 in
 {
   options.mobile.boot.stage-1.ssh = {
@@ -80,11 +93,21 @@ in
         an unauthenticated telnetd daemon on 172.16.42.1 for emergency debugging.
       '';
     };
+
+    holdBeforeSwitchRoot = mkOption {
+      type = types.bool;
+      default = cfg.insecureDebug;
+      description = ''
+        When enabled, pauses stage-1 execution right before unlinking the initrd
+        and switching root to stage-2. To resume, execute 'continue-boot'.
+      '';
+    };
   };
 
   config.mobile.boot.stage-1 = lib.mkIf cfg.enable {
     bootConfig = {
       debug = cfg.insecureDebug;
+      holdBeforeSwitchRoot = cfg.holdBeforeSwitchRoot;
     };
 
     tasks = [
@@ -101,6 +124,9 @@ in
             FileUtils.mkdir_p("/dev/pts")
             System.run("mount", "-t", "devpts", "-o", "ptmxmode=0666,mode=620", "devpts", "/dev/pts") rescue nil
             FileUtils.ln_sf("/dev/pts/ptmx", "/dev/ptmx") rescue nil
+
+            # Ensure busybox symlinks exist in /bin for shell commands
+            System.run("busybox", "--install", "-s", "/bin") rescue nil
 
             is_debug = Configuration["debug"] == true
             if is_debug
@@ -123,6 +149,14 @@ in
       {
         object = banner;
         symlink = "/etc/banner";
+      }
+      {
+        object = profileFile;
+        symlink = "/etc/profile";
+      }
+      {
+        object = continueBootScript;
+        symlink = "/bin/continue-boot";
       }
       {
         object = passwdFile;

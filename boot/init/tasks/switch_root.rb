@@ -383,6 +383,32 @@ class Tasks::SwitchRoot < SingletonTask
     end
   end
 
+  def should_hold?()
+    return true if System.cmdline().grep(/^mobile-nixos\.hold(=yes|=1)?$/).any?
+    return false if System.cmdline().grep(/^mobile-nixos\.hold=(no|0)$/).any?
+    Configuration["holdBeforeSwitchRoot"] == true
+  end
+
+  def hold_before_switch_root()
+    return unless should_hold?
+
+    log("=" * 60)
+    log("Stage-1 hold enabled: pausing before switch_root.")
+    log("Connect via SSH/telnet to debug. Run 'continue-boot' to resume.")
+    log("=" * 60)
+
+    Tasks::Splash.instance.quit("Stage-1 debug hold (run 'continue-boot')", sticky: true)
+
+    File.delete("/run/continue-boot") if File.exist?("/run/continue-boot")
+    until File.exist?("/run/continue-boot")
+      sleep 0.5
+    end
+    File.delete("/run/continue-boot") rescue nil
+
+    log("Resume signal received. Proceeding to stage-2...")
+    Tasks::Splash.instance.quit("Continuing to stage-2")
+  end
+
   def run()
     init = File.join(selected_generation.path, "init")
 
@@ -401,9 +427,12 @@ class Tasks::SwitchRoot < SingletonTask
     log("***")
     log("")
 
+    hold_before_switch_root()
+
     kexec_in_generation(selected_generation) if will_kexec?
 
     Tasks::UDev.instance.teardown()
+
 
     [
       "/proc",
