@@ -397,9 +397,10 @@ class Tasks::SwitchRoot < SingletonTask
     log("Connect via SSH/telnet to debug. Run 'continue-boot' to resume.")
     log("=" * 60)
 
+    File.delete("/run/continue-boot") if File.exist?("/run/continue-boot")
+
     Tasks::Splash.instance.quit("Stage-1 debug hold (run 'continue-boot')", sticky: true)
 
-    File.delete("/run/continue-boot") if File.exist?("/run/continue-boot")
     until File.exist?("/run/continue-boot")
       sleep 0.5
     end
@@ -432,7 +433,6 @@ class Tasks::SwitchRoot < SingletonTask
     kexec_in_generation(selected_generation) if will_kexec?
 
     Tasks::UDev.instance.teardown()
-
 
     [
       "/proc",
