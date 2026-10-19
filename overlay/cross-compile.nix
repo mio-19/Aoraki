@@ -25,6 +25,24 @@ else
       });
   in
   {
+    # systemd 261 requires STATX_ATTR_MOUNT_ROOT (Linux 5.8+) for mount point
+    # detection. Backport the v257 name_to_handle_at()/fstat() fallback for
+    # vendor kernels older than that.
+    # Reference: https://github.com/systemd/systemd/blob/v257/src/basic/mountpoint-util.c
+    systemd =
+      (super.systemd.override (
+        super.lib.optionalAttrs (superStdenv.hostPlatform.isAarch32) {
+          # systemd BPF framework fails when cross-compiling on 32-bit ARM
+          # due to missing linux/types.h in clang target bpf.
+          withLibBPF = false;
+        }
+      )).overrideAttrs
+        (old: {
+          patches = (old.patches or [ ]) ++ [
+            ./patches/systemd-261-mountpoint-old-kernel.patch
+          ];
+        });
+
     # Upstream nixpkgs Qt6 modules skip QtQuick integration during cross-compilation
     # because cross Qt6QuickTools, Qt6QmlTools, and Qt6ShaderToolsTools cmake flags are missing.
     qt6 = super.qt6.overrideScope (
@@ -170,9 +188,6 @@ else
     });
   }
   // super.lib.optionalAttrs (superStdenv != null && superStdenv.hostPlatform.isAarch32) {
-    # systemd BPF framework fails when cross-compiling on 32-bit ARM due to missing linux/types.h in clang target bpf.
-    systemd = super.systemd.override { withLibBPF = false; };
-
     # libpcap pulls in rdma-core (InfiniBand/RoCE), which fails to cross-compile
     # on 32-bit ARM due to CMake Python host/target architecture checks.
     # Smartwatches do not use InfiniBand, so disable RDMA.
