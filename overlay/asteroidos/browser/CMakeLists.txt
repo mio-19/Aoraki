@@ -1,30 +1,25 @@
 cmake_minimum_required(VERSION 3.16)
-project(asteroid-browser VERSION 1.0.0 LANGUAGES CXX)
+project(asteroid-browser VERSION 1.0.0 LANGUAGES C)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_AUTOMOC ON)
-set(CMAKE_AUTORCC ON)
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_C_STANDARD_REQUIRED ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick Network)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(WEBKIT REQUIRED IMPORTED_TARGET webkitgtk-6.0)
+pkg_check_modules(GTK4 REQUIRED IMPORTED_TARGET gtk4)
 
 include(GNUInstallDirs)
 
 set(SOURCES
-    src/main.cpp
-    src/webclient.cpp
-    src/webclient.h
-    src/resources.qrc
+    src/main.c
 )
 
 add_executable(asteroid-browser ${SOURCES})
 
 target_link_libraries(asteroid-browser PRIVATE
-    Qt6::Core
-    Qt6::Gui
-    Qt6::Qml
-    Qt6::Quick
-    Qt6::Network
+    PkgConfig::WEBKIT
+    PkgConfig::GTK4
+    m
 )
 
 install(TARGETS asteroid-browser

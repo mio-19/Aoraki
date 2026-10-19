@@ -35,11 +35,7 @@ rec {
     inherit qml-asteroid amber-mpris mlite;
   };
 
-  browser = callPackage ./browser {
-    inherit qml-asteroid;
-    inherit virtualkeyboard;
-    qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
-  };
+  browser = callPackage ./browser { };
 
   wpewebkit-qt = callPackage ./wpewebkit-qt {
     inherit (pkgs) wpewebkit;

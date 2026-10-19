@@ -1,7 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>qml/main.qml</file>
-        <file>qml/BrowserPage.qml</file>
-        <file>qml/PortalPage.qml</file>
-    </qresource>
-</RCC>
