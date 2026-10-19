@@ -1,0 +1,65 @@
+diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
+index 758b697..4ff5042 100644
+--- a/src/CMakeLists.txt
++++ b/src/CMakeLists.txt
+@@ -19,6 +19,7 @@ set(
+ 	ancs_notification.cpp
+ 	cts.cpp
+ 	findphoneservice.cpp
++	appbridgeservice.cpp
+ )
+ set(
+ 	HEADERS
+@@ -42,6 +43,7 @@ set(
+ 	ancs_notification.h
+ 	cts.h
+ 	findphoneservice.h
++	appbridgeservice.h
+ )
+ 
+ add_executable(asteroid-btsyncd ${SRC} ${HEADERS})
+diff --git a/src/advertisement.cpp b/src/advertisement.cpp
+index 18cd9e6..db95670 100644
+--- a/src/advertisement.cpp
++++ b/src/advertisement.cpp
+@@ -25,6 +25,7 @@ Advertisement::Advertisement(QDBusConnection bus, QObject *parent) : QObject(par
+     mIncludeTxPower = false;
+     addServiceUuid("00000000-0000-0000-0000-00a57e401d05");
+     addServiceUuid(FINDPHONE_UUID);
++    addServiceUuid(APP_BRIDGE_UUID);
+     mDiscoverable = true;
+ 
+     bus.registerObject(mPath, this, QDBusConnection::ExportAllSlots | QDBusConnection::ExportAllProperties);
+diff --git a/src/application.cpp b/src/application.cpp
+index 019f16a..9df9581 100644
+--- a/src/application.cpp
++++ b/src/application.cpp
+@@ -23,6 +23,7 @@
+ #include "screenshotservice.h"
+ #include "timeservice.h"
+ #include "findphoneservice.h"
++#include "appbridgeservice.h"
+ 
+ #include <QDBusMetaType>
+ 
+@@ -37,6 +38,7 @@ Application::Application(QDBusConnection bus, QObject *parent) : QObject(parent)
+     addService(new ScreenshotService(4, bus));
+     addService(new TimeService(5, bus));
+     addService(new FindPhoneService(6, bus));
++    addService(new AppBridgeService(7, bus));
+ 
+     qDBusRegisterMetaType<InterfaceList>();
+     qDBusRegisterMetaType<ManagedObjectList>();
+diff --git a/src/common.h b/src/common.h
+index bed5e28..8f28a72 100644
+--- a/src/common.h
++++ b/src/common.h
+@@ -77,4 +77,8 @@
+ #define FINDPHONE_UUID      "0000F071-0000-0000-0000-00A57E401D05"
+ #define FINDPHONE_RING_UUID "0000F001-0000-0000-0000-00A57E401D05"
+ 
++#define APP_BRIDGE_UUID     "0000A071-0000-0000-0000-00A57E401D05"
++#define APP_BRIDGE_TX_UUID  "0000A001-0000-0000-0000-00A57E401D05"
++#define APP_BRIDGE_RX_UUID  "0000A002-0000-0000-0000-00A57E401D05"
++
+ #endif // COMMON_H

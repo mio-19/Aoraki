@@ -104,11 +104,19 @@
 
   camera = mkAsteroidApp {
     name = "camera";
-    desc = "Remote phone camera shutter and preview controller";
+    desc = "Remote phone camera shutter and live viewfinder preview companion";
     rev = "53c3e636a4f71b05950d125b622cfd8876985fc9";
     sha256 = "0b0vkjh31hjmn5fxvcan5d75xn6ajfslp35hxm7a19g2v5vmij4z";
+    patches = [
+      ./camera/camera-companion.patch
+    ];
+    postPatch = ''
+      cp ${./camera/camerastreamview.h} src/camerastreamview.h
+      cp ${./camera/camerastreamview.cpp} src/camerastreamview.cpp
+    '';
     extraBuildInputs = [
       qt6.qtmultimedia
+      qt6.qtbase
     ];
   };
 

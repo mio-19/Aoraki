@@ -35,7 +35,14 @@ stdenv.mkDerivation (finalAttrs: {
   patches = [
     # Adds find-phone D-Bus command and synchronization packet support for Gadgetbridge
     ./find-phone.patch
+    # Generic App Bridge GATT service and D-Bus interface for remote camera and sensor sync
+    ./app-bridge.patch
   ];
+
+  postPatch = ''
+    cp ${./appbridgeservice.h} src/appbridgeservice.h
+    cp ${./appbridgeservice.cpp} src/appbridgeservice.cpp
+  '';
 
   nativeBuildInputs = [
     cmake
@@ -105,6 +112,20 @@ stdenv.mkDerivation (finalAttrs: {
     esac
     EOF
         chmod +x $out/bin/find-phone
+        cat <<'EOF' > $out/bin/camera-shutter
+    #!/bin/sh
+    set -e
+
+    DEST="org.asteroidos.btsyncd"
+    OBJECT="/org/asteroidos/btsyncd/appbridge"
+    INTERFACE="org.asteroidos.btsyncd.AppBridge"
+    ACTION="''${1:-capture}"
+
+    busctl call "$DEST" "$OBJECT" "$INTERFACE" sendMessage sss "org.asteroidos.camera" "$ACTION" "" 2>/dev/null || \
+    gdbus call --system --dest "$DEST" --object-path "$OBJECT" --method "$INTERFACE.sendMessage" "org.asteroidos.camera" "$ACTION" "" 2>/dev/null || \
+    dbus-send --system --print-reply --dest="$DEST" "$OBJECT" "$INTERFACE.sendMessage" string:"org.asteroidos.camera" string:"$ACTION" string:""
+    EOF
+        chmod +x $out/bin/camera-shutter
   '';
 
   meta = with lib; {
