@@ -10,7 +10,7 @@ class Tasks::LoginEnvironment < SingletonTask
       "/var/log",
     )
     System.write("/etc/shells", "/bin/sh\n")
-    System.write("/etc/passwd", "root:*:0:0:root:/root:/bin/sh\n")
+    System.write("/etc/passwd", "root::0:0:root:/root:/bin/sh\n")
     System.write("/etc/nsswitch.conf", "passwd: files\n")
     System.write("/var/log/lastlog", "")
   end

@@ -26,9 +26,10 @@ class Tasks::UDev < SingletonTask
     # Immediately ensure partition links from devtmpfs
     ensure_partition_links
 
-    # Subsystem-filtered trigger: avoids synthetic Android nodes (e.g. android_usb) that reject uevents with EINVAL
+    # Subsystem-filtered trigger: includes platform and mmc for eMMC host controller
+    # while avoiding synthetic Android nodes (e.g. android_usb) that reject uevents with EINVAL
     begin
-      udevadm("trigger", "--action=add", "--subsystem-match=block", "--subsystem-match=input", "--subsystem-match=graphics")
+      udevadm("trigger", "--action=add", "--subsystem-match=platform", "--subsystem-match=mmc", "--subsystem-match=block", "--subsystem-match=input", "--subsystem-match=graphics")
     rescue System::CommandError => e
       $logger.warn("udevadm trigger non-fatal warning (proceeding): #{e.message}")
     end
@@ -55,12 +56,15 @@ class Tasks::UDev < SingletonTask
     FileUtils.mkdir_p("/dev/disk/by-partlabel")
     FileUtils.mkdir_p("/dev/disk/by-label")
 
-    if File.exist?("/dev/mmcblk0p50")
-      unless File.exist?("/dev/disk/by-partlabel/userdata")
-        System.symlink("/dev/mmcblk0p50", "/dev/disk/by-partlabel/userdata")
-      end
-      unless File.exist?("/dev/disk/by-label/NIXOS_SYSTEM")
-        System.symlink("/dev/mmcblk0p50", "/dev/disk/by-label/NIXOS_SYSTEM")
+    ["/dev/mmcblk0p50", "/dev/block/mmcblk0p50", "/dev/block/bootdevice/by-name/userdata"].each do |candidate|
+      if File.exist?(candidate)
+        unless File.exist?("/dev/disk/by-partlabel/userdata")
+          System.symlink(candidate, "/dev/disk/by-partlabel/userdata")
+        end
+        unless File.exist?("/dev/disk/by-label/NIXOS_SYSTEM")
+          System.symlink(candidate, "/dev/disk/by-label/NIXOS_SYSTEM")
+        end
+        break
       end
     end
 

