@@ -11,8 +11,8 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 * [ ] *Circular AMOLED Visual Optimization*:
 ** Ensure all stage-1 LVGL applets (`boot-splash`, `boot-error`, `boot-selection`) adapt gracefully to circular viewports with circular-safe margins and centered layouts.
 ** Add burn-in protection shifts and low-power Ambient / Always-On-Display (AOD) watchfaces.
-* [ ] *Hardware Rotary Crown Integration*:
-** Map hardware crown rotational encoder events (`/dev/input/eventX` relative axis) directly to Wayland wheel / scroll events in `asteroid-launcher` and application views.
+* [x] *Hardware Rotary Crown Integration*:
+** Mapped hardware crown rotational encoder events (`/dev/input/event1` relative axis) via `-plugin evdevmouse:/dev/input/event1` in `asteroid-launcher` through `$LIPSTICK_OPTIONS`.
 * [ ] *On-Screen Virtual Keyboard Enhancements*:
 ** Optimize RIME input method suggestions and key layout spacing for 400x400+ circular displays.
 ** Provide flick-to-type or swipe input support.
@@ -64,6 +64,10 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 * [ ] *Btrfs Transparent Compression Evaluation on Smartwatches*:
 ** Downstream Qualcomm 4.14 vendor kernel currently fails to mount Btrfs root partitions (`mount -t btrfs`), necessitating ext4 as the standard root filesystem.
 ** Investigate backporting modern Btrfs fixes or kernel upgrade (4.19 / mainlined kernel) to allow zstd transparent rootfs compression on eMMC.
-* [ ] *Stage-2 Graphical Compositor Configuration on Qualcomm MDSS fbdev*:
-** Configure `asteroid-launcher` (Lipstick QtWayland compositor) to render on Qualcomm Mobile Display Subsystem (`/dev/fb0`) via `eglfs` / `linuxfb`.
+* [x] *Stage-2 Graphical Compositor Configuration on Qualcomm MDSS fbdev*:
+** Configured `asteroid-launcher` (Lipstick QtWayland compositor) to render on Qualcomm Mobile Display Subsystem (`/dev/fb0`) via `linuxfb:fb=/dev/fb0` with `QT_ENABLE_HIGHDPI_SCALING=0`.
+** Enabled `mobile.quirks.fb-refresher` (`msm-fb-refresher --loop`) and `qualcomm.fb-notify` for continuous command-mode DSI panel redraws.
+** Initialized display unblanking (`echo 0 > /sys/class/graphics/fb0/blank`) and backlight brightness (50%) in `boot.postBootCommands`.
+** Isolated the framebuffer from VT text console by disabling `getty@tty1` and configured `services.logind.settings.Login.HandlePowerKey = "ignore"`.
+** Added `watch-post-boot-power` service to restore low-power sleep modes (`sleep_disabled = 0`) post-boot.
 
