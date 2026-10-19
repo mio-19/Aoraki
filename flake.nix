@@ -20,6 +20,10 @@
           default = import ./lib/configuration.nix { };
         };
 
-      overlays.default = import ./overlay/default.nix;
+      overlays = {
+        default = import ./overlay/default.nix;
+        always = import ./overlay/always.nix;
+        cross = import ./overlay/cross-compile.nix;
+      };
     };
 }
