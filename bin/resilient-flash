@@ -255,7 +255,39 @@ def flash_partition(
   print(f"Source Image     : {image_path} ({total_size / (1024 * 1024):.1f} MB)")
   print(f"Chunk Size       : {chunk_size_mb} MB ({num_chunks} total chunks)")
   print(f"Verification     : {'SHA256 Checksumming' if verify else 'None'}")
-  print("=" * 64)
+  # Query partition capacity on device before flashing
+  try:
+    ret_sz, out_sz, _ = run_adb(
+        adb_prefix,
+        ["shell", f"blockdev --getsize64 {partition} 2>/dev/null || true"],
+        capture_only=True,
+    )
+    if ret_sz == 0 and out_sz:
+      part_bytes_str = out_sz.decode("latin1", errors="replace").strip()
+      if part_bytes_str.isdigit():
+        part_bytes = int(part_bytes_str)
+        print(f"Partition Capacity: {part_bytes / (1024 * 1024):.1f} MB")
+        if total_size > part_bytes:
+          print(
+              f"\n[!] ERROR: Image size ({total_size / (1024 * 1024):.1f} MB) exceeds"
+              f" target partition capacity ({part_bytes / (1024 * 1024):.1f} MB)!",
+              file=sys.stderr,
+          )
+          print(
+              "    The uncompressed image cannot fit on this partition.",
+              file=sys.stderr,
+          )
+          print(
+              "    Please trim the image closure or flash sparse image with fastboot:",
+              file=sys.stderr,
+          )
+          print(
+              "      fastboot flash userdata system.img",
+              file=sys.stderr,
+          )
+          sys.exit(1)
+  except Exception:
+    pass
 
   # State kept strictly in-memory
   verified_set = set()
@@ -312,7 +344,26 @@ def flash_partition(
           ]
           ret, _, err = run_adb(adb_prefix, cmd, input_bytes=data, timeout=chunk_timeout, capture_only=True)
           if ret != 0:
-            raise RuntimeError(f"dd write failed: {err.decode('latin1', errors='replace')}")
+            err_msg = err.decode('latin1', errors='replace').strip()
+            if offset_mb >= 2048 and "Invalid argument" in err_msg:
+              print(
+                  f"\n[!] FATAL: 'dd' failed with 'Invalid argument' at offset {offset_mb} MB (2 GiB boundary).",
+                  file=sys.stderr,
+              )
+              print(
+                  "    Reason: 32-bit seek offset overflow in recovery dd, or partition capacity reached.",
+                  file=sys.stderr,
+              )
+              print(
+                  "    Workaround: Flash the sparse image via fastboot: 'fastboot flash userdata system.img'",
+                  file=sys.stderr,
+              )
+              print(
+                  "    See BUGS.md for full technical details.",
+                  file=sys.stderr,
+              )
+              sys.exit(1)
+            raise RuntimeError(f"dd write failed: {err_msg}")
 
           dt = max(time.time() - t0, 0.001)
           speed = (actual_chunk_len / (1024 * 1024)) / dt
