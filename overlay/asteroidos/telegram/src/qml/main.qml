@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.VirtualKeyboard
 import org.asteroid.controls
 import org.asteroid.utils
 
@@ -24,6 +25,21 @@ Application {
         target: telegramClient
         function onMessageReceived(title, text) {
             // Optional feedback or notification alert
+        }
+    }
+
+    InputPanel {
+        id: inputPanel
+        z: 999
+        x: 0
+        y: active ? parent.height - height : parent.height
+        width: parent.width
+
+        Behavior on y {
+            NumberAnimation {
+                duration: 200
+                easing.type: Easing.OutQuad
+            }
         }
     }
 }

@@ -96,6 +96,22 @@ in
         );
     in
     {
+      qtdeclarative = qsuper.qtdeclarative.overrideAttrs (
+        old:
+        final.lib.optionalAttrs isCross {
+          cmakeFlags =
+            (map (
+              flag:
+              if final.lib.hasPrefix "-DQt6ShaderToolsTools_DIR=" flag then
+                "-DQt6ShaderToolsTools_DIR=${final.pkgsBuildBuild.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
+              else
+                flag
+            ) (old.cmakeFlags or [ ]))
+            ++ [
+              "-DQt6QuickTools_DIR=${final.pkgsBuildBuild.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+            ];
+        }
+      );
       qtwayland = addCrossQuickTools qsuper.qtwayland;
       qtvirtualkeyboard = addCrossQuickTools qsuper.qtvirtualkeyboard;
       qtmultimedia = addCrossQuickTools qsuper.qtmultimedia;

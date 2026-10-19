@@ -1,0 +1,8 @@
+<RCC>
+    <qresource prefix="/">
+        <file>qml/main.qml</file>
+        <file>qml/LibraryPage.qml</file>
+        <file>qml/ArticlePage.qml</file>
+        <file>qml/SearchPage.qml</file>
+    </qresource>
+</RCC>

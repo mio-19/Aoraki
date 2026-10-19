@@ -9,15 +9,15 @@ int ChatModel::rowCount(const QModelIndex &parent) const
 {
     if (parent.isValid())
         return 0;
-    return m_chats.size();
+    return m_filteredChats.size();
 }
 
 QVariant ChatModel::data(const QModelIndex &index, int role) const
 {
-    if (!index.isValid() || index.row() < 0 || index.row() >= m_chats.size())
+    if (!index.isValid() || index.row() < 0 || index.row() >= m_filteredChats.size())
         return QVariant();
 
-    const ChatItem &item = m_chats.at(index.row());
+    const ChatItem &item = m_filteredChats.at(index.row());
     switch (role) {
     case IdRole:
         return item.id;
@@ -48,6 +48,30 @@ QHash<int, QByteArray> ChatModel::roleNames() const
     return roles;
 }
 
+void ChatModel::setFilterQuery(const QString &query)
+{
+    if (m_filterQuery != query) {
+        m_filterQuery = query;
+        rebuildFilteredChats();
+        emit filterQueryChanged();
+    }
+}
+
+void ChatModel::rebuildFilteredChats()
+{
+    beginResetModel();
+    m_filteredChats.clear();
+    const QString trimmed = m_filterQuery.trimmed();
+    for (const auto &item : m_chats) {
+        if (trimmed.isEmpty() ||
+            item.title.contains(trimmed, Qt::CaseInsensitive) ||
+            item.lastMessage.contains(trimmed, Qt::CaseInsensitive)) {
+            m_filteredChats.append(item);
+        }
+    }
+    endResetModel();
+}
+
 bool ChatModel::hasChat(const QString &id) const
 {
     for (const auto &chat : m_chats) {
@@ -59,9 +83,8 @@ bool ChatModel::hasChat(const QString &id) const
 
 void ChatModel::addChat(const QString &id, const QString &title, const QString &lastMessage, const QString &time, int unreadCount, const QString &avatarColor)
 {
-    beginInsertRows(QModelIndex(), m_chats.size(), m_chats.size());
     m_chats.append({id, title, lastMessage, time, unreadCount, avatarColor});
-    endInsertRows();
+    rebuildFilteredChats();
 }
 
 void ChatModel::addOrUpdateChat(const QString &id, const QString &title, const QString &lastMessage, const QString &time, int unreadCount, const QString &avatarColor)
@@ -75,29 +98,19 @@ void ChatModel::addOrUpdateChat(const QString &id, const QString &title, const Q
                 m_chats[i].unreadCount = unreadCount;
             if (!avatarColor.isEmpty())
                 m_chats[i].avatarColor = avatarColor;
-            emit dataChanged(index(i), index(i), {TitleRole, LastMessageRole, TimeRole, UnreadCountRole, AvatarColorRole});
-            moveChatToTop(id);
+
+            // Move to top on new message
+            if (i > 0) {
+                ChatItem item = m_chats.takeAt(i);
+                m_chats.prepend(item);
+            }
+            rebuildFilteredChats();
             return;
         }
     }
-    beginInsertRows(QModelIndex(), 0, 0);
-    m_chats.prepend({id, title, lastMessage, time, unreadCount, avatarColor});
-    endInsertRows();
-}
 
-void ChatModel::moveChatToTop(const QString &chatId)
-{
-    for (int i = 0; i < m_chats.size(); ++i) {
-        if (m_chats[i].id == chatId) {
-            if (i > 0) {
-                beginMoveRows(QModelIndex(), i, i, QModelIndex(), 0);
-                ChatItem item = m_chats.takeAt(i);
-                m_chats.prepend(item);
-                endMoveRows();
-            }
-            break;
-        }
-    }
+    m_chats.prepend({id, title, lastMessage, time, unreadCount, avatarColor});
+    rebuildFilteredChats();
 }
 
 void ChatModel::updateLastMessage(const QString &chatId, const QString &lastMessage, const QString &time)
@@ -106,9 +119,13 @@ void ChatModel::updateLastMessage(const QString &chatId, const QString &lastMess
         if (m_chats[i].id == chatId) {
             m_chats[i].lastMessage = lastMessage;
             m_chats[i].time = time;
-            emit dataChanged(index(i), index(i), {LastMessageRole, TimeRole});
-            moveChatToTop(chatId);
-            break;
+            m_chats[i].unreadCount++;
+            if (i > 0) {
+                ChatItem item = m_chats.takeAt(i);
+                m_chats.prepend(item);
+            }
+            rebuildFilteredChats();
+            return;
         }
     }
 }
@@ -117,11 +134,23 @@ void ChatModel::markAsRead(const QString &chatId)
 {
     for (int i = 0; i < m_chats.size(); ++i) {
         if (m_chats[i].id == chatId) {
-            if (m_chats[i].unreadCount > 0) {
-                m_chats[i].unreadCount = 0;
-                emit dataChanged(index(i), index(i), {UnreadCountRole});
+            m_chats[i].unreadCount = 0;
+            rebuildFilteredChats();
+            return;
+        }
+    }
+}
+
+void ChatModel::moveChatToTop(const QString &chatId)
+{
+    for (int i = 0; i < m_chats.size(); ++i) {
+        if (m_chats[i].id == chatId) {
+            if (i > 0) {
+                ChatItem item = m_chats.takeAt(i);
+                m_chats.prepend(item);
+                rebuildFilteredChats();
             }
-            break;
+            return;
         }
     }
 }
@@ -130,12 +159,13 @@ void ChatModel::clear()
 {
     beginResetModel();
     m_chats.clear();
+    m_filteredChats.clear();
     endResetModel();
 }
 
 ChatItem ChatModel::getChat(int row) const
 {
-    if (row >= 0 && row < m_chats.size())
-        return m_chats.at(row);
+    if (row >= 0 && row < m_filteredChats.size())
+        return m_filteredChats.at(row);
     return ChatItem();
 }

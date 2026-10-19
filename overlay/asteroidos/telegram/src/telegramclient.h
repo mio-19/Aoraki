@@ -98,6 +98,7 @@ public:
     Q_INVOKABLE void loginWithToken(const QString &token);
     Q_INVOKABLE void logout();
     Q_INVOKABLE void refresh();
+    Q_INVOKABLE void searchChats(const QString &query);
     Q_INVOKABLE void addQuickReply(const QString &text);
     Q_INVOKABLE void removeQuickReply(int index);
     Q_INVOKABLE void resetQuickReplies();
@@ -128,7 +129,7 @@ private:
     void setupDemoData();
     void loadSettings();
     void saveSettings();
-    void appendLocalMessage(const QString &text, const QString &senderName = QString(), bool isOutgoing = true, const QString &type = "text");
+    void appendLocalMessage(const QString &text, const QString &senderName = QString(), bool isOutgoing = true, const QString &type = "text", const QString &extraInfo = QString());
     void triggerHaptics();
     void showNotification(const QString &title, const QString &text);
 

@@ -26,6 +26,7 @@ stdenv.mkDerivation (finalAttrs: {
     cmake
     kdePackages.extra-cmake-modules
     pkg-config
+    qt6.wrapQtAppsHook
   ];
 
   buildInputs = [
@@ -69,6 +70,7 @@ stdenv.mkDerivation (finalAttrs: {
     "-DWITH_ASTEROIDAPP=ON"
     "-DWITH_CMAKE_MODULES=ON"
     "-DECM_DIR=${kdePackages.extra-cmake-modules}/share/ECM/cmake"
+    "-DCMAKE_PREFIX_PATH=${qt6.qtdeclarative};${qt6.qtbase};${qt6.qtsvg};${qt6.qtwayland};${qt6.qtshadertools}"
     "-DQt6Quick_DIR=${qt6.qtdeclarative}/lib/cmake/Qt6Quick"
     "-DQt6Qml_DIR=${qt6.qtdeclarative}/lib/cmake/Qt6Qml"
     "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"

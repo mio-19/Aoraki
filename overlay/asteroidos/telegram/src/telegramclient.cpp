@@ -314,18 +314,38 @@ void TelegramClient::processTdlibNewMessage(const QJsonObject &messageObj)
     QString contentType = content["@type"].toString();
     QString text;
     QString msgType = "text";
+    QString extraInfo;
 
     if (contentType == "messageText") {
         text = content["text"].toObject()["text"].toString();
         msgType = "text";
     } else if (contentType == "messagePhoto") {
         text = content["caption"].toObject()["text"].toString();
-        if (text.isEmpty()) text = "Photo";
+        if (text.isEmpty()) text = "Photo attachment";
         msgType = "photo";
+        extraInfo = "Photo";
     } else if (contentType == "messageVoiceNote") {
         int duration = content["voice_note"].toObject()["duration"].toInt();
-        text = QString("Voice note (%1s)").arg(duration);
+        int mins = duration / 60;
+        int secs = duration % 60;
+        extraInfo = QString("%1:%2").arg(mins).arg(secs, 2, 10, QChar('0'));
+        text = content["caption"].toObject()["text"].toString();
+        if (text.isEmpty()) text = "Voice note";
         msgType = "voice";
+    } else if (contentType == "messageSticker") {
+        text = content["sticker"].toObject()["emoji"].toString();
+        if (text.isEmpty()) text = "Sticker";
+        msgType = "sticker";
+        extraInfo = "Sticker";
+    } else if (contentType == "messageLocation") {
+        text = "Shared location";
+        msgType = "location";
+        extraInfo = "Pin";
+    } else if (contentType == "messageDocument") {
+        text = content["document"].toObject()["file_name"].toString();
+        if (text.isEmpty()) text = "Document";
+        msgType = "document";
+        extraInfo = "File";
     } else {
         text = "Message";
     }
@@ -336,11 +356,11 @@ void TelegramClient::processTdlibNewMessage(const QJsonObject &messageObj)
     qint64 senderId = messageObj["sender_id"].toObject()["user_id"].toInteger();
     QString senderName = m_tdlibUserNames.value(senderId, isOutgoing ? m_accountName : "Contact");
 
-    MessageItem item{msgId, senderName, text, timeStr, isOutgoing, true, msgType};
+    MessageItem item{msgId, senderName, text, timeStr, isOutgoing, true, msgType, extraInfo};
     m_chatHistories[chatId].append(item);
 
     if (m_currentChatId == chatId) {
-        m_messageModel->addMessage(item.id, item.senderName, item.text, item.time, item.isOutgoing, item.isDelivered, item.type);
+        m_messageModel->addMessage(item.id, item.senderName, item.text, item.time, item.isOutgoing, item.isDelivered, item.type, item.extraInfo);
         emit messagesChanged();
     }
 
@@ -364,25 +384,27 @@ void TelegramClient::setupDemoData()
     m_chatModel->addChat("alice_w", "Alice", "See you at 3pm for coffee?", "Yesterday", 0, "#9B59B6");
 
     m_chatHistories["asteroid_dev"] = {
-        {"1", "Sylvie", "Has anyone tested the latest power profiles?", "11:30", false, true, "text"},
-        {"2", "Florent", "Yes, battery life improved by 18% in ambient mode.", "11:35", false, true, "text"},
-        {"3", "Asteroid User", "Awesome! Testing on Fossil Carlyle now.", "11:40", true, true, "text"},
-        {"4", "Sylvie", "New smartwatch release build ready", "11:42", false, true, "text"}
+        {"1", "Sylvie", "Has anyone tested the latest power profiles?", "11:30", false, true, "text", ""},
+        {"2", "Florent", "Yes, battery life improved by 18% in ambient mode.", "11:35", false, true, "text", ""},
+        {"3", "Asteroid User", "Awesome! Testing on Fossil Carlyle now.", "11:40", true, true, "text", ""},
+        {"4", "Sylvie", "Audio status report", "11:41", false, true, "voice", "0:24"},
+        {"5", "Sylvie", "New smartwatch release build ready", "11:42", false, true, "text", ""}
     };
 
     m_chatHistories["wearix_chat"] = {
-        {"1", "Dev", "Added Pinyin, Double Pinyin, and Wubi to virtual keyboard.", "10:10", false, true, "text"},
-        {"2", "Asteroid User", "Tested luna_pinyin on 400x400 round display.", "10:12", true, true, "text"},
-        {"3", "Timo", "Virtual keyboard RIME works nicely!", "10:15", false, true, "text"}
+        {"1", "Dev", "Added Pinyin, Double Pinyin, and Wubi to virtual keyboard.", "10:10", false, true, "text", ""},
+        {"2", "Asteroid User", "Tested luna_pinyin on 400x400 round display.", "10:12", true, true, "text", ""},
+        {"3", "Timo", "Virtual keyboard RIME works nicely!", "10:15", false, true, "text", ""}
     };
 
     m_chatHistories["saved_messages"] = {
-        {"1", "Saved Messages", "Meeting notes: buy watch bands", "Yesterday", true, true, "text"}
+        {"1", "Saved Messages", "Meeting notes: buy watch bands", "Yesterday", true, true, "text", ""}
     };
 
     m_chatHistories["alice_w"] = {
-        {"1", "Alice", "Hey, are you free this afternoon?", "Yesterday", false, true, "text"},
-        {"2", "Alice", "See you at 3pm for coffee?", "Yesterday", false, true, "text"}
+        {"1", "Alice", "Hey, are you free this afternoon?", "Yesterday", false, true, "text", ""},
+        {"2", "Alice", "Photo preview of the cafe", "Yesterday", false, true, "photo", "Photo"},
+        {"3", "Alice", "See you at 3pm for coffee?", "Yesterday", false, true, "text", ""}
     };
 
     selectChat("asteroid_dev", "AsteroidOS Developers");
@@ -507,7 +529,7 @@ void TelegramClient::selectChat(const QString &chatId, const QString &title)
     m_messageModel->clear();
     const auto &history = m_chatHistories.value(chatId);
     for (const auto &item : history) {
-        m_messageModel->addMessage(item.id, item.senderName, item.text, item.time, item.isOutgoing, item.isDelivered, item.type);
+        m_messageModel->addMessage(item.id, item.senderName, item.text, item.time, item.isOutgoing, item.isDelivered, item.type, item.extraInfo);
     }
     m_chatModel->markAsRead(chatId);
     emit messagesChanged();
@@ -517,7 +539,18 @@ void TelegramClient::selectChat(const QString &chatId, const QString &title)
         openChat["@type"] = "openChat";
         openChat["chat_id"] = chatId.toLongLong();
         sendTdlibRequest(openChat);
+
+        QJsonObject viewReq;
+        viewReq["@type"] = "viewMessages";
+        viewReq["chat_id"] = chatId.toLongLong();
+        viewReq["force_read"] = true;
+        sendTdlibRequest(viewReq);
     }
+}
+
+void TelegramClient::searchChats(const QString &query)
+{
+    m_chatModel->setFilterQuery(query);
 }
 
 void TelegramClient::sendMessage(const QString &text)
@@ -550,15 +583,15 @@ void TelegramClient::sendQuickReply(const QString &text)
     sendMessage(text);
 }
 
-void TelegramClient::appendLocalMessage(const QString &text, const QString &senderName, bool isOutgoing, const QString &type)
+void TelegramClient::appendLocalMessage(const QString &text, const QString &senderName, bool isOutgoing, const QString &type, const QString &extraInfo)
 {
     QString timeStr = QTime::currentTime().toString("hh:mm");
     QString msgId = QString::number(QDateTime::currentMSecsSinceEpoch());
     QString sender = senderName.isEmpty() ? m_accountName : senderName;
 
-    MessageItem item{msgId, sender, text, timeStr, isOutgoing, true, type};
+    MessageItem item{msgId, sender, text, timeStr, isOutgoing, true, type, extraInfo};
     m_chatHistories[m_currentChatId].append(item);
-    m_messageModel->addMessage(item.id, item.senderName, item.text, item.time, item.isOutgoing, item.isDelivered, item.type);
+    m_messageModel->addMessage(item.id, item.senderName, item.text, item.time, item.isOutgoing, item.isDelivered, item.type, item.extraInfo);
     m_chatModel->updateLastMessage(m_currentChatId, text, timeStr);
     emit messagesChanged();
 }

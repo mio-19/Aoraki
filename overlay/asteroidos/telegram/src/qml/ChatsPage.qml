@@ -14,31 +14,86 @@ Item {
             text: "Telegram"
             width: parent.width
 
-            IconButton {
+            Row {
                 anchors.left: parent.left
                 anchors.leftMargin: DeviceSpecs.hasRoundScreen ? Dims.w(8) : Dims.w(3)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Dims.w(9)
-                height: width
-                iconName: "ios-refresh"
-                onClicked: telegramClient.refresh()
+                spacing: Dims.w(1)
+
+                IconButton {
+                    width: Dims.w(8)
+                    height: width
+                    iconName: "ios-refresh"
+                    onClicked: telegramClient.refresh()
+                }
+
+                IconButton {
+                    width: Dims.w(8)
+                    height: width
+                    iconName: "ios-search"
+                    onClicked: {
+                        searchBar.visible = !searchBar.visible
+                        if (!searchBar.visible) {
+                            chatModel.filterQuery = ""
+                        }
+                    }
+                }
+            }
+
+            // Connection status pill
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: Dims.h(0.4)
+                spacing: Dims.w(1)
+
+                Rectangle {
+                    width: Dims.w(1.8)
+                    height: width
+                    radius: width / 2
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: telegramClient.connectionStatus === "Connected" ? "#4CAF50" : (telegramClient.connectionStatus === "Offline" ? "#F44336" : "#FF9800")
+                }
+
+                Text {
+                    text: telegramClient.connectionStatus
+                    color: "#888888"
+                    font.pixelSize: Dims.l(2.2)
+                }
             }
 
             IconButton {
                 anchors.right: parent.right
                 anchors.rightMargin: DeviceSpecs.hasRoundScreen ? Dims.w(8) : Dims.w(3)
                 anchors.verticalCenter: parent.verticalCenter
-                width: Dims.w(10)
+                width: Dims.w(9)
                 height: width
                 iconName: "ios-settings-outline"
                 onClicked: layerStack.push(settingsPageComponent)
             }
         }
 
+        // Search Bar (collapsible)
+        Item {
+            id: searchBar
+            visible: false
+            width: parent.width
+            height: visible ? Dims.h(12) : 0
+
+            TextField {
+                id: searchInput
+                anchors.centerIn: parent
+                width: parent.width - (DeviceSpecs.hasRoundScreen ? Dims.w(16) : Dims.w(8))
+                height: Dims.h(9)
+                placeholderText: "Search chats..."
+                onTextChanged: chatModel.filterQuery = text
+            }
+        }
+
         ListView {
             id: chatsList
             width: parent.width
-            height: parent.height - header.height
+            height: parent.height - header.height - searchBar.height
             clip: true
             model: chatModel
             boundsBehavior: Flickable.DragOverBounds

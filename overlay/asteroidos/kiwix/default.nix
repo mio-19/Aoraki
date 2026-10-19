@@ -1,67 +1,86 @@
 {
   lib,
   stdenv,
-  makeWrapper,
-  kiwix-tools,
-  browser,
-  procps,
+  cmake,
+  pkg-config,
+  qt6,
+  libzim,
+  qml-asteroid,
+  virtualkeyboard ? null,
+  qtvirtualkeyboard ? qt6.qtvirtualkeyboard,
+  buildPackages,
 }:
 
-# Kiwix offline Wikipedia and reference reader adaptation for smartwatches
-# Upstream desktop reference: https://github.com/kiwix/kiwix-desktop
-# Upstream tools & serve backend: https://github.com/kiwix/kiwix-tools
-stdenv.mkDerivation {
+let
+  isCross = !stdenv.buildPlatform.canExecute stdenv.hostPlatform;
+in
+stdenv.mkDerivation (finalAttrs: {
   pname = "asteroid-kiwix";
-  version = "1.0.0";
+  version = "2.0.0";
 
   src = ./.;
 
-  nativeBuildInputs = [ makeWrapper ];
+  strictDeps = true;
 
-  dontBuild = true;
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+    qt6.wrapQtAppsHook
+  ];
 
-  installPhase = ''
-    runHook preInstall
+  cmakeFlags = lib.optionals isCross [
+    "-DQt6QuickTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QuickTools"
+    "-DQt6QmlTools_DIR=${buildPackages.qt6.qtdeclarative}/lib/cmake/Qt6QmlTools"
+    "-DQt6ShaderToolsTools_DIR=${buildPackages.qt6.qtshadertools}/lib/cmake/Qt6ShaderToolsTools"
+  ];
 
-    mkdir -p $out/bin $out/share/kiwix-watch
-    mkdir -p $out/share/applications
-    mkdir -p $out/share/icons/hicolor/scalable/apps
+  buildInputs = [
+    qt6.qtbase
+    qt6.qtdeclarative
+    libzim
+    qml-asteroid
+  ];
 
-    # Install launcher script with substitution
-    substitute kiwix-watch.sh $out/bin/kiwix-watch \
-      --subst-var-by out "$out"
-    chmod +x $out/bin/kiwix-watch
-
-    # Install UI assets
-    install -Dm644 welcome.html $out/share/kiwix-watch/welcome.html
-
-    # Install desktop entry
-    install -Dm644 org.kiwix.desktop.desktop $out/share/applications/org.kiwix.desktop.desktop
-    install -Dm644 org.kiwix.desktop.desktop $out/share/applications/kiwix.desktop
-
-    # Install icon
-    install -Dm644 kiwix.svg $out/share/icons/hicolor/scalable/apps/kiwix.svg
-    install -Dm644 kiwix.svg $out/share/icons/hicolor/scalable/apps/org.kiwix.desktop.svg
-
-    # Wrap launcher with kiwix-tools, asteroid-browser, and process management
-    wrapProgram $out/bin/kiwix-watch \
-      --prefix PATH : ${
-        lib.makeBinPath [
-          kiwix-tools
-          browser
-          procps
-        ]
-      } \
-      --set-default KIWIX_WATCH_SHARE "$out/share/kiwix-watch"
-
-    runHook postInstall
-  '';
+  qtWrapperArgs = [
+    "--prefix"
+    "QML2_IMPORT_PATH"
+    ":"
+    "${qml-asteroid}/lib/qt-6/qml"
+    "--set-default"
+    "QT_IM_MODULE"
+    "qtvirtualkeyboard"
+    "--set-default"
+    "QT_VIRTUALKEYBOARD_STYLE"
+    "watch"
+  ]
+  ++ lib.optionals (qtvirtualkeyboard != null) [
+    "--prefix"
+    "QT_PLUGIN_PATH"
+    ":"
+    "${qtvirtualkeyboard}/lib/qt-6/plugins"
+    "--prefix"
+    "QML2_IMPORT_PATH"
+    ":"
+    "${qtvirtualkeyboard}/lib/qt-6/qml"
+  ]
+  ++ lib.optionals (virtualkeyboard != null) [
+    "--prefix"
+    "QML2_IMPORT_PATH"
+    ":"
+    "${virtualkeyboard}/lib/qt-6/qml"
+    "--set-default"
+    "QT_VIRTUALKEYBOARD_LAYOUT_PATH"
+    "${virtualkeyboard}/share/qtvirtualkeyboard/layouts"
+    "--set-default"
+    "RIME_SHARED_DATA_DIR"
+    "${virtualkeyboard}/share/rime-data"
+  ];
 
   meta = with lib; {
-    description = "Offline Wikipedia and reference reader adapted for smartwatches using kiwix-tools and asteroid-browser";
+    description = "Native lightweight offline Wikipedia and ZIM reader for AsteroidOS powered by libzim with virtual keyboard search";
     homepage = "https://www.kiwix.org/";
     license = licenses.gpl3Plus;
     platforms = platforms.linux;
-    mainProgram = "kiwix-watch";
+    mainProgram = "asteroid-kiwix";
   };
-}
+})

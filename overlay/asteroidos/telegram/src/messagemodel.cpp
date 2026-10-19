@@ -33,6 +33,8 @@ QVariant MessageModel::data(const QModelIndex &index, int role) const
         return item.isDelivered;
     case TypeRole:
         return item.type;
+    case ExtraInfoRole:
+        return item.extraInfo;
     default:
         return QVariant();
     }
@@ -48,13 +50,14 @@ QHash<int, QByteArray> MessageModel::roleNames() const
     roles[IsOutgoingRole] = "isOutgoing";
     roles[IsDeliveredRole] = "isDelivered";
     roles[TypeRole] = "type";
+    roles[ExtraInfoRole] = "extraInfo";
     return roles;
 }
 
-void MessageModel::addMessage(const QString &id, const QString &sender, const QString &text, const QString &time, bool isOutgoing, bool isDelivered, const QString &type)
+void MessageModel::addMessage(const QString &id, const QString &sender, const QString &text, const QString &time, bool isOutgoing, bool isDelivered, const QString &type, const QString &extraInfo)
 {
     beginInsertRows(QModelIndex(), m_messages.size(), m_messages.size());
-    m_messages.append({id, sender, text, time, isOutgoing, isDelivered, type});
+    m_messages.append({id, sender, text, time, isOutgoing, isDelivered, type, extraInfo});
     endInsertRows();
 }
 
@@ -63,8 +66,9 @@ void MessageModel::updateDelivered(const QString &id, bool isDelivered)
     for (int i = 0; i < m_messages.size(); ++i) {
         if (m_messages[i].id == id) {
             m_messages[i].isDelivered = isDelivered;
-            emit dataChanged(index(i), index(i), {IsDeliveredRole});
-            break;
+            QModelIndex idx = index(i, 0);
+            emit dataChanged(idx, idx, {IsDeliveredRole});
+            return;
         }
     }
 }

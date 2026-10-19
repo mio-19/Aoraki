@@ -90,23 +90,65 @@ Item {
                     anchors.left: model.isOutgoing ? undefined : parent.left
                     anchors.leftMargin: model.isOutgoing ? 0 : (DeviceSpecs.hasRoundScreen ? Dims.w(8) : Dims.w(4))
 
-                    width: Math.min(messageText.implicitWidth + Dims.w(6) + timeLabel.implicitWidth, messageList.width * 0.78)
-                    height: messageText.implicitHeight + Dims.h(3.2)
+                    width: Math.min(contentColumn.implicitWidth + Dims.w(6) + timeLabel.implicitWidth, messageList.width * 0.82)
+                    height: contentColumn.implicitHeight + Dims.h(3.2)
                     radius: Dims.w(3)
                     color: model.isOutgoing ? "#0078B7" : "#26262B"
 
-                    Text {
-                        id: messageText
+                    Column {
+                        id: contentColumn
                         anchors.left: parent.left
                         anchors.leftMargin: Dims.w(3)
                         anchors.top: parent.top
-                        anchors.topMargin: Dims.h(1.4)
+                        anchors.topMargin: Dims.h(1.2)
                         anchors.right: timeLabel.left
                         anchors.rightMargin: Dims.w(2)
-                        text: model.text
-                        color: "#FFFFFF"
-                        font.pixelSize: Dims.l(3.2)
-                        wrapMode: Text.Wrap
+                        spacing: Dims.h(0.4)
+
+                        // Rich Media Badge Header for non-text messages
+                        Row {
+                            visible: model.type !== "text"
+                            spacing: Dims.w(1.5)
+
+                            Icon {
+                                width: Dims.w(4.5)
+                                height: width
+                                anchors.verticalCenter: parent.verticalCenter
+                                name: {
+                                    if (model.type === "voice") return "ios-mic"
+                                    if (model.type === "photo") return "ios-camera"
+                                    if (model.type === "sticker") return "ios-happy-outline"
+                                    if (model.type === "location") return "ios-pin"
+                                    if (model.type === "document") return "ios-document"
+                                    return "ios-chatbubbles"
+                                }
+                                color: model.isOutgoing ? "#BEE3F8" : "#00A3E0"
+                            }
+
+                            Text {
+                                text: {
+                                    if (model.type === "voice") return "Voice (" + (model.extraInfo || "0:15") + ")"
+                                    if (model.type === "photo") return "Photo"
+                                    if (model.type === "sticker") return "Sticker"
+                                    if (model.type === "location") return "Location"
+                                    if (model.type === "document") return "File"
+                                    return ""
+                                }
+                                color: model.isOutgoing ? "#E2E8F0" : "#63B3ED"
+                                font.pixelSize: Dims.l(2.6)
+                                font.bold: true
+                            }
+                        }
+
+                        // Message Text / Caption
+                        Text {
+                            id: messageText
+                            width: contentColumn.width
+                            text: model.text
+                            color: "#FFFFFF"
+                            font.pixelSize: Dims.l(3.2)
+                            wrapMode: Text.Wrap
+                        }
                     }
 
                     Text {

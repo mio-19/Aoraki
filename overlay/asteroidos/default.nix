@@ -49,9 +49,10 @@ rec {
   };
 
   kiwix = callPackage ./kiwix {
-    kiwix-tools = pkgs.kiwix-tools;
-    inherit browser;
-    inherit (pkgs) procps;
+    inherit (pkgs) libzim;
+    inherit qml-asteroid;
+    inherit virtualkeyboard;
+    qtvirtualkeyboard = pkgs.qt6.qtvirtualkeyboard;
   };
 
   apps =

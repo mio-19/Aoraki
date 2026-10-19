@@ -2,7 +2,7 @@
 Name=Kiwix
 GenericName=Offline Reader
 Comment=Offline Wikipedia and Reference Reader for Smartwatches
-Exec=kiwix-watch %F
+Exec=asteroid-kiwix %F
 Icon=kiwix
 Terminal=false
 Type=Application
