@@ -9,7 +9,11 @@ module Hal
       :KEY_SEARCH,
       :KEY_MENU,
       :KEY_BACK,
-      :BTN_TRIGGER_HAPPY,
+      :BTN_9, # Stem button on Fossil Gen 6 (code 0x109)
+      :BTN_SIDE, # Side stem button (code 0x113)
+      :BTN_0, # Generic hardware button 0 (code 0x100)
+      :BTN_1, # Generic hardware button 1 (code 0x101)
+      :BTN_TRIGGER_HAPPY, # Trigger happy / stem button on Qualcomm platforms
     ]
 
     def firmware_wants_recovery?()

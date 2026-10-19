@@ -16,7 +16,8 @@ let
   inherit (config.mobile.system.android) ab_partitions has_recovery_partition flashingMethod;
   inherit (stage-0.mobile.boot.stage-1) kernel;
 
-  kernelPackage = kernel.package;
+  kernelPackage =
+    if kernel.package != null then kernel.package else config.boot.kernelPackages.kernel;
 
   cmdline = concatStringsSep " " config.boot.kernelParams;
 
@@ -26,7 +27,7 @@ let
     inherit (config.mobile.outputs) initrd;
     name = "mobile-nixos_${device.name}_${bootimg.name}";
     kernel = "${kernelPackage}/${
-      if kernelPackage ? file then kernelPackage.file else kernelPackage.target
+      if kernelPackage ? file then kernelPackage.file else (kernelPackage.target or "zImage")
     }";
     inherit (config.mobile.system.android) appendDTB;
   };
@@ -280,11 +281,11 @@ in
       ];
     })
 
-    (lib.mkIf (kernelPackage != null && kernelPackage.isQcdt) {
+    (lib.mkIf (kernelPackage != null && kernelPackage ? isQcdt && kernelPackage.isQcdt) {
       mobile.system.android.bootimg.dt = "${kernelPackage}/dt.img";
     })
 
-    (lib.mkIf (kernelPackage != null && kernelPackage.isExynosDT) {
+    (lib.mkIf (kernelPackage != null && kernelPackage ? isExynosDT && kernelPackage.isExynosDT) {
       mobile.system.android.bootimg.dt = "${kernelPackage}/dt.img";
     })
 
