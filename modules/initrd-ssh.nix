@@ -23,15 +23,26 @@ in
       default = false;
       description = ''
         Enables ssh during stage-1.
+      '';
+    };
 
-        **CURRENT CONFIGURATION ALSO OPENS ACCESS TO ALL WITHOUT A PASSWORD NOR SSH KEY.**
+    insecureDebug = mkOption {
+      type = types.bool;
+      default = config.mobile.hardware.watch.debug.enable or false;
+      description = ''
+        When enabled, unlocks passwordless root login (root::0:0...) and spawns
+        an unauthenticated telnetd daemon on 172.16.42.1 for emergency debugging.
       '';
     };
   };
 
   config.mobile.boot.stage-1 = lib.mkIf cfg.enable {
+    bootConfig = {
+      debug = cfg.insecureDebug;
+    };
+
     tasks = [
-      # Oh boy, that's insecure! (As documented.)
+      # Insecure root password task
       (pkgs.writeText "insecure-root-password-task.rb" ''
         class Tasks::InsecureRootPassword < SingletonTask
           def initialize()
@@ -39,8 +50,9 @@ in
           end
           
           def run()
-            # Puts a blank password for the root user.
-            System.run("passwd", "-d", "root")
+            if Configuration["debug"] == true
+              System.run("passwd", "-d", "root") rescue nil
+            end
           end
         end
       '')
@@ -53,20 +65,26 @@ in
           
           def run()
             FileUtils.mkdir_p("/etc/dropbear")
-            # Ensure root has an unlocked empty password in /etc/passwd
-            begin
-              if File.exist?("/etc/passwd")
-                passwd = File.read("/etc/passwd").gsub(/^root:[^:]*:/, "root::")
-                File.write("/etc/passwd", passwd)
+            is_debug = Configuration["debug"] == true
+            if is_debug
+              # Ensure root has an unlocked empty password in /etc/passwd
+              begin
+                if File.exist?("/etc/passwd")
+                  passwd = File.read("/etc/passwd").gsub(/^root:[^:]*:/, "root::")
+                  File.write("/etc/passwd", passwd)
+                end
+              rescue => e
+                $logger.warn("Could not patch /etc/passwd: #{e.message}")
               end
-            rescue => e
-              $logger.warn("Could not patch /etc/passwd: #{e.message}")
-            end
-            # Spawn dropbear allowing blank passwords (-B)
-            System.spawn("dropbear", "-ERB", "-b", "/etc/banner")
-            # Spawn telnetd for immediate, unauthenticated emergency shell access
-            if System.which("telnetd")
-              System.spawn("telnetd", "-l", "/bin/sh")
+              # Spawn dropbear allowing blank passwords (-B)
+              System.spawn("dropbear", "-ERB", "-b", "/etc/banner")
+              # Spawn telnetd for immediate, unauthenticated emergency shell access
+              if System.which("telnetd")
+                System.spawn("telnetd", "-l", "/bin/sh")
+              end
+            else
+              # In production / non-debug mode, require normal authentication without blank passwords
+              System.spawn("dropbear", "-ER", "-b", "/etc/banner")
             end
           end
         end

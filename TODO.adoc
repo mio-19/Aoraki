@@ -65,7 +65,7 @@ This document tracks upcoming milestones, architectural enhancements, hardware e
 
 * [ ] *Stage-1 Partition Discovery & UDev Trigger Upstreaming*:
 ** Android vendor kernels feature synthetic sysfs nodes (such as `/sys/class/android_usb`) that reject synthetic `udevadm trigger --action=add` uevents with `EINVAL` (exit code 1). Upstream a filter or ignore rule in Mobile NixOS `boot/init/tasks/udev.rb` instead of rescuing generic `CommandError`.
-** Replace the temporary fallback in `ensure_partition_links()` once upstream stage-1 udev rules cleanly parse GPT partition names on 32-bit ARM downstream Qualcomm kernels.
+** *Refactor device-specific partition fallback in `boot/init/tasks/udev.rb`*: Currently, `ensure_partition_links()` contains a temporary fast-development fallback for `/dev/mmcblk0p50` (the `userdata` partition index on Fossil Gen 6 `fossil-hoki`). Once upstream 32-bit ARM downstream kernel udev rules reliably parse GPT partition table labels (`/dev/disk/by-label/NIXOS_SYSTEM`) or dynamic `PARTNAME` scanning from sysfs is fully stabilized across all watch models, remove this device-specific node reference from the generic `udev.rb` task.
 * [ ] *Btrfs Transparent Compression Evaluation on Smartwatches*:
 ** Downstream Qualcomm 4.14 vendor kernel currently fails to mount Btrfs root partitions (`mount -t btrfs`), necessitating ext4 as the standard root filesystem.
 ** Investigate backporting modern Btrfs fixes or kernel upgrade (4.19 / mainlined kernel) to allow zstd transparent rootfs compression on eMMC.
