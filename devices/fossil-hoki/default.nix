@@ -74,6 +74,11 @@
     "androidboot.usbconfigfs=true"
     "loop.max_part=7"
     "cgroup.memory=nokmem,nosocket"
+  ]
+  ++ lib.optionals config.mobile.hardware.watch.debug.enable [
+    # Verbose systemd logging for early stage-2 debugging.
+    "systemd.log_level=debug"
+    "systemd.log_target=kmsg"
   ];
 
   mobile.system.type = "android";
