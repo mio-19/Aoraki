@@ -40,6 +40,7 @@ else
         (old: {
           patches = (old.patches or [ ]) ++ [
             ./patches/systemd-261-mountpoint-old-kernel.patch
+            ./patches/systemd-261-faccessat-old-kernel.patch
           ];
         });
 

@@ -1,0 +1,19 @@
+# systemd 261 uses faccessat(fd, "", X_OK, AT_EMPTY_PATH) to verify
+# executables. Vendor 4.14 kernels return EINVAL for AT_EMPTY_PATH,
+# which makes pin_callout_binary() fail and systemd freeze at startup.
+# Fall back to access(path, X_OK) on EINVAL as well as ENOSYS.
+
+--- a/src/basic/path-util.c
++++ b/src/basic/path-util.c
+@@ -687,8 +687,9 @@
+                 return r;
+ 
+         r = access_fd(fd, X_OK);
+-        if (r == -ENOSYS)
+-                /* /proc/ is not mounted. Fall back to access(). */
++        if (IN_SET(r, -ENOSYS, -EINVAL))
++                /* /proc/ is not mounted, or the kernel does not support
++                 * faccessat(AT_EMPTY_PATH) (Linux < 5.8). Fall back to access(). */
+                 r = RET_NERRNO(access(name, X_OK));
+         if (r < 0)
+                 return r;
